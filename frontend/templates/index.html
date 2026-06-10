@@ -9,13 +9,17 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="./assets/logo/favicon.ico" type="image/x-icon">
 
-    <link rel="stylesheet" href="../src/styles/global.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="./css/global.css">
 </head>
-<body>
+<body data-aos="fade-down" data-aos-easing="linear" data-aos-duration="1500">
 
     <header>
         <nav class="navbar container">
@@ -27,16 +31,16 @@
             </div>
 
             <div class="nav-links">
-                <a href="#">Inicio</a>
-                <a href="#">Acerca de</a>
-                <a href="#">Funcionalidades</a>
-                <a href="#">Beneficios</a>
+                <a href="#inicio">Inicio</a>
+                <a href="#funcionalidades">Funcionalidades</a>
+                <a href="#como-funciona">¿Cómo Funciona?</a>
+                <a href="#beneficios">Beneficios</a>
 
             </div>
 
             <div class="nav-actions">
-                <a href="#" class="btn btn-ghost">Iniciar sesión</a>
-                <a href="#" class="btn btn-primary">Registrarse</a>
+                <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
+                <a href="./register.html" class="btn btn-primary">Registrarse</a>
             </div>
 
         </nav>
@@ -44,16 +48,16 @@
 
     <main>
 
-        <section class="hero container">
+        <section id="inicio" class="hero container" data-aos="fade-up" data-aos-duration="900">
 
             <span class="badge">
                 Gestión inteligente de tareas académicas
             </span>
 
             <h1>
-                Organiza tu trabajo,
-                mantén el enfoque y
-                mejora tu productividad.
+                    Gestiona tus tareas,
+                    coordina tus equipos y
+                    alcanza tus metas académicas.
             </h1>
 
             <p>
@@ -64,18 +68,14 @@
             </p>
 
             <div class="hero-buttons">
-                <a href="#" class="btn btn-primary">
+                <a href="./register.html" class="btn btn-primary">
                     Empezar ahora
-                </a>
-
-                <a href="#" class="btn btn-secondary">
-                    Ver características
                 </a>
             </div>
 
         </section>
 
-        <section class="features container">
+        <section id="funcionalidades" class="features container" data-aos="fade-up" data-aos-duration="900">
 
             <div class="section-header">
                 <h2>¿Qué puedes hacer con Acadex?</h2>
@@ -87,31 +87,31 @@
 
             <div class="feature-grid">
 
-                <article class="card">
-                    <h3>📋 Gestión de tareas</h3>
+                <article class="card" data-aos="zoom-in" data-aos-delay="100">
+                    <h3><i class="bi bi-list-task"></i> Gestión de tareas</h3>
                     <p>
                         Crea, organiza y controla todas tus tareas
                         desde un único lugar.
                     </p>
                 </article>
 
-                <article class="card">
-                    <h3>👥 Grupos de trabajo</h3>
+                <article class="card" data-aos="zoom-in" data-aos-delay="250">
+                    <h3><i class="bi bi-people-fill"></i> Grupos de trabajo</h3>
                     <p>
                         Colabora con otros integrantes mediante
                         grupos organizados.
                     </p>
                 </article>
 
-                <article class="card">
-                    <h3>⏱️ Seguimiento de tiempo</h3>
+                <article class="card" data-aos="zoom-in" data-aos-delay="300">
+                    <h3><i class="bi bi-alarm-fill"></i> Seguimiento de tiempo</h3>
                     <p>
                         Registra cuánto tiempo dedicas a cada actividad.
                     </p>
                 </article>
 
-                <article class="card">
-                    <h3>📈 Progreso inteligente</h3>
+                <article class="card" data-aos="zoom-in" data-aos-delay="450">
+                    <h3><i class="bi bi-clipboard-data-fill"></i> Progreso inteligente</h3>
                     <p>
                         Visualiza avances y prioriza tareas importantes.
                     </p>
@@ -121,36 +121,107 @@
 
         </section>
 
-        <section class="preview container">
+        <section id="como-funciona" class="workflow container" data-aos="fade-right" data-aos-duration="1000">
 
-            <div class="section-header">
-                <h2>Diseñado para el trabajo profundo</h2>
-            </div>
+    <div class="section-header">
+        <h2>¿Cómo funciona Acadex?</h2>
+        <p>
+            Organiza tus actividades académicas en cuatro pasos simples.
+        </p>
+    </div>
 
-            <div class="dashboard-preview">
+    <div class="workflow-steps">
 
-                <div class="preview-sidebar">
-                    <div class="preview-item active"></div>
-                    <div class="preview-item"></div>
-                    <div class="preview-item"></div>
-                    <div class="preview-item"></div>
-                </div>
+        <div class="step" data-aos="flip-left" data-aos-delay="100">
+            <div class="step-number">1</div>
+            <h3>Crea tus tareas</h3>
+            <p>
+                Registra actividades, entregas y objetivos académicos.
+            </p>
+        </div>
 
-                <div class="preview-content">
+        <div class="step-line"></div>
 
-                    <div class="preview-card large"></div>
+        <div class="step" data-aos="flip-left" data-aos-delay="200">
+            <div class="step-number">2</div>
+            <h3>Organiza actividades</h3>
+            <p>
+                Establece prioridades y planifica tu trabajo.
+            </p>
+        </div>
 
-                    <div class="preview-row">
-                        <div class="preview-card"></div>
-                        <div class="preview-card"></div>
-                    </div>
+        <div class="step-line"></div>
 
-                </div>
+        <div class="step" data-aos="flip-left" data-aos-delay="300">
+            <div class="step-number">3</div>
+            <h3>Colabora en equipo</h3>
+            <p>
+                Coordina responsabilidades con otros integrantes.
+            </p>
+        </div>
 
-            </div>
+        <div class="step-line"></div>
 
-        </section>
+        <div class="step" data-aos="flip-left" data-aos-delay="400">
+            <div class="step-number">4</div>
+            <h3>Monitorea tu progreso</h3>
+            <p>
+                Visualiza avances y mantén el control de tus proyectos.
+            </p>
+        </div>
 
+    </div>
+
+</section>
+
+        <section id="beneficios" class="benefits container" data-aos="fade-up" data-aos-duration="900">
+
+    <div class="section-header">
+        <h2>¿Por qué utilizar Acadex?</h2>
+
+        <p>
+            Más que una lista de tareas, Acadex te ayuda
+            a mantener el control de tus actividades académicas.
+        </p>
+    </div>
+
+    <div class="feature-grid">
+
+        <article class="card">
+            <h3>Mayor organización</h3>
+            <p>
+                Mantén todas tus actividades y proyectos
+                centralizados en un solo lugar.
+            </p>
+        </article>
+
+        <article class="card">
+            <h3>Trabajo colaborativo</h3>
+            <p>
+                Coordina tareas y responsabilidades con
+                tus compañeros de equipo.
+            </p>
+        </article>
+
+        <article class="card">
+            <h3>Control del progreso</h3>
+            <p>
+                Visualiza el avance de tus actividades y
+                conoce qué tareas requieren atención.
+            </p>
+        </article>
+
+        <article class="card">
+            <h3>Mejor gestión del tiempo</h3>
+            <p>
+                Identifica prioridades y organiza tus
+                actividades de manera más eficiente.
+            </p>
+        </article>
+
+    </div>
+
+</section>
     </main>
 
     <footer>
@@ -171,6 +242,13 @@
         </div>
 
     </footer>
+
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+    AOS.init();
+</script>
 
 </body>
 </html>

@@ -170,6 +170,15 @@ p{
     background:var(--surface);
 }
 
+
+.nav-links a{
+    transition:.3s;
+}
+
+.nav-links a:hover{
+    color:var(--primary-container);
+}
+
 /* =========================
    HERO
 ========================= */
@@ -268,79 +277,62 @@ p{
     background:var(--surface-high);
 }
 
-/* =========================
-   DASHBOARD PREVIEW
-========================= */
+/* ======================
+   como funciona
+====================== */
 
-.dashboard-preview{
+.workflow{
+    padding: 100px 0;
+}
 
-    background:var(--surface);
-
-    border-radius:16px;
-
-    padding:24px;
-
+.workflow-steps{
     display:flex;
-
-    gap:24px;
-
-    min-height:400px;
+    align-items:flex-start;
+    justify-content:center;
+    gap:20px;
+    margin-top:60px;
+    flex-wrap:wrap;
 }
 
-.preview-sidebar{
-
-    width:90px;
-
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+.step{
+    flex:1;
+    min-width:220px;
+    text-align:center;
 }
 
-.preview-item{
+.step-number{
+    width:60px;
+    height:60px;
 
-    height:50px;
+    margin:0 auto 20px;
 
-    border-radius:12px;
-
-    background:var(--surface-high);
-}
-
-.preview-item.active{
+    border-radius:50%;
 
     background:var(--primary-container);
-}
-
-.preview-content{
-
-    flex:1;
+    color:white;
 
     display:flex;
-    flex-direction:column;
+    align-items:center;
+    justify-content:center;
 
-    gap:20px;
+    font-size:1.3rem;
+    font-weight:700;
 }
 
-.preview-card{
-
-    background:var(--surface-high);
-
-    border-radius:12px;
-
-    min-height:120px;
+.step h3{
+    margin-bottom:12px;
 }
 
-.preview-card.large{
-
-    min-height:180px;
+.step p{
+    color:var(--text-muted);
+    line-height:1.6;
 }
 
-.preview-row{
-
-    display:grid;
-
-    grid-template-columns:1fr 1fr;
-
-    gap:20px;
+.step-line{
+    flex:0 0 60px;
+    height:2px;
+    background:var(--outline);
+    margin-top:30px;
 }
 
 /* =========================
