@@ -1,0 +1,75 @@
+h1{
+    text-align: center;
+    color: rgb(50, 135, 209);
+}
+
+main, header {
+    text-align: center;
+}
+.login{
+    width: 400px;
+    padding: 40px;
+    margin: auto;
+    background-color: rgb(36, 48, 58);
+    border-radius: 20px;
+}
+
+.login-conatiner {
+    width: 30px;
+    height: 30px;
+    padding: 30px;
+    border-color:blanchedalmond;
+}
+
+.input-container input{
+    border-radius: 10px;
+    background-color: aliceblue;
+    height: 40px;
+    width: 300px;
+}
+
+.pasword-option a{
+    color: #0071e3;
+    text-decoration: none;
+    
+}
+
+.button-iniciar{  
+    background-color:#0071e3;;
+    color: aliceblue;
+    width: 300px;
+    height: 40px;
+    border-radius: 10px;
+}
+
+.button-iniciar:hover {
+    border-color: blanchedalmond;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.google-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    padding: 0;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+.google-btn img {
+    width: 24px;
+    height: 24px;
+}
+
+.social-btn:hover {
+    border-color: var(--primary-color);
+    background-color: var(--bg-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.google-btn:hover {
+    border-color: #f8f9fd;
+}
