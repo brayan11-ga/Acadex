@@ -24,26 +24,45 @@
     <header>
         <nav class="navbar container">
 
-            <div class="logo">
-                <a href="index.html">
-                    <img src="../src/assets/logo/logo_acadex.png" alt="Acadex Logo">
-                </a>
-            </div>
+    <div class="logo">
+        <a href="index.html">
+            <img src="../src/assets/logo/logo_acadex.png" alt="Acadex Logo">
+        </a>
+    </div>
 
-            <div class="nav-links">
-                <a href="#inicio">Inicio</a>
-                <a href="#funcionalidades">Funcionalidades</a>
-                <a href="#como-funciona">¿Cómo Funciona?</a>
-                <a href="#beneficios">Beneficios</a>
+    <!-- Menú escritorio -->
+    <div class="nav-links">
+        <a href="#inicio">Inicio</a>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#como-funciona">¿Cómo funciona?</a>
+        <a href="#beneficios">Beneficios</a>
+    </div>
 
-            </div>
+    <div class="nav-actions">
+        <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
+        <a href="./register.html" class="btn btn-primary">Registrarse</a>
+    </div>
 
-            <div class="nav-actions">
-                <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
-                <a href="./register.html" class="btn btn-primary">Registrarse</a>
-            </div>
+    <!-- Botón hamburguesa -->
+    <button class="menu-toggle">
+        <i class="bi bi-list"></i>
+    </button>
 
-        </nav>
+</nav>
+
+<!-- Menú lateral móvil -->
+<div class="mobile-menu">
+
+    <a href="#inicio">Inicio</a>
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#como-funciona">¿Cómo funciona?</a>
+    <a href="#beneficios">Beneficios</a>
+
+    <a href="./login.html">Iniciar sesión</a>
+    <a href="./register.html">Registrarse</a>
+
+</div>
+
     </header>
 
     <main>
@@ -249,6 +268,8 @@
 <script>
     AOS.init();
 </script>
+
+<script src="../../backend/app/js/main.js"></script>
 
 </body>
 </html>

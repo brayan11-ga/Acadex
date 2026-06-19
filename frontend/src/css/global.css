@@ -124,6 +124,92 @@ p{
     gap:12px;
 }
 
+.nav-links{
+    display:flex;
+    gap:32px;
+}
+
+/* ======================
+MENÚ HAMBURGUESA
+====================== */
+
+.menu-toggle{
+    display:none;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:2rem;
+    cursor:pointer;
+}
+
+/* ======================
+MENÚ MÓVIL
+====================== */
+
+.mobile-menu{
+    position:fixed;
+    top:0;
+    right:-100%;
+    width:280px;
+    height:100vh;
+
+    background:var(--surface);
+
+    display:flex;
+    flex-direction:column;
+
+    gap:30px;
+
+    padding:120px 40px;
+
+    transition:0.4s ease;
+
+    z-index:1000;
+}
+
+.mobile-menu a{
+    text-decoration:none;
+    color:var(--text);
+    font-size:1.1rem;
+    transition:.3s;
+}
+
+.mobile-menu a:hover{
+    color:var(--primary);
+}
+
+.mobile-menu.active{
+    right:0;
+}
+
+/* ======================
+RESPONSIVE
+====================== */
+
+@media (max-width:768px){
+
+    /* Ocultar menú normal */
+    .nav-links{
+        display:none;
+    }
+
+    /* Ocultar botones normales */
+    .nav-actions{
+        display:none;
+    }
+
+    /* Mostrar botón hamburguesa */
+    .menu-toggle{
+        display:block;
+    }
+
+    /* Ajustar navbar */
+    .navbar{
+        justify-content:space-between;
+        align-items:center;
+    }
+
+}
 /* =========================
    BOTONES
 ========================= */
