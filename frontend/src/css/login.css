@@ -1,3 +1,4 @@
+
 /* ===========================
 TÍTULOS
 =========================== */
@@ -156,11 +157,9 @@ BOTÓN INICIAR
 
     font-weight:600;
 
-    background:linear-gradient(
-        135deg,
-        var(--primary-container),
-        var(--primary)
-    );
+    margin-top: 25px;
+
+    background: var(--primary);
 
     transition:.3s;
 }
@@ -170,6 +169,7 @@ BOTÓN INICIAR
 
     transform:translateY(-2px);
 }
+
 
 
 /* ===========================

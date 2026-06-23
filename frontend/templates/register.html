@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Acadex | Iniciar sesión</title>
+
+    <link rel="icon" type="image/png" href="../src/assets/logo/logo_acadex-preview.png">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="../src/css/global.css">
+    <link rel="stylesheet" href="../src/css/login.css">
+</head>
+
+<body>
+
+
+    <header class="header">
+            <nav class="navbar container">
+
+        <div class="logo">
+            <a href="index.html">
+                <img src="../src/assets/logo/logo_acadex-preview.png" alt="Acadex Logo">
+            </a>
+        </div>
+
+        <!-- Menú escritorio -->
+        <div class="nav-links">
+            <a href="./index.html#inicio">Inicio</a>
+            <a href="./index.html#funcionalidades">Funcionalidades</a>
+            <a href="./index.html#como-funciona">¿Cómo funciona?</a>
+            <a href="./index.html#beneficios">Beneficios</a>
+        </div>
+
+        <div class="nav-actions">
+            <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
+            <a href="./register.html" class="btn btn-primary">Registrarse</a>
+        </div>
+
+        <!-- Botón menú móvil -->
+        <button class="menu-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+
+    </nav>
+    </header>
+
+
+
+    <!-- HEADER -->
+    <header class="login-header">
+
+        <h1>Registrate</h1>
+
+        <h3>
+            Continúa organizando tus actividades y proyectos académicos.
+        </h3>
+        <br>
+
+    </header>
+
+
+    <!-- MAIN -->
+    <main>
+        <section class="login">
+
+            <div class="container-login">
+
+                <form action="" method="post">
+
+                    <div class="input-container">
+
+                        <label for="email">
+                            Correo electrónico
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Ingresa tu correo"
+                            required
+                        >
+
+                        <label for="text">
+                            Nombre Usuario
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Ingresa tu nombre de Usuario"
+                            required
+                        >
+
+                        <label for="password">
+                            Contraseña
+                        </label>
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Ingresa tu contraseña"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button class="button-iniciar" type="submit">
+                        Registrarse
+                    </button>
+
+                </form>
+
+                <div class="divider">
+
+                    <span>──────── o ────────</span>
+
+                </div>
+
+                <div class="social-login">
+
+                    <button type="button" class="google-btn">
+
+                        <img
+                            src="https://www.google.com/favicon.ico"
+                            alt="Google"
+                        >
+
+                        Continuar con Google
+
+                    </button>
+
+                </div>
+
+                <div class="register-option">
+
+                    <p>
+
+                        ¿Ya tienes una cuenta?
+
+                        <a href="./register.html">
+                            Iniciar Sesión
+                        </a>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div>
+                <h3>Acadex</h3>
+                <p>
+                    Plataforma inteligente para la gestión de actividades académicas.
+                </p>
+            </div>
+
+            <p>
+                © 2026 Acadex. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+
+    <!-- Menú móvil -->
+    <div class="mobile-menu">
+
+        <a href="./index.html#inicio">Inicio</a>
+        <a href="./index.html#funcionalidades">Funcionalidades</a>
+        <a href="./index.html#como-funciona">¿Cómo funciona?</a>
+        <a href="./index.html#beneficios">Beneficios</a>
+
+        <hr>
+
+        <a href="./login.html">Iniciar sesión</a>
+        <a href="./register.html">Registrarse</a>
+
+    </div>
+
+    <div class="overlay"></div>
+
+    <script src="../../backend/app/js/main.js"></script>
+
+</body>
+</html>
