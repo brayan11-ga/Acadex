@@ -9,267 +9,372 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
     <link rel="shortcut icon" href="./../src/assets/logo/Favicon_acadex.png" type="image/x-icon">
 
+    <!-- AOS -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-    <!-- Bootstrap Icons-->
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
+    <!-- CSS principal -->
     <link rel="stylesheet" href="../src/css/global.css">
 </head>
-<body data-aos="fade-down" data-aos-easing="linear" data-aos-duration="1500">
 
-    <header>
+<body>
+
+    <header class="header">
         <nav class="navbar container">
 
-    <div class="logo">
-        <a href="index.html">
-            <img src="../src/assets/logo/logo_acadex.png" alt="Acadex Logo">
-        </a>
-    </div>
+            <div class="logo">
+                <a href="index.html" aria-label="Ir al inicio">
+                    <!-- Reemplaza esta ruta por tu logo real -->
+                    <img src="../src/assets/logo/logo_acadex-preview.png" alt="Acadex Logo">
+                </a>
+            </div>
 
-    <!-- Menú escritorio -->
-    <div class="nav-links">
-        <a href="#inicio">Inicio</a>
-        <a href="#funcionalidades">Funcionalidades</a>
-        <a href="#como-funciona">¿Cómo funciona?</a>
-        <a href="#beneficios">Beneficios</a>
-    </div>
+            <div class="nav-links">
+                <a href="#inicio">Inicio</a>
+                <a href="#funcionalidades">Funcionalidades</a>
+                <a href="#como-funciona">¿Cómo funciona?</a>
+                <a href="#beneficios">Beneficios</a>
+            </div>
 
-    <div class="nav-actions">
-        <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
-        <a href="./register.html" class="btn btn-primary">Registrarse</a>
-    </div>
+            <div class="nav-actions">
+                <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
+                <a href="./register.html" class="btn btn-primary">Registrarse</a>
+            </div>
 
-    <!-- Botón hamburguesa -->
-    <button class="menu-toggle">
-        <i class="bi bi-list"></i>
-    </button>
+            <button class="menu-toggle" aria-label="Abrir menú">
+                <i class="bi bi-list"></i>
+            </button>
 
-</nav>
+        </nav>
 
-<!-- Menú lateral móvil -->
-<div class="mobile-menu">
+        <!-- Menú móvil -->
+        <div class="mobile-menu">
+            <a href="#inicio">Inicio</a>
+            <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#como-funciona">¿Cómo funciona?</a>
+            <a href="#beneficios">Beneficios</a>
 
-    <a href="#inicio">Inicio</a>
-    <a href="#funcionalidades">Funcionalidades</a>
-    <a href="#como-funciona">¿Cómo funciona?</a>
-    <a href="#beneficios">Beneficios</a>
-
-    <a href="./login.html">Iniciar sesión</a>
-    <a href="./register.html">Registrarse</a>
-
-</div>
-
+            <div class="mobile-menu-actions">
+                <a href="./login.html" class="btn btn-ghost">Iniciar sesión</a>
+                <a href="./register.html" class="btn btn-primary">Registrarse</a>
+            </div>
+        </div>
     </header>
 
     <main>
 
-        <section id="inicio" class="hero container" data-aos="fade-up" data-aos-duration="900">
+        <!-- HERO -->
+        <section id="inicio" class="hero">
+            <canvas id="heroParticles" class="hero-particles" aria-hidden="true"></canvas>
 
-            <span class="badge">
-                Gestión inteligente de tareas académicas
-            </span>
 
-            <h1>
-                    Gestiona tus tareas,
-                    coordina tus equipos y
-                    alcanza tus metas académicas.
-            </h1>
+            <div class="container hero-grid">
 
-            <p>
-                Acadex ayuda a estudiantes y equipos de trabajo
-                a gestionar tareas, actividades y proyectos
-                mediante seguimiento inteligente, control de
-                progreso y colaboración eficiente.
-            </p>
+                <div class="hero-content" data-aos="fade-up" data-aos-duration="900">
+                    <span class="badge">
+                        Gestión inteligente de tareas académicas
+                    </span>
 
-            <div class="hero-buttons">
-                <a href="./register.html" class="btn btn-primary">
-                    Empezar ahora
-                </a>
+                    <h1>
+                        Organiza tus tareas,
+                        coordina tu equipo y
+                        avanza con más control.
+                    </h1>
+
+                    <p>
+                        Acadex ayuda a estudiantes y equipos de trabajo a gestionar actividades,
+                        asignar responsabilidades, hacer seguimiento del progreso y mantener
+                        todo centralizado en un solo lugar.
+                    </p>
+
+                    <div class="hero-buttons">
+                        <a href="./register.html" class="btn btn-primary">
+                            Empezar ahora
+                        </a>
+                        <a href="#funcionalidades" class="btn btn-secondary">
+                            Ver funcionalidades
+                        </a>
+                    </div>
+
+                    <div class="hero-metrics">
+                        <div class="metric-card">
+                            <strong>+120</strong>
+                            <span>Tareas organizadas</span>
+                        </div>
+                        <div class="metric-card">
+                            <strong>35</strong>
+                            <span>Equipos activos</span>
+                        </div>
+                        <div class="metric-card">
+                            <strong>80%</strong>
+                            <span>Seguimiento completo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual" data-aos="fade-left" data-aos-duration="1000">
+                    <div class="hero-panel">
+                        <div class="panel-top">
+                            <div class="panel-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="panel-title">Panel de tareas</span>
+                        </div>
+
+                        <div class="panel-grid">
+                            <article class="task-card task-card-main">
+                                <span class="task-label task-label-progress">En progreso</span>
+                                <h3>Proyecto final de matemáticas</h3>
+                                <p>Equipo 4 · Entrega en 2 días</p>
+
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 72%;"></div>
+                                </div>
+
+                                <div class="task-footer">
+                                    <span><i class="bi bi-clock"></i> 4h 30m</span>
+                                    <span><i class="bi bi-people"></i> 4 miembros</span>
+                                </div>
+                            </article>
+
+                            <article class="task-card task-card-side">
+                                <span class="task-label task-label-done">Completada</span>
+                                <h4>Resumen de lectura</h4>
+                                <p>Asignada a 2 integrantes</p>
+                            </article>
+
+                            <article class="task-card task-card-side">
+                                <span class="task-label task-label-pending">Pendiente</span>
+                                <h4>Presentación de clase</h4>
+                                <p>Falta revisar contenido</p>
+                            </article>
+
+                            <article class="task-card task-card-side">
+                                <span class="task-label task-label-time">Tiempo</span>
+                                <h4>Tiempo de hoy</h4>
+                                <p>3h 20m registrados</p>
+                            </article>
+                        </div>
+                    </div>
+
+                    <!-- Puedes reemplazar esto por una imagen real del dashboard -->
+                    <!-- <img src="RUTA_DE_TU_IMAGEN" alt="Vista previa de Acadex"> -->
+                </div>
+
             </div>
-
         </section>
 
-        <section id="funcionalidades" class="features container" data-aos="fade-up" data-aos-duration="900">
+        <!-- FUNCIONALIDADES -->
+        <section id="funcionalidades" class="section features">
+            <div class="container">
 
-            <div class="section-header">
-                <h2>¿Qué puedes hacer con Acadex?</h2>
-                <p>
-                    Herramientas diseñadas para mantener el control
-                    de tus actividades académicas.
-                </p>
+                <div class="section-header" data-aos="fade-up">
+                    <span class="section-kicker">Funcionalidades</span>
+                    <h2>Todo lo que necesitas para mantener el control</h2>
+                    <p>
+                        Herramientas pensadas para organizar, colaborar y avanzar sin perder el foco.
+                    </p>
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="card" data-aos="zoom-in" data-aos-delay="100">
+                        <div class="card-icon"><i class="bi bi-list-task"></i></div>
+                        <h3>Gestión de tareas</h3>
+                        <p>
+                            Crea, organiza y controla tareas desde una sola interfaz clara y ordenada.
+                        </p>
+                    </article>
+
+                    <article class="card" data-aos="zoom-in" data-aos-delay="200">
+                        <div class="card-icon"><i class="bi bi-people-fill"></i></div>
+                        <h3>Grupos de trabajo</h3>
+                        <p>
+                            Coordina proyectos con compañeros y asigna responsabilidades de forma eficiente.
+                        </p>
+                    </article>
+
+                    <article class="card" data-aos="zoom-in" data-aos-delay="300">
+                        <div class="card-icon"><i class="bi bi-alarm-fill"></i></div>
+                        <h3>Seguimiento de tiempo</h3>
+                        <p>
+                            Registra el tiempo real que dedicas a cada actividad y mejora tu productividad.
+                        </p>
+                    </article>
+
+                    <article class="card" data-aos="zoom-in" data-aos-delay="400">
+                        <div class="card-icon"><i class="bi bi-clipboard-data-fill"></i></div>
+                        <h3>Progreso inteligente</h3>
+                        <p>
+                            Visualiza avances, detecta pendientes y prioriza lo importante con más claridad.
+                        </p>
+                    </article>
+
+                </div>
+
             </div>
-
-            <div class="feature-grid">
-
-                <article class="card" data-aos="zoom-in" data-aos-delay="100">
-                    <h3><i class="bi bi-list-task"></i> Gestión de tareas</h3>
-                    <p>
-                        Crea, organiza y controla todas tus tareas
-                        desde un único lugar.
-                    </p>
-                </article>
-
-                <article class="card" data-aos="zoom-in" data-aos-delay="250">
-                    <h3><i class="bi bi-people-fill"></i> Grupos de trabajo</h3>
-                    <p>
-                        Colabora con otros integrantes mediante
-                        grupos organizados.
-                    </p>
-                </article>
-
-                <article class="card" data-aos="zoom-in" data-aos-delay="300">
-                    <h3><i class="bi bi-alarm-fill"></i> Seguimiento de tiempo</h3>
-                    <p>
-                        Registra cuánto tiempo dedicas a cada actividad.
-                    </p>
-                </article>
-
-                <article class="card" data-aos="zoom-in" data-aos-delay="450">
-                    <h3><i class="bi bi-clipboard-data-fill"></i> Progreso inteligente</h3>
-                    <p>
-                        Visualiza avances y prioriza tareas importantes.
-                    </p>
-                </article>
-
-            </div>
-
         </section>
 
-        <section id="como-funciona" class="workflow container" data-aos="fade-right" data-aos-duration="1000">
+        <!-- CÓMO FUNCIONA -->
+        <section id="como-funciona" class="section workflow">
+            <div class="container">
 
-    <div class="section-header">
-        <h2>¿Cómo funciona Acadex?</h2>
-        <p>
-            Organiza tus actividades académicas en cuatro pasos simples.
-        </p>
-    </div>
+                <div class="section-header" data-aos="fade-up">
+                    <span class="section-kicker">Proceso</span>
+                    <h2>¿Cómo funciona Acadex?</h2>
+                    <p>
+                        Organiza tus actividades académicas en pasos simples y fáciles de seguir.
+                    </p>
+                </div>
 
-    <div class="workflow-steps">
+                <div class="workflow-steps">
 
-        <div class="step" data-aos="flip-left" data-aos-delay="100">
-            <div class="step-number">1</div>
-            <h3>Crea tus tareas</h3>
-            <p>
-                Registra actividades, entregas y objetivos académicos.
-            </p>
-        </div>
+                    <div class="step" data-aos="fade-up" data-aos-delay="100">
+                        <div class="step-number">1</div>
+                        <h3>Crea tus tareas</h3>
+                        <p>
+                            Registra actividades, entregas y objetivos académicos.
+                        </p>
+                    </div>
 
-        <div class="step-line"></div>
+                    <div class="step-line"></div>
 
-        <div class="step" data-aos="flip-left" data-aos-delay="200">
-            <div class="step-number">2</div>
-            <h3>Organiza actividades</h3>
-            <p>
-                Establece prioridades y planifica tu trabajo.
-            </p>
-        </div>
+                    <div class="step" data-aos="fade-up" data-aos-delay="200">
+                        <div class="step-number">2</div>
+                        <h3>Organiza prioridades</h3>
+                        <p>
+                            Decide qué es urgente, qué está en proceso y qué ya está listo.
+                        </p>
+                    </div>
 
-        <div class="step-line"></div>
+                    <div class="step-line"></div>
 
-        <div class="step" data-aos="flip-left" data-aos-delay="300">
-            <div class="step-number">3</div>
-            <h3>Colabora en equipo</h3>
-            <p>
-                Coordina responsabilidades con otros integrantes.
-            </p>
-        </div>
+                    <div class="step" data-aos="fade-up" data-aos-delay="300">
+                        <div class="step-number">3</div>
+                        <h3>Colabora en equipo</h3>
+                        <p>
+                            Asigna tareas, coordina responsabilidades y mantén a todos alineados.
+                        </p>
+                    </div>
 
-        <div class="step-line"></div>
+                    <div class="step-line"></div>
 
-        <div class="step" data-aos="flip-left" data-aos-delay="400">
-            <div class="step-number">4</div>
-            <h3>Monitorea tu progreso</h3>
-            <p>
-                Visualiza avances y mantén el control de tus proyectos.
-            </p>
-        </div>
+                    <div class="step" data-aos="fade-up" data-aos-delay="400">
+                        <div class="step-number">4</div>
+                        <h3>Monitorea avances</h3>
+                        <p>
+                            Revisa progreso, tiempo invertido y resultados en tiempo real.
+                        </p>
+                    </div>
 
-    </div>
+                </div>
 
-</section>
+            </div>
+        </section>
 
-        <section id="beneficios" class="benefits container" data-aos="fade-up" data-aos-duration="900">
+        <!-- BENEFICIOS -->
+        <section id="beneficios" class="section benefits">
+            <div class="container">
 
-    <div class="section-header">
-        <h2>¿Por qué utilizar Acadex?</h2>
+                <div class="section-header" data-aos="fade-up">
+                    <span class="section-kicker">Ventajas</span>
+                    <h2>¿Por qué utilizar Acadex?</h2>
+                    <p>
+                        Más que una lista de tareas, Acadex te ayuda a trabajar con estructura y enfoque.
+                    </p>
+                </div>
 
-        <p>
-            Más que una lista de tareas, Acadex te ayuda
-            a mantener el control de tus actividades académicas.
-        </p>
-    </div>
+                <div class="benefit-grid">
 
-    <div class="feature-grid">
+                    <article class="card highlight-card" data-aos="fade-up" data-aos-delay="100">
+                        <h3>Mayor organización</h3>
+                        <p>
+                            Mantén todas tus actividades y proyectos centralizados en un solo lugar.
+                        </p>
+                    </article>
 
-        <article class="card">
-            <h3>Mayor organización</h3>
-            <p>
-                Mantén todas tus actividades y proyectos
-                centralizados en un solo lugar.
-            </p>
-        </article>
+                    <article class="card highlight-card" data-aos="fade-up" data-aos-delay="200">
+                        <h3>Trabajo colaborativo</h3>
+                        <p>
+                            Coordina tareas y responsabilidades con tus compañeros de forma sencilla.
+                        </p>
+                    </article>
 
-        <article class="card">
-            <h3>Trabajo colaborativo</h3>
-            <p>
-                Coordina tareas y responsabilidades con
-                tus compañeros de equipo.
-            </p>
-        </article>
+                    <article class="card highlight-card" data-aos="fade-up" data-aos-delay="300">
+                        <h3>Control del progreso</h3>
+                        <p>
+                            Visualiza avances y detecta fácilmente qué tareas necesitan atención.
+                        </p>
+                    </article>
 
-        <article class="card">
-            <h3>Control del progreso</h3>
-            <p>
-                Visualiza el avance de tus actividades y
-                conoce qué tareas requieren atención.
-            </p>
-        </article>
+                    <article class="card highlight-card" data-aos="fade-up" data-aos-delay="400">
+                        <h3>Mejor gestión del tiempo</h3>
+                        <p>
+                            Identifica prioridades y organiza tus actividades con más eficiencia.
+                        </p>
+                    </article>
 
-        <article class="card">
-            <h3>Mejor gestión del tiempo</h3>
-            <p>
-                Identifica prioridades y organiza tus
-                actividades de manera más eficiente.
-            </p>
-        </article>
+                </div>
 
-    </div>
+            </div>
+        </section>
 
-</section>
+        <!-- CTA FINAL -->
+        <section class="section cta-section">
+            <div class="container">
+                <div class="cta-card" data-aos="zoom-in">
+                    <div>
+                        <span class="section-kicker">Empieza hoy</span>
+                        <h2>Convierte tus tareas en un sistema claro y productivo</h2>
+                        <p>
+                            Ten una plataforma pensada para organizar mejor tu estudio, tus proyectos y tu equipo.
+                        </p>
+                    </div>
+
+                    <a href="./register.html" class="btn btn-primary">
+                        Crear cuenta
+                    </a>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <footer>
-
+    <footer class="footer">
         <div class="container footer-content">
-
             <div>
                 <h3>Acadex</h3>
                 <p>
-                    Plataforma inteligente para la gestión actividades.
+                    Plataforma inteligente para la gestión de actividades académicas.
                 </p>
             </div>
 
             <p>
                 © 2026 Acadex. Todos los derechos reservados.
             </p>
-
         </div>
-
     </footer>
 
-
+    <!-- AOS JS -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            once: true,
+            offset: 80
+        });
+    </script>
 
-<script>
-    AOS.init();
-</script>
-
-<script src="../../backend/app/js/main.js"></script>
+    <!-- Tu JS -->
+    <script src="../../backend/app/js/main.js"></script>
 
 </body>
 </html>
