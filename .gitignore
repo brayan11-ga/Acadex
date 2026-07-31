@@ -13,3 +13,5 @@ __pycache__/
 
 # Archivos temporales
 *.log
+
+node_modules/
