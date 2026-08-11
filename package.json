@@ -1,9 +1,14 @@
 {
+  "scripts": {
+    "test": "vitest"
+  },
   "dependencies": {
     "aos": "^2.3.4",
     "bootstrap-icons": "^1.13.1"
   },
   "devDependencies": {
-    "@types/aos": "^3.0.8"
+    "@types/aos": "^3.0.8",
+    "jsdom": "^30.0.1",
+    "vitest": "^4.1.10"
   }
 }
