@@ -1,0 +1,233 @@
+/* ===========================
+TÍTULOS
+=========================== */
+
+.login-header{
+    text-align:center;
+    margin-top:50px;
+}
+
+.login-header h1{
+    color:var(--azure);
+    font-size: 3rem;
+    margin-bottom:10px;
+}
+
+.bi bi-person-circle{
+    display: inline-block;
+    margin-top: 0;
+}
+
+
+/* ===========================
+MAIN
+=========================== */
+
+.login-main {
+    min-height: 70vh;
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===========================
+CONTENEDOR LOGIN
+=========================== */
+
+.login{
+    width: 420px;
+    background: var(--panel);
+    padding: 45px;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.container-login{
+    width:100%;
+}
+
+/* ===========================
+FORMULARIO
+=========================== */
+
+.input-container{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.input-container label{
+    color:var(--ink);
+    text-align:left;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+
+.input-container input{
+    width: 100%;
+    height: 50px;
+    padding: 0 15px;
+    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    background: var(--paper-deep);
+    color: var(--ink);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+
+.input-container input:hover{
+    border-color: var(--azure-soft);
+    background: var(--paper-soft);
+}
+
+
+.input-container input:focus{
+    outline: none;
+    border-color: var(--azure);
+    box-shadow: 0 0 0 3px rgba(52, 89, 230, 0.2);
+    background: var(--paper-deep);
+}
+
+/* ===========================
+OLVIDÓ CONTRASEÑA
+=========================== */
+
+.password-option{
+    margin:20px 0;
+    text-align:right;
+    font-size: 0.9rem;
+}
+
+.password-option a{
+    color: var(--azure);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.password-option a:hover {
+    color: var(--azure-soft);
+    text-decoration: underline;
+    text-decoration-color: var(--azure-soft);
+}
+
+/* ===========================
+BOTÓN INICIAR
+=========================== */
+
+.button-iniciar{
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: var(--radius-chip);
+    cursor: pointer;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 25px;
+    background: var(--azure);
+    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
+}
+
+.button-iniciar:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(52, 89, 230, 0.3);
+}
+
+/* ===========================
+DIVISOR
+=========================== */
+
+.divider{
+    text-align:center;
+    margin:25px 0;
+    color:var(--ink-faint);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line-strong);
+}
+
+/* ===========================
+GOOGLE
+=========================== */
+
+.google-btn{
+    width: 100%;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-chip);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+
+.google-btn img{
+    width: 20px;
+}
+
+
+.google-btn:hover{
+    border-color: var(--ink-faint);
+    background: var(--paper-soft);
+    transform: translateY(-1px);
+}
+
+/* ===========================
+REGISTRO
+=========================== */
+
+.register-option{
+    margin-top:25px;
+    text-align:center;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+}
+
+
+.register-option a{
+    color: var(--azure);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition);
+    margin-left: 4px;
+}
+
+.register-option a:hover {
+    color: var(--azure-soft);
+    text-decoration: underline;
+    text-decoration-color: var(--azure-soft);
+}
+
+
+/* ===========================
+RESPONSIVE
+=========================== */
+
+@media(max-width:768px){
+
+    .login{
+        width:95%;
+        padding:30px;
+    }
+
+}
