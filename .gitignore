@@ -1,15 +1,48 @@
-# Entorno virtual
-venv/
+# ==============================
+# ENTORNOS VIRTUALES
+# ==============================
 
-# Python
+venv/
+.venv/
+
+
+# ==============================
+# PYTHON
+# ==============================
+
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Variables de entorno
+
+# ==============================
+# VARIABLES DE ENTORNO
+# ==============================
+
 .env
+.env.*
 
-# VS Code
+
+# ==============================
+# EDITORES
+# ==============================
+
 .vscode/
+.idea/
 
-# Archivos temporales
+
+# ==============================
+# ARCHIVOS TEMPORALES
+# ==============================
+
 *.log
+*.tmp
+
+
+# ==============================
+# SISTEMA OPERATIVO
+# ==============================
+
+.DS_Store
+Thumbs.db
