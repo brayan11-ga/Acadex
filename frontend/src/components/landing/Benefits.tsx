@@ -50,7 +50,7 @@ export const Benefits = () => {
 
             </div>
         </section>
-  );
+    );
 };
 
 export default Benefits;
