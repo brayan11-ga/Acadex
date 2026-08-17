@@ -31,7 +31,7 @@ export const Header = () => {
 
         <div className="nav-actions">
           <Link to="/iniciarSesion" className="btn btn-ghost">Iniciar sesión</Link>
-          <Link to="/iniciarSesion" className="btn btn-primary">Registrarse</Link>
+          <Link to="/registrarse" className="btn btn-primary">Registrarse</Link>
         </div>
 
         <button className="menu-toggle" aria-label="Abrir menú" onClick={toggleMobileMenu}>
@@ -48,7 +48,7 @@ export const Header = () => {
 
         <div className="mobile-menu-actions">
           <Link to="/iniciarSesion" className="btn btn-ghost" onClick={closeMenu}>Iniciar sesión</Link>
-          <Link to="/iniciarSesion" className="btn btn-primary" onClick={closeMenu}>Registrarse</Link>
+          <Link to="/registrarse" className="btn btn-primary" onClick={closeMenu}>Registrarse</Link>
         </div>
       </div>
     </header>
