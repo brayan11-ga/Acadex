@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, BigInteger, String, Date, Boolean, ForeignKey,
     DateTime, Float, Text, UniqueConstraint, CheckConstraint, func
 )
-from backend.app.databases import base
+from backend.app.db.databases import base
 
 
 class Usuarios(base):
@@ -17,7 +17,7 @@ class Usuarios(base):
 class Categorias(base):
     __tablename__ = "categorias"
     id_categoria = Column(Integer, primary_key=True, index=True)
-    nombre_categoria = Column(String(50), nullable=False)
+    nombre_categoria = Column(String(50), nullable=False, unique=True)
 
 
 class Grupos(base):
@@ -25,7 +25,8 @@ class Grupos(base):
     id_grupo = Column(Integer, primary_key=True, index=True)
     nombre_grupo = Column(String(50), nullable=False)
     descripcion = Column(Text)
-    fecha_creacion = Column(Date, nullable=False)
+    fecha_registro = Column(Date, nullable=False, server_default=func.current_date())
+    codigo_acceso =Column(String(20),nullable=False,unique=True)
 
 
 class Integrantes(base):
@@ -33,29 +34,33 @@ class Integrantes(base):
     id_integrante = Column(Integer, primary_key=True, index=True)
     rol = Column(String(50), nullable=False)
     fecha_ingreso = Column(Date, nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=False)
+
 
     __table_args__ = (
         CheckConstraint("rol IN ('lider', 'miembro')", name="chk_rol_integrante"),
+        UniqueConstraint("id_usuario", "id_grupo"),
     )
 
 
 class Tareas(base):
     __tablename__ = "tareas"
     id_tarea = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String(50), nullable=False, index=True)
+    nombre = Column(String(100), nullable=False, index=True)
+    descripcion =Column(Text)
     fecha_entrega = Column(DateTime, nullable=False, index=True)
-    estado = Column(String(50), nullable=False)
+    estado = Column(String(50),default="pendiente", nullable=False)
     dificultad_estimada = Column(Integer, nullable=False)
     tiempo_estimado = Column(Integer, nullable=False)
     prioridad = Column(Integer)
-    tiempo_acumulado = Column(Float)
-    cronometro_activo = Column(Boolean)
+    tiempo_acumulado = Column(default="0", nullable=False)
+    cronometro_activo = Column(default="0",nullable=False)
     ultima_pausa = Column(DateTime)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=True)
-    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria"), nullable=False)
+    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria", ondelete="CASCADE"), nullable=False)
+
 
     __table_args__ = (
         CheckConstraint(
@@ -66,19 +71,17 @@ class Tareas(base):
             "(id_usuario IS NULL AND id_grupo IS NOT NULL)",
             name="chk_tarea_owner",
         ),
+        chk_tiempo_estimado(
+            tiempo_estimado > 0),
     )
 
 
 class AsignacionTareas(base):
     __tablename__ = "asignacion_tareas"
     id_asignacion = Column(Integer, primary_key=True, index=True)
-    fecha_asignacion = Column(DateTime)
-    id_tarea = Column(
-        Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), unique=True
-    )
-    id_integrante = Column(
-        Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE")
-    )
+    fecha_asignacion = Column(DateTime,nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), unique=True)
+    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE"),nullable=False)
 
 
 class Perfiles(base):
@@ -90,19 +93,7 @@ class Perfiles(base):
     descripcion = Column(Text)
     notif_activas = Column(Boolean, nullable=False, default=True)
     limite_cronometro = Column(Integer)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False, unique=True)
-
-
-class MetodosInicioSesion(base):
-    __tablename__ = "metodos_inicio_sesion"
-    id_metodo = Column(Integer, primary_key=True, index=True)
-    tipo_metodo = Column(String(50), nullable=False)
-    correo = Column(String(255))
-    contrasena_hash = Column(String(255))
-    token_google = Column(String(255))
-    estado = Column(Boolean, nullable=False, default=True)
-    fecha_vinculacion = Column(Date, nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, unique=True)
 
 
 class TokensTemporales(base):
@@ -113,8 +104,8 @@ class TokensTemporales(base):
     fecha_creacion = Column(DateTime, nullable=False)
     fecha_expiracion = Column(DateTime, nullable=False)
     usado = Column(Boolean, nullable=False, default=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"))
-    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"))
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
+    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=False)
 
 
 class Notificaciones(base):
@@ -125,21 +116,22 @@ class Notificaciones(base):
     fecha_envio = Column(DateTime, nullable=False)
     estado = Column(Boolean, nullable=False, default=False)
     tipo = Column(String(50), nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"))
-    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"))
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
 
 
 class Archivos(base):
     __tablename__ = "archivos"
     id_archivo = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String(50), nullable=False)
+    nombre = Column(String(100), nullable=False)
     tamano = Column(BigInteger)
     tipo = Column(String(10), nullable=False)
     fecha_adjuncion = Column(DateTime, nullable=False)
     ruta = Column(String(255), nullable=False)
-    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"))
-    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante"))
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"))
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
+    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE"),nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
+
 
     __table_args__ = (
         CheckConstraint(
@@ -152,9 +144,9 @@ class HistorialTareas(base):
     fechahora_fin = Column(DateTime, nullable=False)
     tiempo_real = Column(Float)
     dificultad_real = Column(Integer)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"))
-    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"))
-    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"))
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
+    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=False)
 
     __table_args__ = (CheckConstraint("dificultad_real BETWEEN 1 AND 5", name="chk_dificultad_real"),)
 
@@ -165,8 +157,8 @@ class EstadisticaCategoria(base):
     promedio_tiempo = Column(Float)
     promedio_dificultad = Column(Float)
     total_tareas = Column(Integer)
-    id_perfil = Column(Integer, ForeignKey("perfiles.id_perfil"))
-    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria"))
+    id_perfil = Column(Integer, ForeignKey("perfiles.id_perfil", ondelete="CASCADE"),nullable=False)
+    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria", ondelete="CASCADE"),nullable=False)
 
 
 class EstadisticaCategoriaGrupo(base):
@@ -175,8 +167,8 @@ class EstadisticaCategoriaGrupo(base):
     promedio_tiempo = Column(Float)
     promedio_dificultad = Column(Float)
     total_tareas = Column(Integer)
-    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"))
-    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria"))
+    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=False)
+    id_categoria = Column(Integer, ForeignKey("categorias.id_categoria", ondelete="CASCADE"),nullable=False)
 
 
 class SesionesCronometro(base):
@@ -185,5 +177,6 @@ class SesionesCronometro(base):
     fecha_inicio = Column(DateTime, nullable=False)
     fecha_fin = Column(DateTime)
     duracion = Column(Float)
-    id_tarea = Column(
-        Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
+    id_usuario=Column(Integer,ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
+
