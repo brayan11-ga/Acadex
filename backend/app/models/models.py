@@ -25,7 +25,7 @@ class Grupos(base):
     id_grupo = Column(Integer, primary_key=True, index=True)
     nombre_grupo = Column(String(50), nullable=False)
     descripcion = Column(Text)
-    fecha_registro = Column(Date, nullable=False, server_default=func.current_date())
+    fecha_creacion = Column(Date, nullable=False, server_default=func.current_date())
     codigo_acceso =Column(String(20),nullable=False,unique=True)
 
 
@@ -54,35 +54,32 @@ class Tareas(base):
     dificultad_estimada = Column(Integer, nullable=False)
     tiempo_estimado = Column(Integer, nullable=False)
     prioridad = Column(Integer)
-    tiempo_acumulado = Column(default="0", nullable=False)
-    cronometro_activo = Column(default="0",nullable=False)
+    tiempo_acumulado = Column(Float, nullable=False)
+    cronometro_activo = Column(Boolean,nullable=False)
     ultima_pausa = Column(DateTime)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=True)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=True)
     id_categoria = Column(Integer, ForeignKey("categorias.id_categoria", ondelete="CASCADE"), nullable=False)
 
 
     __table_args__ = (
-        CheckConstraint(
-            "dificultad_estimada BETWEEN 1 AND 5", name="chk_dificultad_estimada"
-        ),
-        CheckConstraint(
-            "(id_usuario IS NOT NULL AND id_grupo IS NULL) OR "
-            "(id_usuario IS NULL AND id_grupo IS NOT NULL)",
-            name="chk_tarea_owner",
-        ),
-        chk_tiempo_estimado(
-            tiempo_estimado > 0),
-    )
+        CheckConstraint("dificultad_estimada BETWEEN 1 AND 5", name="chk_dificultad_estimada"),
+        CheckConstraint("(id_usuario IS NOT NULL AND id_grupo IS NULL) OR "
+            "(id_usuario IS NULL AND id_grupo IS NOT NULL)",name="chk_tarea_owner"),
+        CheckConstraint("tiempo_estimado > 0",name="chk_tiempo_estimado"),
+        )
 
 
 class AsignacionTareas(base):
     __tablename__ = "asignacion_tareas"
     id_asignacion = Column(Integer, primary_key=True, index=True)
     fecha_asignacion = Column(DateTime,nullable=False)
-    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), unique=True)
-    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE"),nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
+    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE"), nullable=False)
 
+    __table_args__ = (
+    UniqueConstraint("id_tarea", "id_integrante"),
+    )
 
 class Perfiles(base):
     __tablename__ = "perfiles"
@@ -104,8 +101,8 @@ class TokensTemporales(base):
     fecha_creacion = Column(DateTime, nullable=False)
     fecha_expiracion = Column(DateTime, nullable=False)
     usado = Column(Boolean, nullable=False, default=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
-    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=True)
+    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=True)
 
 
 class Notificaciones(base):
@@ -117,7 +114,7 @@ class Notificaciones(base):
     estado = Column(Boolean, nullable=False, default=False)
     tipo = Column(String(50), nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
-    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
+    id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=True)
 
 
 class Archivos(base):
@@ -129,13 +126,10 @@ class Archivos(base):
     fecha_adjuncion = Column(DateTime, nullable=False)
     ruta = Column(String(255), nullable=False)
     id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
-    id_integrante = Column(Integer, ForeignKey("integrantes.id_integrante", ondelete="CASCADE"),nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
 
 
     __table_args__ = (
-        CheckConstraint(
-            "tipo IN ('PDF', 'DOCX', 'JPG', 'PNG')", name="chk_tipo_archivo"),)
+        CheckConstraint("tipo IN ('PDF', 'DOCX', 'JPG', 'PNG')", name="chk_tipo_archivo"),)
 
 
 class HistorialTareas(base):
@@ -146,9 +140,10 @@ class HistorialTareas(base):
     dificultad_real = Column(Integer)
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),nullable=False)
     id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"),nullable=False)
-    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=False)
+    id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"),nullable=True)
 
-    __table_args__ = (CheckConstraint("dificultad_real BETWEEN 1 AND 5", name="chk_dificultad_real"),)
+    __table_args__=(CheckConstraint("dificultad_real BETWEEN 1 AND 5", name="chk_dificultad_real"),
+    )
 
 
 class EstadisticaCategoria(base):
