@@ -46,7 +46,7 @@ export const Workflow = () => {
 
                     <div className="step" data-reveal>
                         <span className="step-index">04</span>
-                        <h3>Monitorea avances</h3>
+                        <h3>Monitorea avances </h3>
                         <p>
                             Revisa progreso, tiempo invertido y resultados en tiempo real.
                         </p>
