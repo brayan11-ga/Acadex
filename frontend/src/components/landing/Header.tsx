@@ -1,8 +1,8 @@
 // src/components/landing/Header.tsx
 import { useState } from 'react';
 import logoAcadex from '../../assets/logo_acadex-preview.png';
-
 import { Link } from 'react-router-dom';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,6 +32,10 @@ export const Header = () => {
         <div className="nav-actions">
           <Link to="/iniciarSesion" className="btn btn-ghost">Iniciar sesión</Link>
           <Link to="/registrarse" className="btn btn-primary">Registrarse</Link>
+        </div>
+
+        <div className='nav-bt-toggle'>
+          <ThemeToggle />
         </div>
 
         <button className="menu-toggle" aria-label="Abrir menú" onClick={toggleMobileMenu}>
