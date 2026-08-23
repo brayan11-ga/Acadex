@@ -41,6 +41,17 @@ html {
     scroll-behavior: smooth;
 }
 
+html.light-mode {
+    --background: #ffffff;
+    --background-alt: #f2f4f8;
+    --surface: rgba(255, 255, 255, 0.9);
+    --surface-strong: #eef1f8;
+    --surface-hover: #e4e8f2;
+    --text: #121212;
+    --text-muted: #4b4b4b;
+    --outline: rgba(0, 0, 0, 0.09);
+}
+
 body {
     background:
         radial-gradient(circle at top left, rgba(111, 154, 253, 0.16), transparent 26%),
@@ -50,6 +61,7 @@ body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
     overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 img {

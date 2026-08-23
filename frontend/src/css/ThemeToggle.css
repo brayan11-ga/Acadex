@@ -4,6 +4,7 @@
   --light: #d9d9d9;
   --dark: #121212;
   --gray: #414344;
+  --second: rgba(84, 168, 252, 0.35);
   position: relative;
   z-index: 10;
   width: fit-content;
@@ -15,6 +16,7 @@
   display: none;
 }
 
+/* Estado por defecto: diseño gris */
 .toggle-cont .toggle-label {
   --gap: 3px;
   --width: 32px;
@@ -25,15 +27,14 @@
   padding: 0.3rem;
   width: calc((var(--width) + var(--gap)) * 2);
   height: 100%;
-  background-color: var(--dark);
-  border: 1px solid #777777;
+  background-color: transparent;
+  border: 1px solid #3d6970;
   border-bottom: 0;
   border-radius: 9999px;
   box-sizing: content-box;
   transition: all 0.3s ease-in-out;
 }
 
-/* Resplandor detrás del toggle */
 .toggle-cont .toggle-label::before {
   content: "";
   position: absolute;
@@ -47,6 +48,7 @@
   border: 1px solid #777777;
   border-bottom: 0;
   border-radius: 9999px;
+  box-shadow: 0 1rem 2.5rem -2rem #0080ff;
   transition: all 0.3s ease-in-out;
 }
 
@@ -74,13 +76,14 @@
   align-items: center;
   width: var(--width);
   height: 32px;
-  background-image: radial-gradient(circle at 50% 0%, #666666 0%, var(--gray) 100%);
-  border: 1px solid #aaaaaa;
+  overflow: visible;
+  background-image: radial-gradient(circle at 50% 0%, #045ab1 0%, var(--primary) 100%);
+  border: 1px solid var(--primary);
   border-bottom: 0;
   border-radius: 9999px;
-  box-shadow: inset 0 -0.15rem 0.15rem var(--primary);
+  box-shadow: inset 0 -0.15rem 0.15rem var(--primary),
+    inset 0 0 0.5rem 0.75rem var(--second);
   transition: transform 0.3s ease-in-out;
-  overflow: hidden;
 }
 
 .toggle-cont .toggle-label .cont-icon .sparkle {
@@ -88,20 +91,21 @@
   top: 50%;
   left: 50%;
   display: block;
-  width: calc(var(--width) * 1px);
+  width: calc(var(--width) * 1.5px);
   aspect-ratio: 1;
-  background-color: var(--light);
+  background-color: #acacac;
   border-radius: 50%;
   transform-origin: 50% 50%;
   rotate: calc(1deg * var(--deg));
   transform: translate(-50%, -50%);
-  animation: sparkle calc(100s / var(--duration)) linear infinite;
+  z-index: -10;
+  animation: sparkle-checked calc(100s / var(--duration)) linear infinite;
 }
 
-@keyframes sparkle {
+@keyframes sparkle-checked {
   to {
-    width: calc(var(--width) * 0.5px);
-    transform: translate(2000%, -50%);
+    width: calc(var(--width) * 1px);
+    transform: translate(5000%, -50%);
   }
 }
 
@@ -112,33 +116,34 @@
   z-index: 5;
 }
 
-/* --- Estado "encendido" (checked) --- */
+/* --- Estado "encendido" (checked): diseño azul con brillo original --- */
 .toggle-cont .toggle-input:checked ~ .toggle-label {
-  background-color: transparent;
-  border: 1px solid #3d6970;
+  background-color: var(--dark);
+  border: 1px solid #777777;
 }
 
 .toggle-cont .toggle-input:checked ~ .toggle-label::before {
-  box-shadow: 0 1rem 2.5rem -2rem #0080ff;
+  background-color: var(--gray);
+  box-shadow: none;
 }
 
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon {
-  overflow: visible;
-  background-image: radial-gradient(circle at 50% 0%, #045ab1 0%, var(--primary) 100%);
-  border: 1px solid var(--primary);
+  overflow: clip;
+  background-image: radial-gradient(circle at 50% 0%, #666666 0%, var(--gray) 100%);
+  border: 1px solid #aaaaaa;
+  box-shadow: inset 0 -0.15rem 0.15rem var(--primary);
   transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(-225deg);
 }
 
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .sparkle {
-  z-index: -10;
-  width: calc(var(--width) * 1.5px);
-  background-color: #acacac;
-  animation: sparkle-checked calc(100s / var(--duration)) linear infinite;
+  width: calc(var(--width) * 1px);
+  background-color: var(--light);
+  animation: sparkle calc(100s / var(--duration)) linear infinite;
 }
 
-@keyframes sparkle-checked {
+@keyframes sparkle {
   to {
-    width: calc(var(--width) * 1px);
-    transform: translate(5000%, -50%);
+    width: calc(var(--width) * 0.5px);
+    transform: translate(2000%, -50%);
   }
 }
