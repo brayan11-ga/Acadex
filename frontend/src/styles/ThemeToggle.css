@@ -35,6 +35,7 @@
   transition: all 0.3s ease-in-out;
 }
 
+/* Difuminado del borde exterior*/
 .toggle-cont .toggle-label::before {
   content: "";
   position: absolute;
@@ -116,29 +117,40 @@
   z-index: 5;
 }
 
+/*=======================================================================*/
 /* --- Estado "encendido" (checked): diseño azul con brillo original --- */
+/*=======================================================================*/
+
 .toggle-cont .toggle-input:checked ~ .toggle-label {
-  background-color: var(--dark);
-  border: 1px solid #777777;
+  background-color: #eef1f5;
+  border: 1px solid #c9ccd1;
 }
 
+/* Borde exterior */
 .toggle-cont .toggle-input:checked ~ .toggle-label::before {
-  background-color: var(--gray);
+  background-color: #e4e8f2;
   box-shadow: none;
 }
 
+/* Circulo del switch */
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon {
   overflow: clip;
-  background-image: radial-gradient(circle at 50% 0%, #666666 0%, var(--gray) 100%);
-  border: 1px solid #aaaaaa;
-  box-shadow: inset 0 -0.15rem 0.15rem var(--primary);
+  background-image: radial-gradient(circle at 50% 0%, #ffffff 0%, #e4e8f2 100%);
+  border: 1px solid #c9ccd1;
+  box-shadow: inset 0 -0.15rem 0.15rem rgba(0, 0, 0, 0.08);
   transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(-225deg);
 }
 
+/* Particulas del switch */
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .sparkle {
   width: calc(var(--width) * 1px);
-  background-color: var(--light);
+  background-color: #0d63e4;
   animation: sparkle calc(100s / var(--duration)) linear infinite;
+}
+
+/* Icono del switch en modo claro */
+.toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .icon {
+  fill: #3481ff;
 }
 
 @keyframes sparkle {
