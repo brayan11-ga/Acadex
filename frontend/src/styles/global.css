@@ -22,7 +22,7 @@
     --line-panel: rgba(255, 255, 255, 0.10);
 
     /* marca */
-    --azure: #3459e6;
+    --azure: #3481ff;
     --azure-soft: #7ea2ff;
     --mint: #0aa876;
     --mint-soft: #53e3ac;
@@ -38,6 +38,11 @@
     --ease: cubic-bezier(.16, .84, .44, 1);
 
     --container-width: 1180px;
+
+    /* NUEVO: soporte modo claro/oscuro */
+    --text-on-azure: white;
+    --header-bg: rgba(11, 16, 32, 0.75);
+    --track-bg: rgba(255, 255, 255, 0.08);
 }
 
 /* =========================
@@ -54,6 +59,39 @@ html {
     scroll-behavior: smooth;
 }
 
+/* NUEVO: overrides para modo claro */
+html.light-mode {
+    --paper: #ffffff;
+    --paper-deep: #f2f4f8;
+    --paper-soft: rgba(17, 24, 39, 0.05);
+    --panel: #eef1f8;
+
+    --ink: #121212;
+    --ink-soft: #4b4b4b;
+    --ink-faint: #6b7280;
+    --panel-ink: #121212;
+    --panel-ink-soft: #4b4b4b;
+
+    --line: rgba(0, 0, 0, 0.10);
+    --line-strong: rgba(0, 0, 0, 0.18);
+    --line-panel: rgba(0, 0, 0, 0.10);
+
+    --text-on-azure: white;
+    --header-bg: rgba(255, 255, 255, 0.75);
+    --track-bg: rgba(17, 24, 39, 0.08);
+
+    --azure: #3481ff;
+    --azure-soft: #7ea2ff;
+}
+
+/* NUEVO: adapta el switch (ThemeToggle.css) al fondo blanco */
+html.light-mode .toggle-cont {
+  --gray: #d0d3da;
+  --toggle-border: #b8c2c6;
+  --toggle-track-border: #a9adb3;
+  --toggle-icon: #2a2a2a;
+}
+
 body {
     background: linear-gradient(180deg, var(--paper), var(--paper-deep));
     color: var(--ink);
@@ -61,6 +99,7 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease; /* NUEVO */
 }
 
 img {
@@ -166,7 +205,7 @@ p {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: rgba(11, 16, 32, 0.75);
+    background: var(--header-bg); /* antes: rgba(11, 16, 32, 0.75) fijo */
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
 }
@@ -293,7 +332,7 @@ p {
 
 .btn-primary {
     background: var(--azure);
-    color: #fff;
+    color: var(--text-on-azure); /* antes: #fff fijo */
 }
 
 .btn-primary:hover {
@@ -393,7 +432,7 @@ p {
 }
 
 /* =========================
-   PANEL DE VISTA PREVIA (elemento distintivo)
+   PANEL DE VISTA PREVIA
 ========================= */
 
 .hero-visual {
@@ -406,7 +445,7 @@ p {
         radial-gradient(120% 140% at 16% 6%, rgba(52, 89, 230, 0.35), transparent 46%),
         radial-gradient(120% 140% at 90% 94%, rgba(10, 168, 118, 0.30), transparent 46%),
         var(--panel);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
     border-radius: var(--radius-panel);
     padding: 34px;
     overflow: hidden;
@@ -445,7 +484,7 @@ p {
 
 .chip-progress {
     background: rgba(126, 162, 255, 0.16);
-    color: #a9c1ff;
+    color: var(--azure);
 }
 
 .chip-done {
@@ -467,7 +506,7 @@ p {
     width: 100%;
     height: 8px;
     border-radius: var(--radius-chip);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--track-bg); /* antes: rgba(255,255,255,0.08) fijo */
     overflow: hidden;
     margin-bottom: 22px;
 }
@@ -544,7 +583,7 @@ p {
 }
 
 /* =========================
-   GRID SIN TARJETAS (funcionalidades / beneficios)
+   GRID SIN TARJETAS
 ========================= */
 
 .plain-grid {

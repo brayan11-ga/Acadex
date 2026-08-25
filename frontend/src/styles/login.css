@@ -18,7 +18,6 @@ TÍTULOS
     margin-top: 0;
 }
 
-
 /* ===========================
 MAIN
 =========================== */
@@ -65,7 +64,6 @@ FORMULARIO
     font-size: 0.95rem;
 }
 
-
 .input-container input{
     width: 100%;
     height: 50px;
@@ -77,12 +75,10 @@ FORMULARIO
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-
 .input-container input:hover{
     border-color: var(--azure-soft);
     background: var(--paper-soft);
 }
-
 
 .input-container input:focus{
     outline: none;
@@ -112,7 +108,6 @@ OLVIDÓ CONTRASEÑA
     text-decoration: underline;
     text-decoration-color: var(--azure-soft);
 }
-
 /* ===========================
 BOTÓN INICIAR
 =========================== */
@@ -123,12 +118,12 @@ BOTÓN INICIAR
     border: none;
     border-radius: var(--radius-chip);
     cursor: pointer;
-    color: white;
+    color: var(--text-on-azure);
     font-weight: 700;
     font-size: 1rem;
     margin-top: 25px;
     background: var(--azure);
-    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
+    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition), color var(--transition);
 }
 
 .button-iniciar:hover{
@@ -180,11 +175,9 @@ GOOGLE
     transition: var(--transition);
 }
 
-
 .google-btn img{
     width: 20px;
 }
-
 
 .google-btn:hover{
     border-color: var(--ink-faint);
@@ -203,7 +196,6 @@ REGISTRO
     color: var(--ink-soft);
 }
 
-
 .register-option a{
     color: var(--azure);
     text-decoration: none;
@@ -217,7 +209,6 @@ REGISTRO
     text-decoration: underline;
     text-decoration-color: var(--azure-soft);
 }
-
 
 /* ===========================
 RESPONSIVE
