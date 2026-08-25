@@ -76,7 +76,7 @@ html.light-mode {
     --line-strong: rgba(0, 0, 0, 0.18);
     --line-panel: rgba(0, 0, 0, 0.10);
 
-    --text-on-azure: #121212;
+    --text-on-azure: white;
     --header-bg: rgba(255, 255, 255, 0.75);
     --track-bg: rgba(17, 24, 39, 0.08);
 
@@ -484,7 +484,7 @@ p {
 
 .chip-progress {
     background: rgba(126, 162, 255, 0.16);
-    color: #a9c1ff;
+    color: var(--azure);
 }
 
 .chip-done {
