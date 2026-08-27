@@ -1,0 +1,126 @@
+/* src/styles/layout.css */
+
+.pixel-app {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pixel-bg-start), var(--pixel-bg-end));
+  font-family: var(--pixel-font-body);
+  color: var(--pixel-ink);
+}
+
+/* ===== SIDEBAR ===== */
+
+.pixel-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pixel-logo-moon {
+  width: 85px;
+  height: auto;
+  image-rendering: pixelated;
+  mix-blend-mode: screen;
+  margin-top: -4px; /* pequeño ajuste para centrarla visualmente con el texto */
+}
+
+.pixel-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(14, 10, 28, 0) 0%,
+      rgba(14, 10, 28, 0.75) 22%,
+      rgba(14, 10, 28, 1) 45%,
+      rgba(14, 10, 28, 1) 100%
+    ),
+    url("../assets/backgrounds/sidebar-mountains.png");
+  background-size: cover;
+  background-position: bottom;
+  background-repeat: no-repeat;
+  border-right: 1px solid var(--pixel-border);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+}
+
+.pixel-sidebar-logo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pixel-sidebar-title {
+  font-family: var(--pixel-font-display);
+  font-size: 0.85rem;
+  color: var(--pixel-ink);
+  letter-spacing: 0.05em;
+}
+
+.pixel-sidebar-subtitle {
+  font-size: 0.72rem;
+  color: var(--pixel-ink-faint);
+}
+
+.pixel-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pixel-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--pixel-radius-sm);
+  color: var(--pixel-ink-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pixel-nav-link:hover {
+  background: var(--pixel-panel-alt);
+  color: var(--pixel-ink);
+}
+
+.pixel-nav-link.active {
+  background: var(--pixel-accent);
+  color: white;
+}
+
+.pixel-nav-icon {
+  font-size: 0.9rem;
+  width: 18px;
+  text-align: center;
+}
+
+.pixel-btn-crear {
+  background: var(--pixel-accent);
+  color: white;
+  border: none;
+  border-radius: var(--pixel-radius-sm);
+  padding: 12px;
+  font-family: var(--pixel-font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.pixel-btn-crear:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ===== CONTENIDO ===== */
+
+.pixel-content {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+}

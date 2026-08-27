@@ -1,0 +1,37 @@
+/* src/styles/pixel-theme.css */
+
+:root {
+  /* ===== Fondo ===== */
+  --pixel-bg-start: #1a1233;      /* morado muy oscuro, arriba del degradado */
+  --pixel-bg-end: #0e0a1c;        /* casi negro-morado, abajo del degradado */
+
+  /* ===== Superficies (paneles, sidebar, tarjetas) ===== */
+  --pixel-sidebar: rgba(43, 26, 74, 0.55);
+  --pixel-panel: #1c1438;
+  --pixel-panel-alt: #241a4d;
+  --pixel-border: rgba(255, 255, 255, 0.08);
+  --pixel-border-strong: rgba(255, 255, 255, 0.16);
+
+  /* ===== Acento principal (morado vibrante) ===== */
+  --pixel-accent: #7c5cff;
+  --pixel-accent-soft: #a68bff;
+  --pixel-accent-strong: #5b3df0;
+
+  /* ===== Colores de prioridad ===== */
+  --pixel-baja: #45e0a8;    /* verde menta */
+  --pixel-media: #7c5cff;   /* morado (coincide con el acento) */
+  --pixel-alta: #ff6fa5;    /* rosa/coral */
+
+  /* ===== Texto ===== */
+  --pixel-ink: #f1eaff;
+  --pixel-ink-soft: #b9aee0;
+  --pixel-ink-faint: #7e739e;
+
+  /* ===== Forma ===== */
+  --pixel-radius: 10px;
+  --pixel-radius-sm: 6px;
+
+    /* ===== Tipografía ===== */
+  --pixel-font-display: 'Press Start 2P', monospace;
+  --pixel-font-body: 'Inter', sans-serif;
+}
