@@ -1,0 +1,226 @@
+/* =========================
+   LAYOUT PRINCIPAL (Tareas.tsx)
+========================= */
+.tareas-page {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--paper);
+    /* Asume que el Sidebar tiene un ancho fijo o es manejado por flex */
+}
+
+.tareas-main {
+    flex: 1;
+    padding: 48px;
+    /* Agrega scroll independiente si el Sidebar es estático */
+    overflow-y: auto; 
+}
+
+/* =========================
+   COMPONENTE: ContenidoTarea
+========================= */
+.tareas-content {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Header */
+.tareas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.tareas-header h1 {
+    margin-bottom: 8px;
+    font-size: clamp(2rem, 4vw, 2.8rem); /* Un poco más sutil que el hero global */
+}
+
+.tareas-header p {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+}
+
+.btn-nueva-tarea {
+    background-color: var(--azure);
+    color: var(--text-on-azure);
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-chip);
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
+}
+
+.btn-nueva-tarea:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 129, 255, 0.25);
+}
+
+/* Filtros */
+.tareas-filtros {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+}
+
+.filtro {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ink-soft);
+    padding: 8px 18px;
+    border-radius: var(--radius-chip);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.filtro:hover {
+    background-color: var(--paper-soft);
+    color: var(--ink);
+}
+
+.filtro.activo {
+    background-color: rgba(52, 129, 255, 0.1);
+    color: var(--azure);
+    border-color: rgba(52, 129, 255, 0.15);
+}
+
+/* Lista y Tarjetas */
+.lista-tareas {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tarea-card {
+    background-color: var(--panel);
+    border: 1px solid var(--line-panel);
+    border-radius: 16px; /* Borde intermedio, menor que panel principal */
+    padding: 24px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.tarea-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.tarea-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tarea-info h3 {
+    color: var(--panel-ink);
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.tarea-detalles {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--panel-ink-soft);
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.tarea-detalles span:not(:last-child)::after {
+    content: "•";
+    margin-left: 14px;
+    opacity: 0.4;
+}
+
+/* Estados (Chips generados dinámicamente) */
+.estado {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: var(--radius-chip);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.estado.pendiente {
+    background-color: rgba(226, 150, 63, 0.12);
+    color: var(--amber);
+}
+
+.estado.en-progreso {
+    background-color: rgba(52, 129, 255, 0.12);
+    color: var(--azure);
+}
+
+.estado.completada {
+    background-color: rgba(10, 168, 118, 0.12);
+    color: var(--mint);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
+    .tareas-main {
+        padding: 32px 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tareas-page {
+        flex-direction: column;
+    }
+
+    .tareas-main {
+        padding: 24px 16px;
+    }
+
+    .tareas-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .btn-nueva-tarea {
+        width: 100%;
+        text-align: center;
+    }
+
+    .tarea-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        gap: 16px;
+    }
+    
+    .tarea-detalles {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .tarea-detalles span:not(:last-child)::after {
+        margin-left: 8px;
+    }
+    
+    .estado {
+        align-self: flex-start; /* Evita que el chip ocupe todo el ancho */
+    }
+}
