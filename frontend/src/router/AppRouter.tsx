@@ -3,22 +3,23 @@ import { Routes, Route } from "react-router-dom";
 // Importar páginas
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
-<<<<<<< Updated upstream
-import Registrarse from "../pages/register";
-=======
 import Registrarse from "../pages/Register";
 import Tareas from "../pages/Tareas";
->>>>>>> Stashed changes
+import DetalleTarea from "../pages/DetalleTarea";
 
-function AppRouter () {
-    return(
-        <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/iniciarSesion" element={<IniciarSesion />} />
-        <Route path="/registrarse" element={<Registrarse />} />
+function AppRouter() {
+return (
+<Routes>
+<Route path="/" element={<Inicio />} />
+<Route path="/iniciarSesion" element={<IniciarSesion />} />
+<Route path="/registrarse" element={<Registrarse />} />
+
+        {/* Tareas */}
         <Route path="/tareas" element={<Tareas />} />
-        </Routes>
-    );
+        <Route path="/tareas/:id" element={<DetalleTarea />} />
+    </Routes>
+);
+
 }
 
 export default AppRouter;

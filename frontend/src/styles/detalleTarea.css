@@ -1,0 +1,38 @@
+.detalle-tarea {
+min-height: 100vh;
+padding: 50px 20px;
+background: #f5f7fa;
+font-family: Arial, sans-serif;
+}
+
+.detalle-card {
+max-width: 700px;
+margin: 0 auto;
+padding: 40px;
+background: white;
+border-radius: 20px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.detalle-card h1 {
+margin-bottom: 30px;
+color: #1e293b;
+}
+
+.detalle-info {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+
+.detalle-info p {
+margin: 0;
+padding: 15px;
+background: #f8fafc;
+border-radius: 8px;
+color: #475569;
+}
+
+.detalle-info strong {
+color: #2563eb;
+}
