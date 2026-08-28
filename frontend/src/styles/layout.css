@@ -10,18 +10,11 @@
 
 /* ===== SIDEBAR ===== */
 
-.pixel-logo-row {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
 .pixel-logo-moon {
-  width: 85px;
+  width: 200px;
   height: auto;
   image-rendering: pixelated;
-  mix-blend-mode: screen;
-  margin-top: -4px; /* pequeño ajuste para centrarla visualmente con el texto */
+  margin: -8px 0;
 }
 
 .pixel-sidebar {
@@ -76,21 +69,27 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: var(--pixel-radius-sm);
+  border-radius: 0;
+  border: 2px solid transparent;
   color: var(--pixel-ink-soft);
   font-size: 0.85rem;
   font-weight: 600;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
 }
 
 .pixel-nav-link:hover {
   background: var(--pixel-panel-alt);
   color: var(--pixel-ink);
+  border-color: var(--pixel-border-strong);
 }
 
 .pixel-nav-link.active {
   background: var(--pixel-accent);
   color: white;
+  border-color: var(--pixel-accent-strong);
+  font-family: var(--pixel-font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
 }
 
 .pixel-nav-icon {

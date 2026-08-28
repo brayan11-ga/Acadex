@@ -1,6 +1,13 @@
 // src/pages/Tareas.tsx
+import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
+import "../styles/tareas.css";
+
 function Tareas() {
-  return <h1>Página de Tareas (en construcción)</h1>;
+  return (
+    <div className="pixel-tareas-page">
+      <FormularioNuevaTarea />
+    </div>
+  );
 }
 
 export default Tareas;
