@@ -19,6 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
+  box-shadow: 0 0 0 1px var(--pixel-border), 0 8px 40px rgba(124, 92, 255, 0.08);
 }
 
 .pixel-panel-header {
@@ -83,6 +84,15 @@
   letter-spacing: 0.05em;
   color: var(--pixel-ink-soft);
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pixel-field-icono {
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
 }
 
 .pixel-input {
@@ -156,27 +166,8 @@
   gap: 8px;
 }
 
-.pixel-dificultad-btn {
-  width: 44px;
-  height: 44px;
-  background: var(--pixel-panel-alt);
-  border: 2px solid var(--pixel-border-strong);
-  border-radius: 0;
-  color: var(--pixel-ink-soft);
-  font-family: var(--pixel-font-display);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-
 .pixel-dificultad-btn:hover {
   color: var(--pixel-ink);
-}
-
-.pixel-dificultad-btn.active {
-  background: var(--pixel-accent);
-  border-color: var(--pixel-accent-strong);
-  color: white;
 }
 
 .pixel-dificultad-row {
@@ -192,21 +183,44 @@
   padding: 8px 14px;
   border: 2px solid transparent;
 }
-
-.hint-baja {
-  color: var(--pixel-baja);
-  border-color: var(--pixel-baja);
+.pixel-dificultad-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pixel-panel-alt);
+  border: 2px solid var(--pixel-border-strong);
+  border-radius: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.hint-media {
-  color: var(--pixel-media);
-  border-color: var(--pixel-media);
+.pixel-dificultad-icono {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
 }
 
-.hint-alta {
-  color: var(--pixel-alta);
-  border-color: var(--pixel-alta);
+.pixel-dificultad-btn.nivel-1.active { border-color: var(--pixel-nivel-1); background: color-mix(in srgb, var(--pixel-nivel-1) 20%, var(--pixel-panel-alt)); }
+.pixel-dificultad-btn.nivel-2.active { border-color: var(--pixel-nivel-2); background: color-mix(in srgb, var(--pixel-nivel-2) 20%, var(--pixel-panel-alt)); }
+.pixel-dificultad-btn.nivel-3.active { border-color: var(--pixel-nivel-3); background: color-mix(in srgb, var(--pixel-nivel-3) 20%, var(--pixel-panel-alt)); }
+.pixel-dificultad-btn.nivel-4.active { border-color: var(--pixel-nivel-4); background: color-mix(in srgb, var(--pixel-nivel-4) 20%, var(--pixel-panel-alt)); }
+.pixel-dificultad-btn.nivel-5.active { border-color: var(--pixel-nivel-5); background: color-mix(in srgb, var(--pixel-nivel-5) 20%, var(--pixel-panel-alt)); }
+
+.pixel-dificultad-hint {
+  font-family: var(--pixel-font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 8px 14px;
+  border: 2px solid transparent;
 }
+
+.pixel-dificultad-hint.nivel-1 { color: var(--pixel-nivel-1); border-color: var(--pixel-nivel-1); }
+.pixel-dificultad-hint.nivel-2 { color: var(--pixel-nivel-2); border-color: var(--pixel-nivel-2); }
+.pixel-dificultad-hint.nivel-3 { color: var(--pixel-nivel-3); border-color: var(--pixel-nivel-3); }
+.pixel-dificultad-hint.nivel-4 { color: var(--pixel-nivel-4); border-color: var(--pixel-nivel-4); }
+.pixel-dificultad-hint.nivel-5 { color: var(--pixel-nivel-5); border-color: var(--pixel-nivel-5); }
 /* ===== BOTON DESCARTAR ===== */
 .pixel-link-descartar {
   background: transparent;

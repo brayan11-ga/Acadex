@@ -1,23 +1,25 @@
 // src/components/layout/Sidebar.tsx
 import { NavLink } from "react-router-dom";
 import moonIcon from "../../assets/backgrounds/moon-icon.png";
+import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
+import iconoCalendario from "../../assets/icons/sidebar/calendario_sidebar.png";
+import iconoEstadisticas from "../../assets/icons/sidebar/estadisticas_sidebar.png";
+import iconoAjustes from "../../assets/icons/sidebar/Ajustes_sidebar.png";
 
 const enlaces = [
-  { to: "/dashboard", label: "Panel", icon: "▦" },
-  { to: "/tareas", label: "Tareas", icon: "✓" },
-  { to: "/calendario", label: "Calendario", icon: "▤" },
-  { to: "/stats", label: "Estadísticas", icon: "▲" },
-  { to: "/ajustes", label: "Ajustes", icon: "●" },
+  { to: "/dashboard", label: "Panel", icono: null },
+  { to: "/tareas", label: "Tareas", icono: iconoTareas },
+  { to: "/calendario", label: "Calendario", icono: iconoCalendario },
+  { to: "/stats", label: "Estadísticas", icono: iconoEstadisticas },
+  { to: "/ajustes", label: "Ajustes", icono: iconoAjustes },
 ];
 
 function Sidebar() {
   return (
     <aside className="pixel-sidebar">
       <div className="pixel-sidebar-logo">
-        <div className="pixel-logo-row">
-          <span className="pixel-sidebar-title">ACADEX</span>
-          <img src={moonIcon} alt="" className="pixel-logo-moon" />
-        </div>
+        <span className="pixel-sidebar-title">ACADEX</span>
+        <img src={moonIcon} alt="" className="pixel-logo-moon" />
         <span className="pixel-sidebar-subtitle">Modo Enfoque</span>
       </div>
 
@@ -30,7 +32,16 @@ function Sidebar() {
               isActive ? "pixel-nav-link active" : "pixel-nav-link"
             }
           >
-            <span className="pixel-nav-icon">{enlace.icon}</span>
+            {enlace.icono ? (
+              <img src={enlace.icono} alt="" className="pixel-nav-icono" />
+            ) : (
+              <span className="pixel-grid-icono" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            )}
             {enlace.label}
           </NavLink>
         ))}

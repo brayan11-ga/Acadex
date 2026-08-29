@@ -1,21 +1,23 @@
 // src/components/tareas/FormularioNuevaTarea.tsx
 import { useState } from "react";
+import caraNivel1 from "../../assets/icons/dificultad/1.png";
+import caraNivel2 from "../../assets/icons/dificultad/2.png";
+import caraNivel3 from "../../assets/icons/dificultad/3.png";
+import caraNivel4 from "../../assets/icons/dificultad/4.png";
+import caraNivel5 from "../../assets/icons/dificultad/5.png";
+import iconoCategorias from "../../assets/icons/ui/categorias.png";
+import iconoCalendario from "../../assets/icons/ui/calendario.png";
+import iconoReloj from "../../assets/icons/ui/reloj.png";
 
 const CATEGORIAS = ["Backend", "Frontend", "Diseño", "Documentación"];
-const NIVELES_DIFICULTAD = [1, 2, 3, 4, 5];
-const ETIQUETAS_DIFICULTAD: Record<number, string> = {
-  1: "Muy fácil",
-  2: "Fácil",
-  3: "Moderada",
-  4: "Difícil",
-  5: "Muy difícil",
-};
 
-const colorDificultad = (nivel: number) => {
-  if (nivel <= 2) return "baja";
-  if (nivel === 3) return "media";
-  return "alta";
-};
+const NIVELES_DIFICULTAD = [
+  { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
+  { nivel: 2, icono: caraNivel2, etiqueta: "Fácil" },
+  { nivel: 3, icono: caraNivel3, etiqueta: "Moderada" },
+  { nivel: 4, icono: caraNivel4, etiqueta: "Difícil" },
+  { nivel: 5, icono: caraNivel5, etiqueta: "Muy difícil" },
+];
 
 function FormularioNuevaTarea() {
   const [titulo, setTitulo] = useState("");
@@ -24,6 +26,8 @@ function FormularioNuevaTarea() {
   const [dificultad, setDificultad] = useState(3);
   const [tiempoEstimado, setTiempoEstimado] = useState("");
   const [descripcion, setDescripcion] = useState("");
+
+  const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
 
   const manejarEnvio = (evento: React.FormEvent) => {
     evento.preventDefault();
@@ -55,7 +59,10 @@ function FormularioNuevaTarea() {
 
       <div className="pixel-field-row">
         <label className="pixel-field">
-          <span className="pixel-field-label">Categoría</span>
+          <span className="pixel-field-label">
+            <img src={iconoCategorias} alt="" className="pixel-field-icono" />
+            Categoría
+          </span>
           <select
             className="pixel-input"
             value={categoria}
@@ -70,7 +77,10 @@ function FormularioNuevaTarea() {
         </label>
 
         <label className="pixel-field">
-          <span className="pixel-field-label">Fecha de entrega</span>
+          <span className="pixel-field-label">
+            <img src={iconoCalendario} alt="" className="pixel-field-icono" />
+            Fecha de entrega
+          </span>
           <input
             type="date"
             className="pixel-input"
@@ -85,29 +95,33 @@ function FormularioNuevaTarea() {
           <span className="pixel-field-label">Dificultad estimada</span>
           <div className="pixel-dificultad-row">
             <div className="pixel-dificultad-group">
-              {NIVELES_DIFICULTAD.map((nivel) => (
+              {NIVELES_DIFICULTAD.map(({ nivel, icono }) => (
                 <button
                   key={nivel}
                   type="button"
+                  aria-label={`Dificultad ${nivel}`}
                   className={
                     dificultad === nivel
-                      ? "pixel-dificultad-btn active"
-                      : "pixel-dificultad-btn"
+                      ? `pixel-dificultad-btn nivel-${nivel} active`
+                      : `pixel-dificultad-btn nivel-${nivel}`
                   }
                   onClick={() => setDificultad(nivel)}
                 >
-                  {nivel}
+                  <img src={icono} alt="" className="pixel-dificultad-icono" />
                 </button>
               ))}
             </div>
-            <span className={`pixel-dificultad-hint hint-${colorDificultad(dificultad)}`}>
-              {ETIQUETAS_DIFICULTAD[dificultad]}
+            <span className={`pixel-dificultad-hint nivel-${dificultad}`}>
+              {nivelActual.etiqueta}
             </span>
           </div>
         </div>
 
         <label className="pixel-field">
-          <span className="pixel-field-label">Tiempo estimado (min)</span>
+          <span className="pixel-field-label">
+            <img src={iconoReloj} alt="" className="pixel-field-icono" />
+            Tiempo estimado (min)
+          </span>
           <input
             type="number"
             min="1"

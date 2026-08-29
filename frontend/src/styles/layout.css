@@ -10,6 +10,12 @@
 
 /* ===== SIDEBAR ===== */
 
+.pixel-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .pixel-logo-moon {
   width: 200px;
   height: auto;
@@ -92,10 +98,31 @@
   letter-spacing: 0.02em;
 }
 
-.pixel-nav-icon {
-  font-size: 0.9rem;
-  width: 18px;
-  text-align: center;
+.pixel-nav-icono {
+  width: 25px;
+  height: 25px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.pixel-grid-icono {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+}
+
+.pixel-grid-icono span {
+  background: var(--pixel-ink-soft);
+  transition: background 0.1s ease;
+}
+
+.pixel-nav-link:hover .pixel-grid-icono span,
+.pixel-nav-link.active .pixel-grid-icono span {
+  background: currentColor;
 }
 
 .pixel-btn-crear {

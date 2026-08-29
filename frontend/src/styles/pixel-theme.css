@@ -2,13 +2,13 @@
 
 :root {
   /* ===== Fondo ===== */
-  --pixel-bg-start: #0f1a33;      /* morado muy oscuro, arriba del degradado */
-  --pixel-bg-end: #0a1122;        /* casi negro-morado, abajo del degradado */
+  --pixel-bg-start: #0d1526;      /* morado muy oscuro, arriba del degradado */
+  --pixel-bg-end: #070c17;        /* casi negro-morado, abajo del degradado */
 
   /* ===== Superficies (paneles, sidebar, tarjetas) ===== */
   --pixel-sidebar: rgba(20, 30, 58, 0.55);
-  --pixel-panel: #131f3d;
-  --pixel-panel-alt: #1a2847;
+  --pixel-panel: #17233f;
+  --pixel-panel-alt: #1f2e52;
   --pixel-border: rgba(255, 255, 255, 0.08);
   --pixel-border-strong: rgba(255, 255, 255, 0.16);
 
@@ -34,4 +34,10 @@
     /* ===== Tipografía ===== */
   --pixel-font-display: 'Press Start 2P', monospace;
   --pixel-font-body: 'Inter', sans-serif;
+    /* ===== Colores por nivel de dificultad ===== */
+  --pixel-nivel-1: #3ecbf0;
+  --pixel-nivel-2: #57d68d;
+  --pixel-nivel-3: #a374f2;
+  --pixel-nivel-4: #f2a33e;
+  --pixel-nivel-5: #f24e4e;
 }
