@@ -1,11 +1,20 @@
-// src/pages/Tareas.tsx
-import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
-import "../styles/tareas.css";
+import { useOutletContext } from 'react-router-dom';
+import ContenidoTareas from '../components/tareas/ContenidoTareas';
+import '../styles/tareas.css';
+
+// Le decimos a TypeScript qué tipo de dato viene en el contexto
+interface AppContext {
+  abrirModalGlobal: () => void;
+}
 
 function Tareas() {
+  // Extraemos la función global
+  const { abrirModalGlobal } = useOutletContext<AppContext>();
+
   return (
     <div className="pixel-tareas-page">
-      <FormularioNuevaTarea />
+      {/* Conectamos tu botón al modal global */}
+      <ContenidoTareas onNuevaTarea={abrirModalGlobal} />
     </div>
   );
 }

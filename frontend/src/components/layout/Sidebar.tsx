@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx
 import { NavLink } from "react-router-dom";
 import moonIcon from "../../assets/backgrounds/moon-icon.png";
 import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
@@ -14,7 +13,13 @@ const enlaces = [
   { to: "/ajustes", label: "Ajustes", icono: iconoAjustes },
 ];
 
-function Sidebar() {
+// 1. Definimos la prop para recibir la acción
+interface SidebarProps {
+  onCrearRapido: () => void;
+}
+
+// 2. Recibimos la prop
+function Sidebar({ onCrearRapido }: SidebarProps) {
   return (
     <aside className="pixel-sidebar">
       <div className="pixel-sidebar-logo">
@@ -36,10 +41,7 @@ function Sidebar() {
               <img src={enlace.icono} alt="" className="pixel-nav-icono" />
             ) : (
               <span className="pixel-grid-icono" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span><span></span>
               </span>
             )}
             {enlace.label}
@@ -47,7 +49,10 @@ function Sidebar() {
         ))}
       </nav>
 
-      <button className="pixel-btn-crear">+ CREAR</button>
+      {/* 3. Conectamos la función al evento onClick */}
+      <button className="pixel-btn-crear" onClick={onCrearRapido}>
+        + CREAR RÁPIDO
+      </button>
     </aside>
   );
 }

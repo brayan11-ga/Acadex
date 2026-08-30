@@ -19,7 +19,13 @@ const NIVELES_DIFICULTAD = [
   { nivel: 5, icono: caraNivel5, etiqueta: "Muy difícil" },
 ];
 
-function FormularioNuevaTarea() {
+// 1. Definimos la interfaz para que TypeScript reconozca la prop
+interface FormularioProps {
+  onDescartar: () => void;
+}
+
+// 2. Agregamos la prop al componente
+function FormularioNuevaTarea({ onDescartar }: FormularioProps) {
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState(CATEGORIAS[0]);
   const [fecha, setFecha] = useState("");
@@ -41,7 +47,8 @@ function FormularioNuevaTarea() {
           <h2 className="pixel-panel-title">Nueva tarea</h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
-        <button type="button" className="pixel-link-descartar">
+        {/* 3. Conectamos la prop al evento onClick del botón */}
+        <button type="button" className="pixel-link-descartar" onClick={onDescartar}>
           × Descartar
         </button>
       </div>
