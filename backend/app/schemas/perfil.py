@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 class PerfilBase(BaseModel):
     nombre_usuario: str
@@ -24,5 +24,4 @@ class PerfilOut(PerfilBase):
     id_perfil: int
     id_usuario: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

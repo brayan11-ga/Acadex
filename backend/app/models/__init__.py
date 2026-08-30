@@ -1,5 +1,14 @@
-# app/models/__init__.py
-from app.models.usuario import Usuario  # noqa
-from app.models.grupo import Grupo  # noqa
-from app.models.categoria import Categoria  # noqa
-from app.models.tarea import Tarea  # noqa
+from app.models.usuario import Usuario
+from app.models.categoria import Categoria
+from app.models.grupo import Grupo
+from app.models.integrante import Integrante
+from app.models.tarea import Tarea
+from app.models.asignacion_tarea import AsignacionTarea
+from app.models.perfil import Perfil
+from app.models.token_temporal import TokenTemporal
+from app.models.sesion_cronometro import SesionCronometro
+from app.models.historial_tarea import HistorialTarea
+from app.models.archivo import Archivo
+from app.models.notificacion import Notificacion
+from app.models.estadistica_categoria import EstadisticaCategoria
+from app.models.estadistica_categoria_grupo import EstadisticaCategoriaGrupo

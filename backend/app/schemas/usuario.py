@@ -1,16 +1,14 @@
-from pydantic import BaseModel,EmailStr
 from datetime import date
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 class UsuarioBase(BaseModel):
-    correo_electronico:str
+    correo_electronico: EmailStr
 
-class UsuarioCreate(BaseModel):
-    contrasena:str
+class UsuarioCreate(UsuarioBase):
+    contrasena: str
 
-class UsuarioOut(BaseModel):
-    id_usuario:int
-    fecha_registro:date
-    es_admin:bool
-
-    class config:
-        from_attributes=True
+class UsuarioOut(UsuarioBase):
+    id_usuario: int
+    fecha_registro: date
+    es_admin: bool
+    model_config = ConfigDict(from_attributes=True)

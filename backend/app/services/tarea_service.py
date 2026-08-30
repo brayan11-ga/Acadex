@@ -1,17 +1,12 @@
-# app/services/tarea_service.py
 from typing import List
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.models.tarea import Tarea
 from app.repositories import tarea_repository
 from app.schemas.tarea import TareaCreate, TareaUpdate
 
-
 def crear_tarea(db: Session, datos: TareaCreate) -> Tarea:
     return tarea_repository.crear_tarea(db, datos)
-
 
 def obtener_tarea(db: Session, id_tarea: int) -> Tarea:
     tarea = tarea_repository.obtener_tarea_por_id(db, id_tarea)
@@ -22,15 +17,12 @@ def obtener_tarea(db: Session, id_tarea: int) -> Tarea:
         )
     return tarea
 
-
 def listar_tareas(db: Session) -> List[Tarea]:
     return tarea_repository.obtener_todas_las_tareas(db)
-
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
     tarea = obtener_tarea(db, id_tarea)
     return tarea_repository.actualizar_tarea(db, tarea, datos)
-
 
 def eliminar_tarea(db: Session, id_tarea: int) -> None:
     tarea = obtener_tarea(db, id_tarea)
