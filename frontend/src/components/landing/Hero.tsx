@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+
+
 // src/components/landing/Hero.tsx
 export const Hero = () => {
   return (
@@ -19,9 +22,7 @@ export const Hero = () => {
                     </p>
 
                     <div className="hero-buttons">
-                        <a href="./register.html" className="btn btn-primary">
-                            Empezar ahora
-                        </a>
+                        <Link to="/registrarse" className="btn btn-primary">Regístrate aquí</Link>
                         <a href="#funcionalidades" className="btn btn-secondary">
                             Ver funcionalidades
                         </a>

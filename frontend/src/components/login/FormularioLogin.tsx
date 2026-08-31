@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { Link } from "react-router-dom";
 
 interface LoginFormData {
   email: string;
@@ -71,7 +72,7 @@ export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
 
           <div className="register-option">
             <p>
-              ¿No tienes una cuenta? <a href="./register.html">Regístrate aquí</a>
+              ¿No tienes una cuenta? <Link to="/registrarse">Regístrate aquí</Link>
             </p>
           </div>
         </div>
