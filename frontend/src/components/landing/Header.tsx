@@ -1,4 +1,3 @@
-// src/components/landing/Header.tsx
 import { useState } from 'react';
 import logoAcadex from '../../assets/logo_acadex-preview.png';
 import { Link } from 'react-router-dom';

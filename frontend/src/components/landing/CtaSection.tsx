@@ -1,4 +1,3 @@
-// src/components/landing/CtaSection.tsx
 export const CtaSection = () => {
   return (
     <section className="section cta-section">
