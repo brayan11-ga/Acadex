@@ -1,73 +1,48 @@
-/* ThemeToggle.css */
+/* ThemeToggle.css - Versión compacta y alineada */
+
 .toggle-cont {
-  --primary: #54a8fc;
-  --light: #d9d9d9;
-  --dark: #121212;
-  --gray: #414344;
-  --second: rgba(84, 168, 252, 0.35);
+  --primary: var(--azure);
+  --light: var(--ink);
+  --dark: var(--paper);
+  --gray: var(--panel);
   position: relative;
   z-index: 10;
   width: fit-content;
-  height: 32px;
-  border-radius: 9999px;
+  height: 26px; /* Reducido de 32px a 26px para que no sea más alto que los botones */
 }
 
 .toggle-cont .toggle-input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
-/* Estado por defecto: diseño gris */
 .toggle-cont .toggle-label {
   --gap: 3px;
-  --width: 32px;
+  --width: 26px; /* Ajustado proporcionalmente */
   cursor: pointer;
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem;
+  padding: 0.2rem; /* Padding más sutil */
   width: calc((var(--width) + var(--gap)) * 2);
   height: 100%;
-  background-color: transparent;
-  border: 1px solid #3d6970;
-  border-bottom: 0;
-  border-radius: 9999px;
+  
+  background-color: var(--panel);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-chip);
   box-sizing: content-box;
-  transition: all 0.3s ease-in-out;
+  
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.4); /* Sombra un poco más compacta */
+  
+  transition: background-color 0.4s ease-in-out, border-color 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
 }
 
-/* Difuminado del borde exterior*/
-.toggle-cont .toggle-label::before {
-  content: "";
-  position: absolute;
-  z-index: -10;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(90% + 1.5rem);
-  height: calc(80% + 1.5rem);
-  background-color: var(--gray);
-  border: 1px solid #777777;
-  border-bottom: 0;
-  border-radius: 9999px;
-  box-shadow: 0 1rem 2.5rem -2rem #0080ff;
-  transition: all 0.3s ease-in-out;
-}
-
+.toggle-cont .toggle-label::before,
 .toggle-cont .toggle-label::after {
-  content: "";
-  position: absolute;
-  z-index: -10;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  background-image: radial-gradient(
-    circle at 50% -100%,
-    rgb(58, 155, 252) 0%,
-    rgba(12, 12, 12, 1) 80%
-  );
-  border-radius: 9999px;
+  display: none;
 }
 
 .toggle-cont .toggle-label .cont-icon {
@@ -76,86 +51,42 @@
   justify-content: center;
   align-items: center;
   width: var(--width);
-  height: 32px;
-  overflow: visible;
-  background-image: radial-gradient(circle at 50% 0%, #045ab1 0%, var(--primary) 100%);
-  border: 1px solid var(--primary);
-  border-bottom: 0;
-  border-radius: 9999px;
-  box-shadow: inset 0 -0.15rem 0.15rem var(--primary),
-    inset 0 0 0.5rem 0.75rem var(--second);
-  transition: transform 0.3s ease-in-out;
+  height: 26px; /* Altura alineada */
+  
+  background-color: var(--paper-deep);
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  
+  box-shadow: inset -2px -2px 0px rgba(0, 0, 0, 0.4);
+  
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-.toggle-cont .toggle-label .cont-icon .sparkle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  width: calc(var(--width) * 1.5px);
-  aspect-ratio: 1;
-  background-color: #acacac;
-  border-radius: 50%;
-  transform-origin: 50% 50%;
-  rotate: calc(1deg * var(--deg));
-  transform: translate(-50%, -50%);
-  z-index: -10;
-  animation: sparkle-checked calc(100s / var(--duration)) linear infinite;
-}
-
-@keyframes sparkle-checked {
-  to {
-    width: calc(var(--width) * 1px);
-    transform: translate(5000%, -50%);
-  }
-}
-
+/* Reducimos ligeramente el icono interno para que respire dentro del botón compacto */
 .cont-icon .icon {
-  width: 0.75rem;
+  width: 0.9rem;
+  height: 0.9rem;
   fill: var(--light);
   position: relative;
   z-index: 5;
+  transition: fill 0.4s ease;
 }
 
-/*=======================================================================*/
-/* --- Estado "encendido" (checked): diseño azul con brillo original --- */
-/*=======================================================================*/
-
+/* Estados activos */
 .toggle-cont .toggle-input:checked ~ .toggle-label {
-  background-color: #eef1f5;
-  border: 1px solid #c9ccd1;
+  background-color: #e8e2f8; 
+  border-color: #7c5cff;
+  box-shadow: 3px 3px 0px rgba(124, 92, 255, 0.25);
 }
 
-/* Borde exterior */
-.toggle-cont .toggle-input:checked ~ .toggle-label::before {
-  background-color: #e4e8f2;
-  box-shadow: none;
-}
-
-/* Circulo del switch */
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon {
-  overflow: clip;
-  background-image: radial-gradient(circle at 50% 0%, #ffffff 0%, #e4e8f2 100%);
-  border: 1px solid #c9ccd1;
-  box-shadow: inset 0 -0.15rem 0.15rem rgba(0, 0, 0, 0.08);
-  transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(-225deg);
+  background-color: #ffffff;
+  border: 2px solid #7c5cff;
+  box-shadow: inset -2px -2px 0px rgba(124, 92, 255, 0.2);
+  
+  transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(360deg);
 }
 
-/* Particulas del switch */
-.toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .sparkle {
-  width: calc(var(--width) * 1px);
-  background-color: #0d63e4;
-  animation: sparkle calc(100s / var(--duration)) linear infinite;
-}
-
-/* Icono del switch en modo claro */
 .toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .icon {
-  fill: #3481ff;
-}
-
-@keyframes sparkle {
-  to {
-    width: calc(var(--width) * 0.5px);
-    transform: translate(2000%, -50%);
-  }
+  fill: #5b3df0; 
 }

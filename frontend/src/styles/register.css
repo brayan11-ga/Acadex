@@ -2,30 +2,23 @@
 TÍTULOS
 =========================== */
 
-.login-header {
+.register-header {
     text-align: center;
-    margin-top: 50px;
 }
 
-.login-header h1 {
+.register-header h1 {
     color: var(--azure);
-    font-family: var(--font-display); /* Tipografía Pixel */
-    font-size: 1.6rem; /* Reducido porque la fuente pixel es más ancha */
-    margin-bottom: 14px;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5); /* Sombra de texto retro */
-}
-
-.bi.bi-person-circle {
-    display: inline-block;
-    margin-top: 0;
-    color: var(--azure);
+    font-family: var(--font-display); /* Estilo Pixel */
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
 }
 
 /* ===========================
 MAIN
 =========================== */
 
-.login-main {
+.register-main {
     min-height: 70vh;
     padding: 60px 20px;
     display: flex;
@@ -34,109 +27,88 @@ MAIN
 }
 
 /* ===========================
-CONTENEDOR LOGIN
+CONTENEDOR REGISTRO
 =========================== */
 
-.login {
-    width: 420px;
+.register-box {
+    width: 440px; /* Un pelín más ancho para respirar mejor */
     background: var(--panel);
     padding: 45px;
     border-radius: var(--radius-panel);
-    border: 2px solid var(--line-strong); /* Borde más marcado */
-    box-shadow: 6px 6px 0px rgba(124, 92, 255, 0.15); /* Sombra de bloque estilo pixel */
+    border: 2px solid var(--line-strong);
+    box-shadow: 6px 6px 0px rgba(124, 92, 255, 0.15); /* Sombra bloque pixel */
 }
 
-.container-login {
+.register-container {
     width: 100%;
 }
 
 /* ===========================
-FORMULARIO
+FORMULARIO (3 inputs)
 =========================== */
 
-.input-container {
+.register-inputs {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px; /* <-- Espacio amplio entre los 3 campos */
 }
 
-.input-container label {
+.register-inputs label {
     color: var(--ink);
     text-align: left;
-    font-family: var(--font-display); /* Labels estilo retro */
+    font-family: var(--font-display);
     font-size: 0.55rem;
     line-height: 1.5;
+    margin-bottom: -6px; /* Acerca sutilmente el label al input */
 }
 
-.input-container input {
+.register-inputs input {
     width: 100%;
     height: 50px;
     padding: 0 15px;
-    border-radius: var(--radius-chip); /* Usamos la variable del global.css (6px) */
-    border: 2px solid var(--line-strong); /* Borde más grueso */
+    border-radius: var(--radius-chip);
+    border: 2px solid var(--line-strong);
     background: var(--paper-deep);
     color: var(--ink);
-    font-family: var(--font-body); /* Mantenemos fuente normal para que lo que se escribe sea legible */
+    font-family: var(--font-body);
     font-size: 0.95rem;
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-.input-container input:hover {
+.register-inputs input:hover {
     border-color: var(--azure-soft);
     background: var(--paper-soft);
 }
 
-.input-container input:focus {
+.register-inputs input:focus {
     outline: none;
     border-color: var(--azure);
-    box-shadow: 3px 3px 0px rgba(124, 92, 255, 0.25); /* Focus estilo bloque */
+    box-shadow: 3px 3px 0px rgba(124, 92, 255, 0.25);
     background: var(--paper-deep);
 }
 
 /* ===========================
-OLVIDÓ CONTRASEÑA
+BOTÓN REGISTRARSE
 =========================== */
 
-.password-option {
-    margin: 20px 0;
-    text-align: right;
-    font-size: 0.85rem;
-}
-
-.password-option a {
-    color: var(--azure);
-    text-decoration: none;
-    transition: color var(--transition);
-}
-
-.password-option a:hover {
-    color: var(--azure-soft);
-    text-decoration: underline;
-    text-decoration-color: var(--azure-soft);
-}
-
-/* ===========================
-BOTÓN INICIAR
-=========================== */
-
-.button-iniciar {
+.button-register {
     width: 100%;
     height: 50px;
-    border: 2px solid transparent; /* Preparado para el hover retro */
+    border: 2px solid transparent;
     border-radius: var(--radius-chip);
     cursor: pointer;
     color: var(--text-on-azure);
-    font-family: var(--font-display); /* Botón estilo retro */
+    font-family: var(--font-display);
     font-size: 0.7rem;
-    margin-top: 25px;
+    margin-top: 32px; /* <-- Aquí le damos el respiro al botón */
     background: var(--azure);
-    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition), color var(--transition);
+    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
 }
 
-.button-iniciar:hover {
-    transform: translate(-2px, -2px); /* Movimiento diagonal típico del pixel art */
+.button-register:hover {
+    transform: translate(-2px, -2px);
     filter: brightness(1.1);
-    box-shadow: 4px 4px 0px rgba(91, 61, 240, 0.4); /* Sombra sólida abajo y a la derecha */
+    box-shadow: 4px 4px 0px rgba(91, 61, 240, 0.4);
 }
 
 /* ===========================
@@ -148,7 +120,7 @@ DIVISOR
     margin: 25px 0;
     color: var(--ink-faint);
     font-family: var(--font-display);
-    font-size: 0.5rem; /* Letra pequeña para el "O" u "OR" */
+    font-size: 0.5rem;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -158,7 +130,7 @@ DIVISOR
 .divider::after {
     content: "";
     flex: 1;
-    height: 2px; /* Línea ligeramente más gruesa */
+    height: 2px;
     background: var(--line-strong);
 }
 
@@ -191,21 +163,21 @@ GOOGLE
     border-color: var(--ink-soft);
     background: var(--paper-soft);
     transform: translate(-2px, -2px);
-    box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.08); /* Sombra sólida para el botón secundario */
+    box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.08);
 }
 
 /* ===========================
-REGISTRO
+OPCIÓN DE LOGIN
 =========================== */
 
-.register-option {
+.login-option {
     margin-top: 25px;
     text-align: center;
     font-size: 0.9rem;
     color: var(--ink-soft);
 }
 
-.register-option a {
+.login-option a {
     color: var(--azure);
     text-decoration: none;
     font-weight: 600;
@@ -213,7 +185,7 @@ REGISTRO
     margin-left: 4px;
 }
 
-.register-option a:hover {
+.login-option a:hover {
     color: var(--azure-soft);
     text-decoration: underline;
     text-decoration-color: var(--azure-soft);
@@ -224,9 +196,9 @@ RESPONSIVE
 =========================== */
 
 @media(max-width: 768px) {
-    .login {
+    .register-box {
         width: 95%;
         padding: 30px;
-        box-shadow: 4px 4px 0px rgba(124, 92, 255, 0.15); /* Sombra más sutil en móvil */
+        box-shadow: 4px 4px 0px rgba(124, 92, 255, 0.15);
     }
 }
