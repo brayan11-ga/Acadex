@@ -1,5 +1,5 @@
 // src/components/tareas/FormularioNuevaTarea.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import caraNivel1 from "../../assets/icons/dificultad/1.png";
 import caraNivel2 from "../../assets/icons/dificultad/2.png";
 import caraNivel3 from "../../assets/icons/dificultad/3.png";
@@ -8,8 +8,8 @@ import caraNivel5 from "../../assets/icons/dificultad/5.png";
 import iconoCategorias from "../../assets/icons/ui/categorias.png";
 import iconoCalendario from "../../assets/icons/ui/calendario.png";
 import iconoReloj from "../../assets/icons/ui/reloj.png";
-
-const CATEGORIAS = ["Backend", "Frontend", "Diseño", "Documentación"];
+import { listarCategorias, type Categoria } from "../../services/categorias";
+import { crearTarea } from "../../services/tareas";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -19,25 +19,60 @@ const NIVELES_DIFICULTAD = [
   { nivel: 5, icono: caraNivel5, etiqueta: "Muy difícil" },
 ];
 
-// 1. Definimos la interfaz para que TypeScript reconozca la prop
 interface FormularioProps {
   onDescartar: () => void;
+  onTareaCreada: () => void; // avisa al padre para refrescar la lista
 }
 
-// 2. Agregamos la prop al componente
-function FormularioNuevaTarea({ onDescartar }: FormularioProps) {
+function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [titulo, setTitulo] = useState("");
-  const [categoria, setCategoria] = useState(CATEGORIAS[0]);
+  const [idCategoria, setIdCategoria] = useState<number | null>(null);
   const [fecha, setFecha] = useState("");
   const [dificultad, setDificultad] = useState(3);
   const [tiempoEstimado, setTiempoEstimado] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
 
-  const manejarEnvio = (evento: React.FormEvent) => {
+  // Al montar el componente, traemos las categorías reales de la BD
+  useEffect(() => {
+    listarCategorias()
+      .then((datos) => {
+        setCategorias(datos);
+        if (datos.length > 0) setIdCategoria(datos[0].id_categoria);
+      })
+      .catch(() => setError("No se pudieron cargar las categorías"));
+  }, []);
+
+  const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault();
-    console.log({ titulo, categoria, fecha, dificultad, tiempoEstimado, descripcion });
+    setError(null);
+
+    if (!titulo.trim() || !fecha || idCategoria === null) {
+      setError("Completa título, fecha y categoría");
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      await crearTarea({
+        nombre: titulo,
+        descripcion,
+        fecha_entrega: `${fecha}T00:00:00`, // el input date solo da la fecha; completamos la hora
+        dificultad_estimada: dificultad,
+        tiempo_estimado: Number(tiempoEstimado) || 0,
+        id_categoria: idCategoria,
+        id_usuario: 1, // TODO: reemplazar por el id del usuario logueado
+      });
+      onTareaCreada();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear la tarea");
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -47,11 +82,12 @@ function FormularioNuevaTarea({ onDescartar }: FormularioProps) {
           <h2 className="pixel-panel-title">Nueva tarea</h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
-        {/* 3. Conectamos la prop al evento onClick del botón */}
         <button type="button" className="pixel-link-descartar" onClick={onDescartar}>
           × Descartar
         </button>
       </div>
+
+      {error && <p className="pixel-error">{error}</p>}
 
       <label className="pixel-field">
         <span className="pixel-field-label">Título</span>
@@ -72,12 +108,12 @@ function FormularioNuevaTarea({ onDescartar }: FormularioProps) {
           </span>
           <select
             className="pixel-input"
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
+            value={idCategoria ?? ""}
+            onChange={(e) => setIdCategoria(Number(e.target.value))}
           >
-            {CATEGORIAS.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+            {categorias.map((cat) => (
+              <option key={cat.id_categoria} value={cat.id_categoria}>
+                {cat.nombre}
               </option>
             ))}
           </select>
@@ -151,8 +187,8 @@ function FormularioNuevaTarea({ onDescartar }: FormularioProps) {
       </label>
 
       <div className="pixel-panel-footer">
-        <button type="submit" className="pixel-btn-crear-tarea">
-          Crear →
+        <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>
+          {enviando ? "Creando..." : "Crear →"}
         </button>
       </div>
     </form>

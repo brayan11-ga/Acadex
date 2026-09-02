@@ -5,27 +5,37 @@ import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
 
 import "../styles/pixel-theme.css";
 import "../styles/layout.css";
-import "../styles/tareas.css"; // Importamos los estilos del modal globalmente
+import "../styles/tareas.css";
 
 function AppLayout() {
-  // Estado global para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // cambia cada vez que se crea una tarea
+
+  const manejarTareaCreada = () => {
+    setIsModalOpen(false);
+    setRefreshKey((k) => k + 1);
+  };
 
   return (
     <div className="pixel-app">
-      {/* Pasamos la función al Sidebar */}
       <Sidebar onCrearRapido={() => setIsModalOpen(true)} />
-      
+
       <main className="pixel-content">
-        {/* Usamos context para que las vistas (como Tareas) puedan usar la función */}
-        <Outlet context={{ abrirModalGlobal: () => setIsModalOpen(true) }} />
+        <Outlet
+          context={{
+            abrirModalGlobal: () => setIsModalOpen(true),
+            refreshKey,
+          }}
+        />
       </main>
 
-      {/* El modal renderizado a nivel global */}
       {isModalOpen && (
         <div className="pixel-modal-overlay">
           <div className="pixel-modal-content">
-            <FormularioNuevaTarea onDescartar={() => setIsModalOpen(false)} />
+            <FormularioNuevaTarea
+              onDescartar={() => setIsModalOpen(false)}
+              onTareaCreada={manejarTareaCreada}
+            />
           </div>
         </div>
       )}
