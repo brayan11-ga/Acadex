@@ -12,7 +12,7 @@ class TareaBase(BaseModel):
     dificultad_estimada: int
     tiempo_estimado: int
     prioridad: Optional[int] = None
-    id_categoria: int
+    id_categoria: int   
 
 
 class TareaCreate(TareaBase):
