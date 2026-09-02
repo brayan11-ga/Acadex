@@ -1,6 +1,7 @@
+// src/components/Login/FormularioLogin.tsx (o tu ruta actual)
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Importamos useNavigate
 
 interface LoginFormData {
   email: string;
@@ -14,10 +15,38 @@ interface FormularioLoginProps {
 export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [errorLogin, setErrorLogin] = useState<string | null>(null);
+  const navigate = useNavigate(); // Hook para redirigir entre páginas
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit?.({ email, password });
+    setErrorLogin(null);
+
+    // 1. Validamos contra nuestro usuario de prueba en memoria
+    const USUARIO_PRUEBA = {
+      email: "admin@acadex.com",
+      password: "123456",
+      nombre: "Juan ",
+      rol: "ESTUDIANTE ADSO"
+    };
+
+    if (email === USUARIO_PRUEBA.email && password === USUARIO_PRUEBA.password) {
+      // 2. Guardamos la sesión simulada en localStorage para que otras vistas la lean
+      localStorage.setItem("usuario_acadex", JSON.stringify({
+        nombre: USUARIO_PRUEBA.nombre,
+        rol: USUARIO_PRUEBA.rol,
+        email: USUARIO_PRUEBA.email
+      }));
+
+      // Si el componente padre pasó un onSubmit, lo ejecutamos
+      onSubmit?.({ email, password });
+
+      // 3. Redirigimos automáticamente al panel
+      navigate("/panel");
+    } else {
+      // Si falla, mostramos un error amigable
+      setErrorLogin("Correo o contraseña incorrectos. Pruebe con: admin@acadex.com / 123456");
+    }
   };
 
   return (
@@ -27,6 +56,13 @@ export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
           <h1>Iniciar Sesión</h1>
         </div>
         <div className="container-login">
+          {/* Mensaje de error visual si fallan las credenciales */}
+          {errorLogin && (
+            <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.85rem' }}>
+              {errorLogin}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="input-container">
               <label htmlFor="email">Correo electrónico</label>
@@ -35,7 +71,7 @@ export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
                 id="email"
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                placeholder="Ingresa tu correo"
+                placeholder="admin@acadex.com"
                 required
               />
 
@@ -45,7 +81,7 @@ export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
                 id="password"
                 value={password}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                placeholder="Ingresa tu contraseña"
+                placeholder="123456"
                 required
               />
             </div>
@@ -80,4 +116,4 @@ export const FormularioLogin = ({ onSubmit }: FormularioLoginProps) => {
   );
 };
 
-export default FormularioLogin
+export default FormularioLogin;

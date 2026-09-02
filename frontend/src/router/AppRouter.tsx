@@ -9,6 +9,7 @@ import Registrarse from "../pages/Register";
 // Layout y páginas internas
 import AppLayout from "../layouts/AppLayout";
 import Tareas from "../pages/Tareas";
+import { Panel } from "../pages/Panel"; // <-- Importamos nuestro nuevo Panel
 
 function AppRouter() {
   return (
@@ -20,6 +21,7 @@ function AppRouter() {
 
       {/* Rutas internas, todas comparten el sidebar de AppLayout */}
       <Route element={<AppLayout />}>
+        <Route path="/panel" element={<Panel />} /> {/* <-- Nueva ruta del panel */}
         <Route path="/tareas" element={<Tareas />} />
       </Route>
     </Routes>
