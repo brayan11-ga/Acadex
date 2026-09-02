@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 
-
-// src/components/landing/Hero.tsx
 export const Hero = () => {
-  return (
+    return (
     <section id="inicio" className="hero">
             <div className="container hero-grid">
 

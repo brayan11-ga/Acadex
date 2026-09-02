@@ -1,15 +1,17 @@
-# app/main.py
-# app/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.router import router
+import app.models  # noqa
 
-import app.models  # noqa - registra todos los modelos antes de usar la BD
-from app.api.v1.endpoints import tareas
+app = FastAPI(title="Acadex API")
 
-app = FastAPI()
+# middelware para las rutas de las peticiones y credenciales
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.include_router(tareas.router)
-
-
-@app.get("/")
-def root():
-    return {"mensaje": "Acadex funcionando"}
+app.include_router(router)

@@ -1,11 +1,8 @@
-# app/models/tarea.py
 from sqlalchemy import (
     Column, Integer, String, Text, TIMESTAMP, Boolean, Float,
     ForeignKey, CheckConstraint
 )
-
 from app.db.base import Base
-
 
 class Tarea(Base):
     __tablename__ = "tareas"

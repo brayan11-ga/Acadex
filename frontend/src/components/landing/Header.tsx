@@ -1,4 +1,3 @@
-// src/components/landing/Header.tsx
 import { useState } from 'react';
 import logoAcadex from '../../assets/logos/logo_acadex-preview.png';
 import logoAcadexLight from '../../assets/logos/logo_acadex_light.png';

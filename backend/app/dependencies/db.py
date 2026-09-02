@@ -1,6 +1,4 @@
-# app/dependencies/db.py
 from app.db.session import SessionLocal
-
 
 def get_db():
     db = SessionLocal()

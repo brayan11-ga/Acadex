@@ -1,6 +1,33 @@
-// src/components/landing/ThemeToggle.tsx
 import '../../styles/ThemeToggle.css';
 import { useTheme } from '../../contexts/ThemeContext';
+import type React from 'react';
+
+const sparkles = [
+    { width: 2, deg: 25, duration: 11 },
+    { width: 1, deg: 100, duration: 18 },
+    { width: 1, deg: 280, duration: 5 },
+    { width: 2, deg: 200, duration: 3 },
+    { width: 2, deg: 30, duration: 20 },
+    { width: 2, deg: 300, duration: 9 },
+    { width: 1, deg: 250, duration: 4 },
+    { width: 2, deg: 210, duration: 8 },
+    { width: 2, deg: 100, duration: 9 },
+    { width: 1, deg: 15, duration: 13 },
+    { width: 1, deg: 75, duration: 18 },
+    { width: 2, deg: 65, duration: 6 },
+    { width: 2, deg: 50, duration: 7 },
+    { width: 1, deg: 320, duration: 5 },
+    { width: 1, deg: 220, duration: 5 },
+    { width: 1, deg: 215, duration: 2 },
+    { width: 2, deg: 135, duration: 9 },
+    { width: 2, deg: 45, duration: 4 },
+    { width: 1, deg: 78, duration: 16 },
+    { width: 1, deg: 89, duration: 19 },
+    { width: 2, deg: 65, duration: 14 },
+    { width: 2, deg: 97, duration: 1 },
+    { width: 1, deg: 174, duration: 10 },
+    { width: 1, deg: 236, duration: 5 },
+];
 
 export const ThemeToggle = () => {
     const { isDarkMode, toggleTheme } = useTheme();

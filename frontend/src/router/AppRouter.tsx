@@ -1,7 +1,6 @@
 // src/router/AppRouter.tsx
 import { Routes, Route } from "react-router-dom";
 
-// Páginas públicas
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
 import Registrarse from "../pages/Register";
