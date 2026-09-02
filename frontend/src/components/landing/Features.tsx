@@ -1,4 +1,3 @@
-// src/components/landing/Features.tsx
 export const Features = () => {
   return (
     <section id="funcionalidades" className="section features">

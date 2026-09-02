@@ -1,8 +1,5 @@
-# app/models/categoria.py
 from sqlalchemy import Column, Integer, String
-
 from app.db.base import Base
-
 
 class Categoria(Base):
     __tablename__ = "categorias"

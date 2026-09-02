@@ -1,11 +1,10 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.api.v1.router import router
 import app.models  # noqa
-from app.api.v1.endpoints import categorias, tareas
 
-app = FastAPI()
+app = FastAPI(title="Acadex API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,8 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tareas.router)
-app.include_router(categorias.router)
+app.include_router(router)
 
 
 @app.get("/")

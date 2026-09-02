@@ -1,0 +1,204 @@
+/* ===========================
+TÍTULOS
+=========================== */
+
+.register-header {
+    text-align: center;
+}
+
+.register-header h1 {
+    color: var(--azure);
+    font-family: var(--font-display); /* Estilo Pixel */
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+/* ===========================
+MAIN
+=========================== */
+
+.register-main {
+    min-height: 70vh;
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===========================
+CONTENEDOR REGISTRO
+=========================== */
+
+.register-box {
+    width: 440px; /* Un pelín más ancho para respirar mejor */
+    background: var(--panel);
+    padding: 45px;
+    border-radius: var(--radius-panel);
+    border: 2px solid var(--line-strong);
+    box-shadow: 6px 6px 0px rgba(124, 92, 255, 0.15); /* Sombra bloque pixel */
+}
+
+.register-container {
+    width: 100%;
+}
+
+/* ===========================
+FORMULARIO (3 inputs)
+=========================== */
+
+.register-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* <-- Espacio amplio entre los 3 campos */
+}
+
+.register-inputs label {
+    color: var(--ink);
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.55rem;
+    line-height: 1.5;
+    margin-bottom: -6px; /* Acerca sutilmente el label al input */
+}
+
+.register-inputs input {
+    width: 100%;
+    height: 50px;
+    padding: 0 15px;
+    border-radius: var(--radius-chip);
+    border: 2px solid var(--line-strong);
+    background: var(--paper-deep);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.register-inputs input:hover {
+    border-color: var(--azure-soft);
+    background: var(--paper-soft);
+}
+
+.register-inputs input:focus {
+    outline: none;
+    border-color: var(--azure);
+    box-shadow: 3px 3px 0px rgba(124, 92, 255, 0.25);
+    background: var(--paper-deep);
+}
+
+/* ===========================
+BOTÓN REGISTRARSE
+=========================== */
+
+.button-register {
+    width: 100%;
+    height: 50px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-chip);
+    cursor: pointer;
+    color: var(--text-on-azure);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    margin-top: 32px; /* <-- Aquí le damos el respiro al botón */
+    background: var(--azure);
+    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
+}
+
+.button-register:hover {
+    transform: translate(-2px, -2px);
+    filter: brightness(1.1);
+    box-shadow: 4px 4px 0px rgba(91, 61, 240, 0.4);
+}
+
+/* ===========================
+DIVISOR
+=========================== */
+
+.divider {
+    text-align: center;
+    margin: 25px 0;
+    color: var(--ink-faint);
+    font-family: var(--font-display);
+    font-size: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 2px;
+    background: var(--line-strong);
+}
+
+/* ===========================
+GOOGLE
+=========================== */
+
+.google-btn {
+    width: 100%;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    border: 2px solid var(--line-strong);
+    border-radius: var(--radius-chip);
+    cursor: pointer;
+    transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+.google-btn img {
+    width: 20px;
+}
+
+.google-btn:hover {
+    border-color: var(--ink-soft);
+    background: var(--paper-soft);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.08);
+}
+
+/* ===========================
+OPCIÓN DE LOGIN
+=========================== */
+
+.login-option {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.login-option a {
+    color: var(--azure);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition);
+    margin-left: 4px;
+}
+
+.login-option a:hover {
+    color: var(--azure-soft);
+    text-decoration: underline;
+    text-decoration-color: var(--azure-soft);
+}
+
+/* ===========================
+RESPONSIVE
+=========================== */
+
+@media(max-width: 768px) {
+    .register-box {
+        width: 95%;
+        padding: 30px;
+        box-shadow: 4px 4px 0px rgba(124, 92, 255, 0.15);
+    }
+}

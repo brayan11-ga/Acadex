@@ -1,6 +1,5 @@
-// src/components/landing/Footer.tsx
 export const Footer = () => {
-  return (
+    return (
     <footer className="footer">
         <div className="container footer-content">
             <div>
@@ -15,7 +14,7 @@ export const Footer = () => {
             </p>
         </div>
     </footer>
-  );
+    );
 };
 
 export default Footer;
