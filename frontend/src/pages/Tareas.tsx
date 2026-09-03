@@ -1,16 +1,25 @@
-import Sidebar from '../components/dashboard/Sidebar';
-import ContenidoTarea from '../components/dashboard/ContenidoTareas';
-
+// src/pages/Tareas.tsx
+import { useOutletContext } from 'react-router-dom';
+import ContenidoTareas from '../components/tareas/ContenidoTareas';
+import type { TareaBackend } from '../services/tareas';
 import '../styles/tareas.css';
 
-function Tareas() {
-  return (
-    <div className="tareas-page">
-      <Sidebar />
+interface AppContext {
+  abrirModalGlobal: () => void;
+  abrirModalEditar: (tarea: TareaBackend) => void;
+  refreshKey: number;
+}
 
-      <div className="tareas-main">
-        <ContenidoTarea />
-      </div>
+function Tareas() {
+  const { abrirModalGlobal, abrirModalEditar, refreshKey } = useOutletContext<AppContext>();
+
+  return (
+    <div className="pixel-tareas-page">
+      <ContenidoTareas
+        onNuevaTarea={abrirModalGlobal}
+        onEditarTarea={abrirModalEditar}
+        refreshKey={refreshKey}
+      />
     </div>
   );
 }

@@ -1,11 +1,13 @@
-// src/components/landing/Header.tsx
 import { useState } from 'react';
-import logoAcadex from '../../assets/logo_acadex-preview.png';
-
+import logoAcadex from '../../assets/logos/logo_acadex-preview.png';
+import logoAcadexLight from '../../assets/logos/logo_acadex_light.png';
 import { Link } from 'react-router-dom';
+import { ThemeToggle } from './ThemeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDarkMode } = useTheme();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -18,7 +20,11 @@ export const Header = () => {
       <nav className="navbar container">
         <div className="logo">
           <a href="/#inicio" aria-label="Ir al inicio">
-            <img src={logoAcadex} alt="Acadex Logo" />
+            {/* Logo dinámico: usa el oscuro si isDarkMode es true, de lo contrario usa el claro */}
+            <img 
+              src={isDarkMode ? logoAcadex : logoAcadexLight} 
+              alt="Acadex Logo" 
+            />
           </a>
         </div>
 
@@ -29,9 +35,11 @@ export const Header = () => {
           <a href="/#beneficios">Beneficios</a>
         </div>
 
+        {/* Acciones principales unificadas (Botones + ThemeToggle alineados en fila) */}
         <div className="nav-actions">
           <Link to="/iniciarSesion" className="btn btn-ghost">Iniciar sesión</Link>
           <Link to="/registrarse" className="btn btn-primary">Registrarse</Link>
+          <ThemeToggle />
         </div>
 
         <button className="menu-toggle" aria-label="Abrir menú" onClick={toggleMobileMenu}>

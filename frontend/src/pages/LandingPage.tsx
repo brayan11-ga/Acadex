@@ -1,12 +1,7 @@
-// src/pages/LandingPage.tsx
 import { useEffect } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-
-
-
-
 import Header from '../components/landing/Header';
 import Hero from '../components/landing/Hero';
 import Features from '../components/landing/Features';
@@ -14,9 +9,6 @@ import Workflow from '../components/landing/Workflow';
 import Benefits from '../components/landing/Benefits';
 import CtaSection from '../components/landing/CtaSection';
 import Footer from '../components/landing/Footer';
-
-
-import '../styles/global.css';
 
 export const LandingPage = () => {
   useEffect(() => {

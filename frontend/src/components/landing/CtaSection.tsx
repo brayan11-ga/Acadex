@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 // src/components/landing/CtaSection.tsx
 export const CtaSection = () => {
   return (
@@ -9,9 +11,7 @@ export const CtaSection = () => {
                     Ten una plataforma pensada para organizar mejor tu estudio, tus proyectos y tu equipo.
                 </p>
 
-                <a href="#" className="btn btn-primary">
-                    Crear cuenta
-                </a>
+                <Link to="/registrarse" className="btn btn-primary">Regístrate aquí</Link>
             </div>
         </section>
   );

@@ -1,25 +1,30 @@
+// src/router/AppRouter.tsx
 import { Routes, Route } from "react-router-dom";
 
-// Importar páginas
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
 import Registrarse from "../pages/Register";
+
+// Layout y páginas internas
+import AppLayout from "../layouts/AppLayout";
 import Tareas from "../pages/Tareas";
-import DetalleTarea from "../pages/DetalleTarea";
+import { Panel } from "../pages/Panel"; // <-- Importamos nuestro nuevo Panel
 
 function AppRouter() {
-return (
-<Routes>
-<Route path="/" element={<Inicio />} />
-<Route path="/iniciarSesion" element={<IniciarSesion />} />
-<Route path="/registrarse" element={<Registrarse />} />
+  return (
+    <Routes>
+      {/* Rutas públicas */}
+      <Route path="/" element={<Inicio />} />
+      <Route path="/iniciarSesion" element={<IniciarSesion />} />
+      <Route path="/registrarse" element={<Registrarse />} />
 
-        {/* Tareas */}
+      {/* Rutas internas, todas comparten el sidebar de AppLayout */}
+      <Route element={<AppLayout />}>
+        <Route path="/panel" element={<Panel />} /> {/* <-- Nueva ruta del panel */}
         <Route path="/tareas" element={<Tareas />} />
-        <Route path="/tareas/:id" element={<DetalleTarea />} />
+      </Route>
     </Routes>
-);
-
+  );
 }
 
 export default AppRouter;

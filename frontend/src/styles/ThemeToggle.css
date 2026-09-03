@@ -1,0 +1,92 @@
+/* ThemeToggle.css - Versión compacta y alineada */
+
+.toggle-cont {
+  --primary: var(--azure);
+  --light: var(--ink);
+  --dark: var(--paper);
+  --gray: var(--panel);
+  position: relative;
+  z-index: 10;
+  width: fit-content;
+  height: 26px; /* Reducido de 32px a 26px para que no sea más alto que los botones */
+}
+
+.toggle-cont .toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.toggle-cont .toggle-label {
+  --gap: 3px;
+  --width: 26px; /* Ajustado proporcionalmente */
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem; /* Padding más sutil */
+  width: calc((var(--width) + var(--gap)) * 2);
+  height: 100%;
+  
+  background-color: var(--panel);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-chip);
+  box-sizing: content-box;
+  
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.4); /* Sombra un poco más compacta */
+  
+  transition: background-color 0.4s ease-in-out, border-color 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+}
+
+.toggle-cont .toggle-label::before,
+.toggle-cont .toggle-label::after {
+  display: none;
+}
+
+.toggle-cont .toggle-label .cont-icon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--width);
+  height: 26px; /* Altura alineada */
+  
+  background-color: var(--paper-deep);
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  
+  box-shadow: inset -2px -2px 0px rgba(0, 0, 0, 0.4);
+  
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Reducimos ligeramente el icono interno para que respire dentro del botón compacto */
+.cont-icon .icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: var(--light);
+  position: relative;
+  z-index: 5;
+  transition: fill 0.4s ease;
+}
+
+/* Estados activos */
+.toggle-cont .toggle-input:checked ~ .toggle-label {
+  background-color: #e8e2f8; 
+  border-color: #7c5cff;
+  box-shadow: 3px 3px 0px rgba(124, 92, 255, 0.25);
+}
+
+.toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon {
+  background-color: #ffffff;
+  border: 2px solid #7c5cff;
+  box-shadow: inset -2px -2px 0px rgba(124, 92, 255, 0.2);
+  
+  transform: translateX(calc((var(--gap) * 2) + 100%)) rotate(360deg);
+}
+
+.toggle-cont .toggle-input:checked ~ .toggle-label .cont-icon .icon {
+  fill: #5b3df0; 
+}

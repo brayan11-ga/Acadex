@@ -1,6 +1,5 @@
-// src/components/landing/Workflow.tsx
 export const Workflow = () => {
-  return (
+    return (
     <section id="como-funciona" className="section workflow">
             <div className="container">
 
@@ -56,7 +55,7 @@ export const Workflow = () => {
 
             </div>
         </section>
-  );
+    );
 };
 
 export default Workflow;
