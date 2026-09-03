@@ -154,3 +154,24 @@
   color: var(--pixel-baja);
   border: 1px solid var(--pixel-baja);
 }
+
+/* Estilos nuevos */
+.pixel-tarea-botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pixel-btn-icono {
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pixel-btn-peligro {
+  color: #ff4d6d;
+}

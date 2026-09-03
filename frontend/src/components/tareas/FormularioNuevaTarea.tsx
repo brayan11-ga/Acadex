@@ -9,7 +9,7 @@ import iconoCategorias from "../../assets/icons/ui/categorias.png";
 import iconoCalendario from "../../assets/icons/ui/calendario.png";
 import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
-import { crearTarea } from "../../services/tareas";
+import { crearTarea, actualizarTarea, type TareaBackend } from "../../services/tareas";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -21,10 +21,11 @@ const NIVELES_DIFICULTAD = [
 
 interface FormularioProps {
   onDescartar: () => void;
-  onTareaCreada: () => void; // avisa al padre para refrescar la lista
+  onTareaCreada: () => void;
+  tareaAEditar?: TareaBackend | null;
 }
 
-function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
+function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: FormularioProps) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [titulo, setTitulo] = useState("");
   const [idCategoria, setIdCategoria] = useState<number | null>(null);
@@ -37,15 +38,31 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
 
   const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
 
-  // Al montar el componente, traemos las categorías reales de la BD
+  // Traemos las categorías reales al abrir el formulario
   useEffect(() => {
     listarCategorias()
       .then((datos) => {
         setCategorias(datos);
-        if (datos.length > 0) setIdCategoria(datos[0].id_categoria);
+        // Solo ponemos una categoría por defecto si estamos CREANDO,
+        // no si vamos a rellenar el formulario con una tarea existente
+        if (!tareaAEditar && datos.length > 0) {
+          setIdCategoria(datos[0].id_categoria);
+        }
       })
       .catch(() => setError("No se pudieron cargar las categorías"));
-  }, []);
+  }, [tareaAEditar]);
+
+  // Si nos pasaron una tarea para editar, rellenamos el formulario con sus datos
+  useEffect(() => {
+    if (tareaAEditar) {
+      setTitulo(tareaAEditar.nombre);
+      setIdCategoria(tareaAEditar.id_categoria);
+      setFecha(tareaAEditar.fecha_entrega.slice(0, 10)); // "2026-09-05T17:00:00" -> "2026-09-05"
+      setDificultad(tareaAEditar.dificultad_estimada);
+      setTiempoEstimado(String(tareaAEditar.tiempo_estimado));
+      setDescripcion(tareaAEditar.descripcion ?? "");
+    }
+  }, [tareaAEditar]);
 
   const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault();
@@ -58,18 +75,29 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
 
     setEnviando(true);
     try {
-      await crearTarea({
-        nombre: titulo,
-        descripcion,
-        fecha_entrega: `${fecha}T00:00:00`, // el input date solo da la fecha; completamos la hora
-        dificultad_estimada: dificultad,
-        tiempo_estimado: Number(tiempoEstimado) || 0,
-        id_categoria: idCategoria,
-        id_usuario: 1, // TODO: reemplazar por el id del usuario logueado
-      });
+      if (tareaAEditar) {
+        await actualizarTarea(tareaAEditar.id_tarea, {
+          nombre: titulo,
+          descripcion,
+          fecha_entrega: `${fecha}T00:00:00`,
+          dificultad_estimada: dificultad,
+          tiempo_estimado: Number(tiempoEstimado) || 0,
+          id_categoria: idCategoria,
+        });
+      } else {
+        await crearTarea({
+          nombre: titulo,
+          descripcion,
+          fecha_entrega: `${fecha}T00:00:00`,
+          dificultad_estimada: dificultad,
+          tiempo_estimado: Number(tiempoEstimado) || 0,
+          id_categoria: idCategoria,
+          id_usuario: 1, // TODO: reemplazar por el id del usuario logueado
+        });
+      }
       onTareaCreada();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear la tarea");
+      setError(err instanceof Error ? err.message : "Error al guardar la tarea");
     } finally {
       setEnviando(false);
     }
@@ -79,7 +107,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
     <form className="pixel-panel" onSubmit={manejarEnvio}>
       <div className="pixel-panel-header">
         <div>
-          <h2 className="pixel-panel-title">Nueva tarea</h2>
+          <h2 className="pixel-panel-title">{tareaAEditar ? "Editar tarea" : "Nueva tarea"}</h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
         <button type="button" className="pixel-link-descartar" onClick={onDescartar}>
@@ -113,7 +141,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
           >
             {categorias.map((cat) => (
               <option key={cat.id_categoria} value={cat.id_categoria}>
-                {cat.nombre}
+                {cat.nombre_categoria}
               </option>
             ))}
           </select>
@@ -188,7 +216,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada }: FormularioProps) {
 
       <div className="pixel-panel-footer">
         <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>
-          {enviando ? "Creando..." : "Crear →"}
+          {enviando ? "Guardando..." : tareaAEditar ? "Guardar →" : "Crear →"}
         </button>
       </div>
     </form>
