@@ -1,43 +1,31 @@
 // src/pages/Panel.tsx
-import { useState, useEffect } from 'react';
-import { obtenerDatosPanel, type DatosPanel } from '../services/panelService';
-import '../styles/Panel.css'; // Nuestro siguiente y último archivo
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/hooks';
+import { fetchPanelData } from '../store/panelSlice';
+import '../styles/Panel.css'; 
 
 export const Panel = () => {
-  // Estado único que agrupa toda la data del panel
-  const [datos, setDatos] = useState<DatosPanel | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  
+  // Consumimos el estado global de Redux
+  const { data: datos, loading: cargando, error } = useAppSelector((state) => state.panel);
 
-  // TODO: Conectar con el contexto de autenticación cuando esté listo (useAuth)
   const nombreUsuario = "Cargando...";
   const rolUsuario = "Perfil";
 
   useEffect(() => {
-    const cargarPanel = async () => {
-      try {
-        const datosRecibidos = await obtenerDatosPanel();
-        setDatos(datosRecibidos);
-      } catch (err) {
-        setError("Error al cargar la información del panel.");
-      } finally {
-        setCargando(false);
-      }
-    };
+    // Disparamos la acción para traer los datos reales de la BD al montar el componente
+    dispatch(fetchPanelData());
+  }, [dispatch]);
 
-    cargarPanel();
-  }, []);
-
-  // Manejo de estados de carga y error
   if (cargando) {
-    return <div className="panel-estado pixel-text">Cargando tu panel...</div>;
+    return <div className="panel-estado pixel-text">Cargando tu panel desde la base de datos...</div>;
   }
 
   if (error || !datos) {
     return <div className="panel-estado pixel-error">{error || "No se encontraron datos."}</div>;
   }
 
-  // Extraemos los datos para usarlos más fácilmente
   const { tareaPrioritaria, progreso, proximasTareas } = datos;
 
   return (
@@ -71,7 +59,6 @@ export const Panel = () => {
 
       {/* --- Grid Superior (Hero) --- */}
       <section className="panel-grid-top">
-        {/* Tarjeta: Tarea Prioritaria */}
         {tareaPrioritaria && (
           <div className="tarjeta-prioridad pixel-panel">
             <div className="prioridad-top">
@@ -93,7 +80,6 @@ export const Panel = () => {
           </div>
         )}
 
-        {/* Tarjeta: Progreso Diario */}
         {progreso && (
           <div className="tarjeta-progreso pixel-panel">
             <h3 className="progreso-titulo">PROGRESO DIARIO</h3>
@@ -105,7 +91,6 @@ export const Panel = () => {
               {progreso.completadas} tareas completadas, faltan {progreso.total - progreso.completadas}
             </p>
             
-            {/* Gráfico de Barras Estilo Pixel */}
             <div className="progreso-grafico">
               {progreso.dias.map((dia, idx) => (
                 <div key={idx} className="grafico-columna">
@@ -150,7 +135,6 @@ export const Panel = () => {
                     <span className="equipo-texto">+2 otros</span>
                   </div>
                 )}
-                {/* Barra de progreso visual para tareas específicas */}
                 {tarea.id === 4 && (
                   <div className="mini-barra-progreso">
                     <div className="mini-barra-relleno" style={{ width: '80%' }}></div>
