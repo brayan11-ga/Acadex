@@ -1,5 +1,6 @@
 # app/api/v1/endpoints/tareas.py
-from typing import List
+from datetime import date
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -19,6 +20,17 @@ def crear_tarea(datos: TareaCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[TareaResponse])
 def listar_tareas(db: Session = Depends(get_db)):
     return tarea_service.listar_tareas(db)
+
+
+@router.get("/calendario", response_model=List[TareaResponse])
+def listar_tareas_calendario(
+    desde: date,
+    hasta: date,
+    id_usuario: Optional[int] = None,
+    id_grupo: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    return tarea_service.listar_tareas_calendario(db, desde, hasta, id_usuario, id_grupo)
 
 
 @router.get("/{id_tarea}", response_model=TareaResponse)

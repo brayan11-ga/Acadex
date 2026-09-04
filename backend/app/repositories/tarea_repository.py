@@ -1,4 +1,5 @@
 # app/repositories/tarea_repository.py
+from datetime import date, timedelta
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.tarea import Tarea
@@ -28,3 +29,20 @@ def actualizar_tarea(db: Session, tarea: Tarea, datos: TareaUpdate) -> Tarea:
 def eliminar_tarea(db: Session, tarea: Tarea) -> None:
     db.delete(tarea)
     db.commit()
+
+def obtener_tareas_por_rango(
+    db: Session,
+    fecha_inicio: date,
+    fecha_fin: date,
+    id_usuario: Optional[int] = None,
+    id_grupo: Optional[int] = None,
+) -> List[Tarea]:
+    query = db.query(Tarea).filter(
+        Tarea.fecha_entrega >= fecha_inicio,
+        Tarea.fecha_entrega < fecha_fin + timedelta(days=1),
+    )
+    if id_usuario is not None:
+        query = query.filter(Tarea.id_usuario == id_usuario)
+    if id_grupo is not None:
+        query = query.filter(Tarea.id_grupo == id_grupo)
+    return query.order_by(Tarea.fecha_entrega).all()

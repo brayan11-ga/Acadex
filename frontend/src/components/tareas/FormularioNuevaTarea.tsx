@@ -57,7 +57,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
     if (tareaAEditar) {
       setTitulo(tareaAEditar.nombre);
       setIdCategoria(tareaAEditar.id_categoria);
-      setFecha(tareaAEditar.fecha_entrega.slice(0, 10)); // "2026-09-05T17:00:00" -> "2026-09-05"
+      setFecha(tareaAEditar.fecha_entrega.slice(0, 16));
       setDificultad(tareaAEditar.dificultad_estimada);
       setTiempoEstimado(String(tareaAEditar.tiempo_estimado));
       setDescripcion(tareaAEditar.descripcion ?? "");
@@ -79,7 +79,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         await actualizarTarea(tareaAEditar.id_tarea, {
           nombre: titulo,
           descripcion,
-          fecha_entrega: `${fecha}T00:00:00`,
+          fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: Number(tiempoEstimado) || 0,
           id_categoria: idCategoria,
@@ -88,7 +88,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         await crearTarea({
           nombre: titulo,
           descripcion,
-          fecha_entrega: `${fecha}T00:00:00`,
+          fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: Number(tiempoEstimado) || 0,
           id_categoria: idCategoria,
@@ -153,7 +153,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
             Fecha de entrega
           </span>
           <input
-            type="date"
+            type="datetime-local"
             className="pixel-input"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
