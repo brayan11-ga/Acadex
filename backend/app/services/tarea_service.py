@@ -1,4 +1,5 @@
-from typing import List
+from datetime import date
+from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.tarea import Tarea
@@ -27,3 +28,12 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
 def eliminar_tarea(db: Session, id_tarea: int) -> None:
     tarea = obtener_tarea(db, id_tarea)
     tarea_repository.eliminar_tarea(db, tarea)
+
+def listar_tareas_calendario(
+    db: Session,
+    desde: date,
+    hasta: date,
+    id_usuario: Optional[int] = None,
+    id_grupo: Optional[int] = None,
+) -> List[Tarea]:
+    return tarea_repository.obtener_tareas_por_rango(db, desde, hasta, id_usuario, id_grupo)
