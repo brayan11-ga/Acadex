@@ -5,12 +5,19 @@ export async function apiFetch<T>(
   ruta: string,
   opciones: RequestInit = {}
 ): Promise<T> {
+  // 1. Recuperamos el token JWT guardado en el login
+  const token = localStorage.getItem('access_token');
+
+  // 2. Construimos los headers incluyendo la autorización si el token existe
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    ...opciones.headers,
+  };
+
   const respuesta = await fetch(`${BASE_URL}${ruta}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...opciones.headers,
-    },
     ...opciones,
+    headers, // <-- Pasamos los headers con el token integrado
   });
 
   if (!respuesta.ok) {

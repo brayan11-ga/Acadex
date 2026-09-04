@@ -20,7 +20,7 @@ export const FormularioLogin = () => {
     try {
       const data = await iniciarSesion(email, password);
       localStorage.setItem('access_token', data.access_token);
-      navigate('/dashboard'); // ajusta a tu ruta post-login
+      navigate('/panel');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
