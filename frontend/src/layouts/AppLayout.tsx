@@ -1,7 +1,9 @@
+// src/layouts/AppLayout.tsx
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
+import { ThemeToggle } from "../components/landing/ThemeToggle";
 
 import "../styles/pixel-theme.css";
 import "../styles/layout.css";
@@ -28,6 +30,11 @@ function AppLayout() {
           }}
         />
       </main>
+
+      {/* Botón flotante fijo en la esquina inferior derecha */}
+      <div className="floating-theme-toggle">
+        <ThemeToggle />
+      </div>
 
       {isModalOpen && (
         <div className="pixel-modal-overlay">
