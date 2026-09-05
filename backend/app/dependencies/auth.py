@@ -15,7 +15,7 @@ CREDENCIALES_INVALIDAS = HTTPException(
 )
 
 def get_usuario_actual(
-    credentials:HTTPAuthorizationCredentials=Depends(security_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
     db: Session = Depends(get_db),
 ) -> Usuario:
 
@@ -25,10 +25,10 @@ def get_usuario_actual(
 
     try:
         id_usuario = int(payload.sub)
-    except (TypeError,ValueError):
+    except (TypeError, ValueError):
         raise CREDENCIALES_INVALIDAS
 
-    usuario = db.query(Usuario).filter(Usuario.id_usuario == id_usuario)
+    usuario = db.query(Usuario).filter(Usuario.id_usuario == id_usuario).first()  # ✅ agregado .first()
     if not usuario:
         raise CREDENCIALES_INVALIDAS
 
