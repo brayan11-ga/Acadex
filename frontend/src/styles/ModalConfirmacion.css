@@ -1,0 +1,78 @@
+/* src/styles/ModalConfirmacion.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--panel, #151b28);
+  border: 2px solid var(--line-strong, #2a3548);
+  border-radius: 8px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--text-main, #ffffff);
+  margin: 0;
+}
+
+.modal-message {
+  font-size: 0.9rem;
+  color: var(--text-muted, #94a3b8);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pixel-btn-danger {
+  background-color: #ff4d4d;
+  color: white;
+  border: 2px solid #cc0000;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pixel-btn-danger:hover {
+  background-color: #ff3333;
+}
+
+.pixel-btn-outline {
+  background-color: transparent;
+  color: var(--text-muted, #94a3b8);
+  border: 2px solid var(--line-strong, #2a3548);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pixel-btn-outline:hover {
+  border-color: var(--text-main, #ffffff);
+  color: var(--text-main, #ffffff);
+}

@@ -17,10 +17,10 @@
   background:
     linear-gradient(
       to top,
-      rgba(14, 10, 28, 0) 0%,
-      rgba(14, 10, 28, 0.75) 22%,
-      rgba(14, 10, 28, 1) 45%,
-      rgba(14, 10, 28, 1) 100%
+      var(--sidebar-gradient-1) 0%,
+      var(--sidebar-gradient-2) 22%,
+      var(--sidebar-gradient-3) 45%,
+      var(--sidebar-gradient-3) 100%
     ),
     url("../assets/backgrounds/sidebar-mountains.png");
   background-size: cover;
@@ -32,21 +32,15 @@
   flex-direction: column;
   justify-content: space-between;
   
-  /* Se fija en la parte superior y acompaña el scroll ocupando siempre la altura exacta */
   position: sticky;
   top: 0;
   height: 100vh;
   box-sizing: border-box;
   z-index: 100;
+  transition: background 0.3s ease;
 }
 
-.pixel-sidebar-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 6px;
-}
+
 
 /* Contenedor del Logo Principal */
 .pixel-brand-container {
@@ -55,6 +49,13 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 2px;
+}
+
+.floating-theme-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
 }
 
 .pixel-brand-icon {

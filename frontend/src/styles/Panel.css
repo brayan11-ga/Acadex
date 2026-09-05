@@ -452,3 +452,99 @@
   margin-left: auto;
   font-weight: bold;
 }
+
+/* --- Estilos para el Perfil y Menú Desplegable --- */
+.user-profile-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-profile-clickable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: var(--panel, #151b28);
+  border: 2px solid var(--line-strong, #2a3548);
+  border-radius: 6px;
+  padding: 6px;
+  z-index: 100;
+  min-width: 160px;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);
+}
+
+.btn-cerrar-sesion {
+  background: transparent;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-weight: bold;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-cerrar-sesion:hover {
+  background-color: rgba(255, 77, 77, 0.1);
+}
+
+/* --- Banner de Modo de Prueba (Aviso de sesión / servidor) --- */
+.panel-banner-aviso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background-color: rgba(242, 163, 62, 0.1);
+  border: 2px solid var(--amber, #f2a33e);
+  padding: 16px 24px;
+  border-radius: var(--radius-panel, 8px);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+}
+
+.panel-banner-texto {
+  font-size: 0.9rem;
+  color: var(--text-main, #ffffff);
+  line-height: 1.4;
+}
+
+.panel-banner-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.panel-btn-chico {
+  padding: 6px 14px;
+  font-size: 0.755rem;
+}
+
+/* Responsivo para pantallas pequeñas / móviles */
+@media (max-width: 768px) {
+  .panel-banner-aviso {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .panel-banner-acciones {
+    justify-content: center;
+  }
+}
