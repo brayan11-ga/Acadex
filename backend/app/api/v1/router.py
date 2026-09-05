@@ -1,4 +1,3 @@
-# app/api/v1/router.py
 from fastapi import APIRouter
 from app.api.v1.endpoints import usuarios, perfiles, tareas, sesiones_cronometro, categorias
 

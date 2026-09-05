@@ -1,8 +1,8 @@
-// src/components/Login/FormularioLogin.tsx (o tu ruta actual)
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { iniciarSesion } from '../../services/authService';
+import { adminApi } from '../../services/adminapi';
 
 export const FormularioLogin = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +20,14 @@ export const FormularioLogin = () => {
     try {
       const data = await iniciarSesion(email, password);
       localStorage.setItem('access_token', data.access_token);
-      navigate('/dashboard'); // ajusta a tu ruta post-login
+
+      const usuario = await adminApi.obtenerMe<{ es_admin: boolean }>();
+
+      if (usuario?.es_admin) {
+        navigate('/admin');
+      } else {
+        navigate('/panel');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
