@@ -102,7 +102,7 @@
   color: #cbd5e1;
 }
 
-/* Eventos y Tareas */
+/* Badges de eventos y tareas */
 .lista-eventos {
   display: flex;
   flex-direction: column;
@@ -114,13 +114,30 @@
   font-size: 0.75rem;
   padding: 4px 8px;
   border-radius: 6px;
-  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.prioridad-alta { background-color: #ef4444; }
-.prioridad-media { background-color: #f59e0b; }
-.prioridad-baja { background-color: #10b981; }
+/* Colores según el estado de la tarea (Pendiente, En Proceso, Completada, Cancelada) */
+.estado-pendiente {
+  background-color: #f59e0b; /* Naranja / Ámbar */
+  color: #ffffff;
+}
+
+.estado-en_proceso {
+  background-color: #3b82f6; /* Azul */
+  color: #ffffff;
+}
+
+.estado-completada {
+  background-color: #10b981; /* Verde */
+  color: #ffffff;
+}
+
+.estado-cancelada {
+  background-color: #6b7280; /* Gris */
+  color: #ffffff;
+}
