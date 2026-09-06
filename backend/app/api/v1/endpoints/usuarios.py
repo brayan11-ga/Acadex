@@ -34,9 +34,14 @@ def restablecer_password(
 ):
     return service.generar_token_reset_password(db, id_usuario)
 
-@router.get("/{id_usuario}", response_model=UsuarioOut)
-def leer_usuario(id_usuario: int, db: Session = Depends(get_db)):
-    return service.obtener_usuario(db, id_usuario)
+@router.put("/{id_usuario}", response_model=UsuarioOut)
+def actualizar_usuario(
+    id_usuario: int,
+    usuario: UsuarioUpdate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(requerir_admin), # solo verifica que sea admin, no se usa como db
+):
+    return service.actualizar_usuario(db, id_usuario, usuario)
 
 @router.get("/", response_model=List[UsuarioOut])
 def listar_usuarios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -46,7 +51,11 @@ def listar_usuarios(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
 def actualizar_usuario(id_usuario:int,usuario:UsuarioUpdate,db:Session=Depends(requerir_admin),):
     return service.actualizar_usuario(db,id_usuario,usuario)
 
-@router.delete("/{ususario}",status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_usuario(id_usuario:int,db:Session=Depends(requerir_admin),):
-    service.eliminar_usuario(db,id_usuario)
+@router.delete("/{id_usuario}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_usuario(
+    id_usuario: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(requerir_admin),
+):
+    service.eliminar_usuario(db, id_usuario)
     return None

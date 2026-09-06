@@ -1,4 +1,4 @@
-# backend/app/services/usuario_service.py
+from app.schemas.usuario import UsuarioUpdate 
 from typing import List
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -60,3 +60,24 @@ def obtener_usuario(db: Session, id_usuario: int) -> Usuario:
 
 def listar_usuarios(db: Session, skip: int = 0, limit: int = 100) -> List[Usuario]:
     return repo.get_usuarios(db, skip, limit)
+
+def actualizar_usuario(db: Session, id_usuario: int, datos: UsuarioUpdate) -> Usuario:
+    usuario = repo.get_usuario_by_id(db, id_usuario)
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado",
+        )
+
+    datos_dict = datos.model_dump(exclude_unset=True)
+    return repo.update_usuario(db, usuario, datos_dict)
+
+
+def eliminar_usuario(db: Session, id_usuario: int) -> None:
+    usuario = repo.get_usuario_by_id(db, id_usuario)
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado",
+        )
+    repo.delete_usuario(db, usuario)

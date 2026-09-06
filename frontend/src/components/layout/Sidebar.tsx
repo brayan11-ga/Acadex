@@ -11,7 +11,7 @@ const enlaces = [
   { to: "/panel", label: "Panel", icono: null },
   { to: "/tareas", label: "Tareas", icono: iconoTareas },
   { to: "/calendario", label: "Calendario", icono: iconoCalendario },
-  { to: "/stats", label: "Estadísticas", icono: iconoEstadisticas },
+  { to: "/estadisticas", label: "Estadísticas", icono: iconoEstadisticas },
   { to: "/ajustes", label: "Ajustes", icono: iconoAjustes },
 ];
 
