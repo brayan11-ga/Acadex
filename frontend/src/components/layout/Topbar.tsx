@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface PanelTopbarProps {
+// Le cambiamos el nombre a la interfaz para que sea genérica
+interface TopbarProps {
   nombreUsuario: string;
   rolUsuario: string;
   token: string | null;
   onAbrirModalLogout: () => void;
 }
 
-export const PanelTopbar = ({ nombreUsuario, rolUsuario, token, onAbrirModalLogout }: PanelTopbarProps) => {
+export const Topbar = ({ nombreUsuario, rolUsuario, token, onAbrirModalLogout }: TopbarProps) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const navigate = useNavigate();
 

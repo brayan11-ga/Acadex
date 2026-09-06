@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+// src/pages/AdminPage.tsx
+import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { FormularioModal } from '../components/admin/FormularioModal';
