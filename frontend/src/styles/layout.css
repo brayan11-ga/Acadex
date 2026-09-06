@@ -14,6 +14,7 @@
 .pixel-sidebar {
   width: 220px;
   flex-shrink: 0;
+  /* Fondo original: degradado y montañas */
   background:
     linear-gradient(
       to top,
@@ -37,12 +38,51 @@
   height: 100vh;
   box-sizing: border-box;
   z-index: 100;
-  transition: background 0.3s ease;
+  transition: width 0.3s ease, padding 0.3s ease, background 0.3s ease;
 }
 
+/* === ESTADO COLAPSADO === */
+.pixel-sidebar.collapsed {
+  width: 84px;
+  padding: 24px 12px;
+  align-items: center;
+  /* Quita las montañas y el degradado, haciéndolo transparente */
+  background: transparent; 
+}
 
+/* === BOTÓN TOGGLE (PIXEL ART STYLE) === */
+.btn-toggle-sidebar {
+  position: absolute;
+  top: 32px;
+  right: -14px; /* Sobresale un poco para ser muy clickeable */
+  width: 28px;
+  height: 28px;
+  background: var(--pixel-accent, #7c5cff); /* Color vibrante */
+  border: 2px solid var(--pixel-ink, #ffffff); /* Borde duro para el efecto pixel */
+  border-radius: 0; /* Cuadrado perfecto */
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 101;
+  box-shadow: 2px 2px 0 var(--pixel-panel-alt, #000000); /* Sombra sólida retro */
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
 
-/* Contenedor del Logo Principal */
+.btn-toggle-sidebar:hover {
+  filter: brightness(1.2);
+  transform: scale(1.1);
+}
+
+.btn-toggle-sidebar i {
+  /* Asegura que el ícono de Bootstrap quede bien centrado */
+  line-height: 1; 
+  margin-top: 1px;
+}
+
+/* === BRANDING Y LOGO === */
 .pixel-brand-container {
   display: flex;
   flex-direction: column;
@@ -59,10 +99,11 @@
 }
 
 .pixel-brand-icon {
-  width: 52px;  
-  height: 52px;
+  width: 48px;  
+  height: 48px;
   object-fit: contain;
   image-rendering: pixelated;
+  flex-shrink: 0;
 }
 
 .pixel-sidebar-title {
@@ -70,11 +111,12 @@
   font-size: 0.9rem;
   color: var(--pixel-ink);
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .pixel-logo-moon {
   width: 100%;
-  max-width: 200px;
+  max-width: 150px;
   height: auto;
   image-rendering: pixelated;
   margin: 2px auto;
@@ -84,26 +126,31 @@
 .pixel-sidebar-subtitle {
   font-size: 0.7rem;
   color: var(--pixel-ink-faint);
+  white-space: nowrap;
 }
 
+/* === NAVEGACIÓN === */
 .pixel-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px; /* Un poco más de espacio para que respiren los iconos */
   margin: auto 0;
+  width: 100%;
 }
 
 .pixel-nav-link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 0;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--pixel-radius-sm, 6px);
   border: 2px solid transparent;
   color: var(--pixel-ink-soft);
   font-size: 0.85rem;
   font-weight: 600;
-  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
 }
 
 .pixel-nav-link:hover {
@@ -121,20 +168,37 @@
   letter-spacing: 0.02em;
 }
 
-.pixel-nav-icono {
-  width: 25px;
-  height: 25px;
-  image-rendering: pixelated;
-  flex-shrink: 0;
+/* Ajustes cuando el sidebar está cerrado (Evita el "espichado") */
+.pixel-sidebar.collapsed .pixel-nav-link {
+  justify-content: center;
+  padding: 12px; /* Padding uniforme crea un cuadrado/círculo en lugar de un rectángulo */
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.pixel-sidebar.collapsed .pixel-nav-link.active {
+  /* Evita que el fondo activo se vea deforme */
+  aspect-ratio: 1; 
+  padding: 0; /* Se centra automáticamente con flex */
+}
+
+/* Íconos de navegación */
+.pixel-nav-icono {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  flex-shrink: 0; /* CRUCIAL: Evita que el ícono se aplaste al encoger el contenedor */
+  display: block;
+}
+
+/* Icono genérico (el cuadriculado) */
 .pixel-grid-icono {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 2px;
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
@@ -148,12 +212,48 @@
   background: currentColor;
 }
 
+/* === TOOLTIP FLOTANTE === */
+.pixel-tooltip {
+  display: none;
+  position: absolute;
+  left: calc(100% + 15px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--pixel-panel, #0f172a);
+  color: var(--pixel-ink, #fff);
+  padding: 6px 14px;
+  border: 1px solid var(--pixel-border-strong, #334155);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.4); /* Sombra sólida retro */
+  font-family: var(--pixel-font-body);
+}
+
+.pixel-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  transform: translateY(-50%);
+  border-width: 6px 6px 6px 0;
+  border-style: solid;
+  border-color: transparent var(--pixel-border-strong, #334155) transparent transparent;
+}
+
+.pixel-sidebar.collapsed .pixel-nav-link:hover .pixel-tooltip {
+  display: block;
+}
+
+/* === BOTÓN CREAR TAREA === */
 .pixel-btn-crear {
   background: var(--pixel-accent);
   color: white;
   border: none;
-  border-radius: var(--pixel-radius-sm);
-  padding: 12px;
+  border-radius: var(--pixel-radius-sm, 6px);
+  padding: 14px;
   font-family: var(--pixel-font-body);
   font-weight: 700;
   font-size: 0.85rem;
@@ -161,11 +261,25 @@
   width: 100%;
   transition: filter 0.15s ease, transform 0.15s ease;
   margin-top: auto;
+  white-space: nowrap;
+}
+
+/* Evitar que el botón + se espiche */
+.pixel-sidebar.collapsed .pixel-btn-crear {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: auto auto 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  border-radius: 8px; /* Para que parezca una tecla o un cubo */
 }
 
 .pixel-btn-crear:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  filter: brightness(1.15);
+  transform: translateY(-2px);
 }
 
 /* ===== CONTENIDO ===== */
@@ -176,4 +290,5 @@
   overflow-y: auto;
   min-height: 100vh;
   box-sizing: border-box;
+  /* Para que el contenido respire bien con el fondo del layout */
 }

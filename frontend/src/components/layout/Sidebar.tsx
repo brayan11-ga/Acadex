@@ -1,4 +1,5 @@
 // src/components/layout/Sidebar.tsx
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import moonIcon from "../../assets/backgrounds/moon-icon.png";
 import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
@@ -20,19 +21,31 @@ interface SidebarProps {
 }
 
 function Sidebar({ onCrearRapido }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <aside className="pixel-sidebar">
+    <aside className={`pixel-sidebar ${isCollapsed ? "collapsed" : ""}`}>
+      {/* Botón de toggle con Bootstrap Icons y estilo para pixel-art (se ajustará en CSS) */}
+      <button 
+        className="btn-toggle-sidebar" 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+      >
+        <i className={`bi ${isCollapsed ? "bi-caret-right-fill" : "bi-caret-left-fill"}`}></i>
+      </button>
+
       <div className="pixel-sidebar-logo">
-        {/* Logo principal grande y reconocible */}
         <div className="pixel-brand-container">
           <img src={logoAcadex} alt="Acadex Logo" className="pixel-brand-icon" />
-          <span className="pixel-sidebar-title">ACADEX</span>
+          {!isCollapsed && <span className="pixel-sidebar-title">ACADEX</span>}
         </div>
 
-        {/* Imagen de la luna decorativa */}
-        <img src={moonIcon} alt="Modo Enfoque Luna" className="pixel-logo-moon" />
-        
-        <span className="pixel-sidebar-subtitle">Modo Enfoque</span>
+        {!isCollapsed && (
+          <>
+            <img src={moonIcon} alt="Modo Enfoque Luna" className="pixel-logo-moon" />
+            <span className="pixel-sidebar-subtitle">Modo Enfoque</span>
+          </>
+        )}
       </div>
 
       <nav className="pixel-sidebar-nav">
@@ -51,13 +64,15 @@ function Sidebar({ onCrearRapido }: SidebarProps) {
                 <span></span><span></span><span></span><span></span>
               </span>
             )}
-            {enlace.label}
+            
+            {!isCollapsed && <span className="nav-text">{enlace.label}</span>}
+            {isCollapsed && <span className="pixel-tooltip">{enlace.label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      <button className="pixel-btn-crear" onClick={onCrearRapido}>
-        + CREAR RÁPIDO
+      <button className="pixel-btn-crear" onClick={onCrearRapido} title="Crear Rápido">
+        {isCollapsed ? "+" : "+ CREAR RÁPIDO"}
       </button>
     </aside>
   );
