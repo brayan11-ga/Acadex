@@ -1,13 +1,11 @@
-# backend/app/api/v1/endpoints/perfiles.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual
 from app.models.usuario import Usuario
 from app.schemas.perfil import PerfilCreate, PerfilUpdate, PerfilOut
 from app.services import perfil_service as service
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_usuario_actual
 from app.models.usuario import Usuario
 
 router = APIRouter(prefix="/perfiles", tags=["perfiles"])
@@ -52,7 +50,7 @@ def actualizar_perfil(id_usuario: int, cambios: PerfilUpdate, db: Session = Depe
 @router.get("/me", response_model=PerfilOut)
 def leer_mi_perfil(
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_usuario_actual)
 ):
     """Obtiene el perfil del usuario autenticado actualmente."""
     perfil = service.obtener_perfil_por_usuario(db, current_user.id_usuario)

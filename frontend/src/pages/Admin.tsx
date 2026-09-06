@@ -2,134 +2,132 @@ import { useEffect, useState, useCallback } from 'react';
 import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { FormularioModal } from '../components/admin/FormularioModal';
-import { Resumen } from '../components/admin/Resumen'; // ajusta si lo moviste de carpeta
+import { Resumen } from '../components/admin/Resumen';
 import { TABS_ADMIN } from '../services/entidadesConfig';
 import '../styles/admin.css';
 
 const TAB_RESUMEN = { clave: 'resumen', titulo: 'Resumen' };
 const TODAS_LAS_TABS = [TAB_RESUMEN, ...TABS_ADMIN];
 
-export const AdminPage = () => {
-  const [tabActivo, setTabActivo] = useState(TAB_RESUMEN.clave);
-  const [filas, setFilas] = useState<any[]>([]);
-  const [cargando, setCargando] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [filaEditando, setFilaEditando] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export const Admin = () => {
+    const [tabActivo, setTabActivo] = useState(TAB_RESUMEN.clave);
+    const [filas, setFilas] = useState<any[]>([]);
+    const [cargando, setCargando] = useState(false);
+    const [guardando, setGuardando] = useState(false);
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [filaEditando, setFilaEditando] = useState<any | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const esTabResumen = tabActivo === TAB_RESUMEN.clave;
+    const configActual = esTabResumen ? null : TABS_ADMIN.find((t) => t.clave === tabActivo)!;
 
-  const esTabResumen = tabActivo === TAB_RESUMEN.clave;
-  const configActual = esTabResumen ? null : TABS_ADMIN.find((t) => t.clave === tabActivo)!;
-
-  const cargarDatos = useCallback(async () => {
+    const cargarDatos = useCallback(async () => {
     if (!configActual) return;
     setCargando(true);
     setError(null);
     const datos = await adminApi.listar<any>(configActual.clave);
     if (datos === null) {
-      setError('No se pudo cargar la información.');
-      setFilas([]);
+        setError('No se pudo cargar la información.');
+        setFilas([]);
     } else {
-      setFilas(datos);
+        setFilas(datos);
     }
     setCargando(false);
-  }, [configActual]);
+    }, [configActual]);
 
-  useEffect(() => {
+    useEffect(() => {
     cargarDatos();
-  }, [cargarDatos]);
+    }, [cargarDatos]);
 
-  const abrirCrear = () => {
+    const abrirCrear = () => {
     setFilaEditando(null);
     setModalAbierto(true);
-  };
+    };
 
-  const abrirEditar = (fila: any) => {
+    const abrirEditar = (fila: any) => {
     setFilaEditando(fila);
     setModalAbierto(true);
-  };
+    };
 
-  const guardar = async (datos: Record<string, unknown>) => {
+    const guardar = async (datos: Record<string, unknown>) => {
     if (!configActual) return;
     setGuardando(true);
-    const idField = Object.keys(configActual.valoresVacios).includes('id')
-      ? 'id'
-      : Object.keys(filaEditando ?? {}).find((k) => k.startsWith('id_') && filaEditando[k] !== undefined);
+    const idField = Object.keys(configActual.valoresVacios).includes('id')? 'id'
+        : Object.keys(filaEditando ?? {}).find((k) => k.startsWith('id_') && filaEditando[k] !== undefined);
 
     const resultado = filaEditando
-      ? await adminApi.actualizar(configActual.clave, filaEditando[idField!], datos)
-      : await adminApi.crear(configActual.clave, datos);
+        ? await adminApi.actualizar(configActual.clave, filaEditando[idField!], datos)
+        : await adminApi.crear(configActual.clave, datos);
     setGuardando(false);
 
     if (resultado === null) {
-      setError('No se pudo guardar el registro.');
-      return;
+        setError('No se pudo guardar el registro.');
+        return;
     }
     setModalAbierto(false);
     cargarDatos();
-  };
+    };
 
-  const eliminar = async (fila: any) => {
+    const eliminar = async (fila: any) => {
     const idField = Object.keys(fila).find((k) => k.startsWith('id_'));
     if (!confirm('¿Eliminar este registro?')) return;
     await adminApi.eliminar(configActual!.clave, fila[idField!]);
     cargarDatos();
-  };
+    };
 
-  return (
+    return (
     <div className="admin-page">
-      <h1>Panel de Administración — Acadex</h1>
+        <h1>Panel de Administración — Acadex</h1>
 
-      <div className="tabs">
+        <div className="tabs">
         {TODAS_LAS_TABS.map((tab) => (
-          <button
+            <button
             key={tab.clave}
             className={`tab-btn ${tab.clave === tabActivo ? 'activo' : ''}`}
             onClick={() => setTabActivo(tab.clave)}
-          >
+            >
             {tab.titulo}
-          </button>
+            </button>
         ))}
-      </div>
+        </div>
 
-      {error && <p className="error-msg">{error}</p>}
+        {error && <p className="error-msg">{error}</p>}
 
-      {esTabResumen ? (
+        {esTabResumen ? (
         <Resumen />
-      ) : (
+        ) : (
         <>
-          {!configActual!.soloLectura && (
+            {!configActual!.soloLectura && (
             <div className="admin-toolbar">
-              <button className="btn btn-primary" onClick={abrirCrear}>
+                <button className="btn btn-primary" onClick={abrirCrear}>
                 + Nuevo
-              </button>
+                </button>
             </div>
-          )}
+            )}
 
-          <GenericTable
+            <GenericTable
             columnas={configActual!.columnas}
             filas={filas}
             cargando={cargando}
             soloLectura={configActual!.soloLectura}
             onEditar={abrirEditar}
             onEliminar={eliminar}
-          />
-
-          {!configActual!.soloLectura && (
-            <FormularioModal
-              titulo={filaEditando ? `Editar ${configActual!.titulo}` : `Nuevo ${configActual!.titulo}`}
-              campos={configActual!.campos}
-              valoresIniciales={filaEditando ?? configActual!.valoresVacios}
-              abierto={modalAbierto}
-              guardando={guardando}
-              onCerrar={() => setModalAbierto(false)}
-              onGuardar={guardar}
             />
-          )}
+
+            {!configActual!.soloLectura && (
+            <FormularioModal
+                titulo={filaEditando ? `Editar ${configActual!.titulo}` : `Nuevo ${configActual!.titulo}`}
+                campos={configActual!.campos}
+                valoresIniciales={filaEditando ?? configActual!.valoresVacios}
+                abierto={modalAbierto}
+                guardando={guardando}
+                onCerrar={() => setModalAbierto(false)}
+                onGuardar={guardar}
+            />
+            )}
         </>
-      )}
+        )}
     </div>
-  );
+    );
 };
 
-export default AdminPage;
+export default Admin;
