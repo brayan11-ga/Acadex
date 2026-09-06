@@ -1,9 +1,8 @@
 # app/repositories/panel_repository.py
 from sqlalchemy.orm import Session
-from sqlalchemy import asc
+from sqlalchemy import asc, func
 from datetime import datetime, timedelta
 
-# Importamos directamente las CLASES
 from app.models.tarea import Tarea
 from app.models.categoria import Categoria
 from app.models.historial_tarea import HistorialTarea
@@ -14,10 +13,12 @@ class PanelRepository:
         Obtiene la tarea pendiente más urgente (por prioridad y fecha de entrega) 
         junto con el nombre de su categoría.
         """
-        # Todo con T mayúscula y C mayúscula
         return db.query(Tarea, Categoria.nombre_categoria)\
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
-            .filter(Tarea.id_usuario == id_usuario, Tarea.estado == 'pendiente')\
+            .filter(
+                Tarea.id_usuario == id_usuario, 
+                func.lower(Tarea.estado) != 'completada'  # <-- Permite cualquier variación de "completada" y trae las demás
+            )\
             .order_by(asc(Tarea.prioridad), asc(Tarea.fecha_entrega))\
             .first()
 
@@ -27,7 +28,10 @@ class PanelRepository:
         """
         query = db.query(Tarea, Categoria.nombre_categoria)\
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
-            .filter(Tarea.id_usuario == id_usuario, Tarea.estado == 'pendiente')
+            .filter(
+                Tarea.id_usuario == id_usuario, 
+                func.lower(Tarea.estado) != 'completada'  # <-- Igual aquí
+            )
         
         if exclude_id:
             query = query.filter(Tarea.id_tarea != exclude_id)
@@ -48,7 +52,10 @@ class PanelRepository:
         Cuenta cuántas tareas le faltan al usuario por completar en total.
         """
         return db.query(Tarea)\
-            .filter(Tarea.id_usuario == id_usuario, Tarea.estado == 'pendiente')\
+            .filter(
+                Tarea.id_usuario == id_usuario, 
+                func.lower(Tarea.estado) != 'completada'  # <-- Y aquí también
+            )\
             .count()
 
 panel_repository = PanelRepository()

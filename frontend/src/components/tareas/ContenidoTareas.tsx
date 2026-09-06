@@ -5,9 +5,13 @@ import {
   listarTareas,
   obtenerTarea,
   eliminarTarea,
+  actualizarTarea,
   type TareaBackend,
 } from "../../services/tareas";
 import { listarCategorias, type Categoria } from "../../services/categorias";
+import { FiltrosTareas } from "./FiltrosTareas";
+import { TarjetaTarea } from "./TarjetaTarea";
+import { ModalDetalleTarea } from "./ModalDetalleTarea";
 
 interface ContenidoTareaProps {
   onNuevaTarea: () => void;
@@ -21,6 +25,7 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tareaDetalle, setTareaDetalle] = useState<TareaBackend | null>(null);
+  const [filtroActivo, setFiltroActivo] = useState<string>("todas");
 
   useEffect(() => {
     setCargando(true);
@@ -47,18 +52,37 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
 
   const tareasPendientes = tareas.filter((t) => t.estado !== "Completada").length;
 
+  const tareasFiltradas = tareas.filter((tarea) => {
+    if (filtroActivo === "alta") return tarea.dificultad_estimada >= 4;
+    if (filtroActivo === "activas") return tarea.estado !== "Completada";
+    if (filtroActivo === "completadas") return tarea.estado === "Completada";
+    return true;
+  });
+
   const manejarEliminar = async (id: number) => {
-    const confirmar = window.confirm(
-      "¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer."
-    );
-    if (!confirmar) return;
+    if (!window.confirm("¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer.")) return;
 
     try {
       await eliminarTarea(id);
-      // La quitamos de la lista sin tener que volver a pedir todo al backend
       setTareas((actuales) => actuales.filter((t) => t.id_tarea !== id));
     } catch {
       setError("No se pudo eliminar la tarea");
+    }
+  };
+
+  const manejarCambiarEstado = async (tarea: TareaBackend) => {
+    const nuevoEstado = tarea.estado === "Completada" ? "Pendiente" : "Completada";
+
+    try {
+      const tareaActualizada = await actualizarTarea(tarea.id_tarea, {
+        estado: nuevoEstado,
+      });
+
+      setTareas((actuales) =>
+        actuales.map((t) => (t.id_tarea === tarea.id_tarea ? tareaActualizada : t))
+      );
+    } catch {
+      setError("No se pudo actualizar el estado de la tarea");
     }
   };
 
@@ -85,93 +109,41 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         </button>
       </header>
 
-      <div className="pixel-tareas-filtros">
-        <span className="pixel-filtro-label">Filtrar por:</span>
-        <button className="pixel-filtro-btn activo">Todas</button>
-        <button className="pixel-filtro-btn">Alta Prioridad</button>
-        <button className="pixel-filtro-btn">Activas</button>
-        <button className="pixel-filtro-btn">Completadas</button>
-      </div>
+      <FiltrosTareas filtroActivo={filtroActivo} onCambiarFiltro={setFiltroActivo} />
 
       {cargando && <p className="pixel-tareas-subtitle">Cargando tareas...</p>}
       {error && <p className="pixel-error">{error}</p>}
 
       {!cargando && !error && (
         <section className="pixel-tareas-lista">
-          {tareas.map((tarea) => (
-            <article
-              key={tarea.id_tarea}
-              className={`pixel-tarea-card ${tarea.estado === "Completada" ? "completada" : ""}`}
-            >
-              <div className="pixel-tarea-info">
-                <div className="pixel-tarea-header-card">
-                  <h3 className="pixel-tarea-titulo">{tarea.nombre}</h3>
-                  <span className={`pixel-badge-dificultad nivel-${tarea.dificultad_estimada}`}>
-                    Nivel {tarea.dificultad_estimada}
-                  </span>
-                </div>
-                <div className="pixel-tarea-detalles">
-                  <span>📅 {formatearFecha(tarea.fecha_entrega)}</span>
-                  <span>📂 {nombreCategoria(tarea.id_categoria)}</span>
-                </div>
-              </div>
-
-              <div className="pixel-tarea-acciones">
-                <span className={`pixel-estado-badge ${tarea.estado.replace(" ", "-").toLowerCase()}`}>
-                  {tarea.estado}
-                </span>
-                <div className="pixel-tarea-botones">
-                  <button
-                    type="button"
-                    className="pixel-btn-icono"
-                    onClick={() => manejarVerDetalles(tarea.id_tarea)}
-                  >
-                    Ver
-                  </button>
-                  <button
-                    type="button"
-                    className="pixel-btn-icono"
-                    onClick={() => onEditarTarea(tarea)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className="pixel-btn-icono pixel-btn-peligro"
-                    onClick={() => manejarEliminar(tarea.id_tarea)}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+          {tareasFiltradas.length === 0 ? (
+            <p className="pixel-tareas-subtitle" style={{ textAlign: "center", padding: "20px" }}>
+              No hay tareas para mostrar en este filtro.
+            </p>
+          ) : (
+            tareasFiltradas.map((tarea) => (
+              <TarjetaTarea
+                key={tarea.id_tarea}
+                tarea={tarea}
+                nombreCategoria={nombreCategoria}
+                formatearFecha={formatearFecha}
+                onVerDetalles={manejarVerDetalles}
+                onEditar={onEditarTarea}
+                onEliminar={manejarEliminar}
+                onCambiarEstado={manejarCambiarEstado}
+              />
+            ))
+          )}
         </section>
       )}
 
       {tareaDetalle && (
-        <div className="pixel-modal-overlay" onClick={() => setTareaDetalle(null)}>
-          <div className="pixel-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="pixel-panel">
-              <div className="pixel-panel-header">
-                <h2 className="pixel-panel-title">{tareaDetalle.nombre}</h2>
-                <button
-                  type="button"
-                  className="pixel-link-descartar"
-                  onClick={() => setTareaDetalle(null)}
-                >
-                  × Cerrar
-                </button>
-              </div>
-              <p><strong>Categoría:</strong> {nombreCategoria(tareaDetalle.id_categoria)}</p>
-              <p><strong>Estado:</strong> {tareaDetalle.estado}</p>
-              <p><strong>Fecha de entrega:</strong> {formatearFecha(tareaDetalle.fecha_entrega)}</p>
-              <p><strong>Dificultad:</strong> Nivel {tareaDetalle.dificultad_estimada}</p>
-              <p><strong>Tiempo estimado:</strong> {tareaDetalle.tiempo_estimado} min</p>
-              <p><strong>Descripción:</strong> {tareaDetalle.descripcion || "Sin descripción"}</p>
-            </div>
-          </div>
-        </div>
+        <ModalDetalleTarea
+          tarea={tareaDetalle}
+          nombreCategoria={nombreCategoria}
+          formatearFecha={formatearFecha}
+          onCerrar={() => setTareaDetalle(null)}
+        />
       )}
     </main>
   );

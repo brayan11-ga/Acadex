@@ -16,12 +16,14 @@ router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
 @router.post("/", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
 def crear_tarea(
-    datos: TareaCreate, 
+    datos: TareaCreate,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(get_usuario_actual) # <-- Inyectamos el usuario autenticado
+    usuario_actual: Usuario = Depends(get_usuario_actual)
 ):
-    # Sobrescribimos o asignamos el id_usuario real del token para evitar errores de llave foránea
-    datos.id_usuario = usuario_actual.id_usuario
+    # Si la tarea no viene asociada a un grupo, es una tarea personal:
+    # asignamos el id_usuario real del token (nunca el que mande el frontend)
+    if datos.id_grupo is None:
+        datos.id_usuario = usuario_actual.id_usuario
     return tarea_service.crear_tarea(db, datos)
 
 
