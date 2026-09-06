@@ -7,6 +7,8 @@ from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate
 from app.schemas.auth import LoginRequest, Token
 from app.models.usuario import Usuario
 from app.services import usuario_service as service
+from app.schemas.token_temporal import TokenResetOut
+from app.dependencies.auth import requerir_admin
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -23,6 +25,14 @@ def login(credenciales: LoginRequest, db: Session = Depends(get_db)):
 def leer_usuario_actual(usuario_actual:Usuario=Depends(get_usuario_actual)):
 # devuelve los datos Usuario dueño del token
     return usuario_actual
+
+@router.post("/{id_usuario}/restablecer-password", response_model=TokenResetOut)
+def restablecer_password(
+    id_usuario: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(requerir_admin),  # solo un admin puede generar el reset
+):
+    return service.generar_token_reset_password(db, id_usuario)
 
 @router.get("/{id_usuario}", response_model=UsuarioOut)
 def leer_usuario(id_usuario: int, db: Session = Depends(get_db)):

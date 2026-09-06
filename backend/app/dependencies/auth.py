@@ -5,7 +5,7 @@ from app.dependencies.db import get_db
 from app.core.security import decode_access_token
 from app.models.usuario import Usuario
 from app.repositories import usuario_repository as repo
-
+from app.models.integrante import Integrante  # ajusta la ruta según cómo se llame tu archivo del modelo
 security_scheme = HTTPBearer()
 
 CREDENCIALES_INVALIDAS = HTTPException(
@@ -34,12 +34,42 @@ def get_usuario_actual(
 
     return usuario
 
-def requerir_admin(usuario:Usuario=Depends(get_usuario_actual))-> Usuario:
-
-    #exige que sea administrador.se puede usar en cualquier endpoint que solo el admin pueda tocar.
+def requerir_admin(usuario: Usuario = Depends(get_usuario_actual)) -> Usuario:
     if not usuario.es_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tiene permisos de administrador"
         )
+    return usuario 
+
+# dependencies/auth.py (o permisos.py)
+
+def requerir_lider_de_grupo(
+    id_grupo: int,
+    usuario: Usuario = Depends(get_usuario_actual),
+    db: Session = Depends(get_db),
+) -> Usuario:
+    """
+    Permite pasar si el usuario es admin de la app,
+    O si es 'lider' específicamente de ESE grupo (id_grupo).
+    """
+    if usuario.es_admin:
+        return usuario
+
+    integrante = (
+        db.query(Integrante)
+        .filter(
+            Integrante.id_usuario == usuario.id_usuario,
+            Integrante.id_grupo == id_grupo,
+            Integrante.rol == "lider",
+        )
+        .first()
+    )
+
+    if not integrante:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos de líder sobre este grupo",
+        )
+
     return usuario
