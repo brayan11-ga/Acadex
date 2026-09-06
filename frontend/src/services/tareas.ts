@@ -22,7 +22,7 @@ export interface NuevaTareaPayload {
   dificultad_estimada: number;
   tiempo_estimado: number;
   id_categoria: number;
-  id_usuario: number;
+  id_usuario?: number;
 }
 
 // Payload para editar: todos los campos son opcionales porque tu TareaUpdate
