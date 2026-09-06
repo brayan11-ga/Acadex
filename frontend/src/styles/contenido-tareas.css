@@ -120,18 +120,22 @@
   color: var(--pixel-ink);
 }
 
-/* Etiquetas de dificultad adaptadas a los colores de Samuel */
+/* Etiquetas de dificultad */
 .pixel-badge-dificultad {
   font-size: 0.7rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 12px;
   font-weight: 700;
   text-transform: uppercase;
+  background-color: transparent;
+  border: 1px solid currentColor;
 }
 
-.pixel-badge-dificultad.nivel-1 { background-color: rgba(62, 203, 240, 0.15); color: var(--pixel-nivel-1); }
-.pixel-badge-dificultad.nivel-3 { background-color: rgba(163, 116, 242, 0.15); color: var(--pixel-nivel-3); }
-.pixel-badge-dificultad.nivel-5 { background-color: rgba(242, 78, 78, 0.15); color: var(--pixel-nivel-5); }
+.pixel-badge-dificultad.nivel-1 { color: var(--pixel-nivel-1); }
+.pixel-badge-dificultad.nivel-2 { color: var(--pixel-nivel-2); }
+.pixel-badge-dificultad.nivel-3 { color: var(--pixel-nivel-3); }
+.pixel-badge-dificultad.nivel-4 { color: var(--pixel-nivel-4); }
+.pixel-badge-dificultad.nivel-5 { color: var(--pixel-nivel-5); }
 
 .pixel-tarea-detalles {
   display: flex;
@@ -155,7 +159,6 @@
   border: 1px solid var(--pixel-baja);
 }
 
-/* Estilos nuevos */
 .pixel-tarea-botones {
   display: flex;
   gap: 8px;
@@ -163,15 +166,31 @@
 }
 
 .pixel-btn-icono {
-  font-family: inherit;
+  font-family: var(--pixel-font-body);
   font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid currentColor;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--pixel-radius-sm);
+  border: 1px solid var(--pixel-border-strong);
   background: transparent;
+  color: var(--pixel-ink-soft);
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pixel-btn-icono:hover {
+  background-color: var(--pixel-panel-alt);
+  border-color: var(--pixel-accent-soft);
+  color: var(--pixel-ink);
 }
 
 .pixel-btn-peligro {
+  border-color: rgba(255, 77, 109, 0.4);
+  color: #ff4d6d;
+}
+
+.pixel-btn-peligro:hover {
+  background-color: rgba(255, 77, 109, 0.12);
+  border-color: #ff4d6d;
   color: #ff4d6d;
 }
