@@ -1,3 +1,4 @@
+# backend/app/api/v1/endpoints/tareas.py
 from datetime import date
 from typing import List, Optional
 
@@ -5,6 +6,8 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.dependencies.db import get_db
+from app.dependencies.auth import get_usuario_actual
+from app.models.usuario import Usuario
 from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse
 from app.services import tarea_service
 
@@ -12,7 +15,13 @@ router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
 
 @router.post("/", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
-def crear_tarea(datos: TareaCreate, db: Session = Depends(get_db)):
+def crear_tarea(
+    datos: TareaCreate, 
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual) # <-- Inyectamos el usuario autenticado
+):
+    # Sobrescribimos o asignamos el id_usuario real del token para evitar errores de llave foránea
+    datos.id_usuario = usuario_actual.id_usuario
     return tarea_service.crear_tarea(db, datos)
 
 

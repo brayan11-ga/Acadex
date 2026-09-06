@@ -6,23 +6,37 @@
      ========================= */
   --pixel-bg-start: #0d1526;
   --pixel-bg-end: #070c17;
-  
+
+  --pixel-sidebar: rgba(20, 30, 58, 0.55);
   --pixel-panel: #151b28;
   --pixel-panel-alt: #1f2e52;
-  
+
   --pixel-ink: #f1eaff;
   --pixel-ink-soft: #b9aee0;
   --pixel-ink-faint: #7e739e;
-  
+
   --pixel-border: rgba(255, 255, 255, 0.08);
   --pixel-border-strong: #2a3548;
-  
+
   --pixel-accent: #7c5cff;
+  --pixel-accent-soft: #a68bff;
   --pixel-accent-strong: #5b3df0;
-  
+
+  /* Colores de prioridad */
+  --pixel-baja: #45e0a8;
+  --pixel-media: #7c5cff;
+  --pixel-alta: #ff6fa5;
+
+  /* Colores por nivel de dificultad */
+  --pixel-nivel-1: #3ecbf0;
+  --pixel-nivel-2: #57d68d;
+  --pixel-nivel-3: #a374f2;
+  --pixel-nivel-4: #f2a33e;
+  --pixel-nivel-5: #f24e4e;
+
   --pixel-radius: 10px;
   --pixel-radius-sm: 6px;
-  
+
   --pixel-font-display: 'Press Start 2P', monospace;
   --pixel-font-body: 'Inter', sans-serif;
 
@@ -38,22 +52,37 @@
 html.light-mode {
   --pixel-bg-start: #f4f0ff;
   --pixel-bg-end: #e8e2f8;
-  
+
+  --pixel-sidebar: rgba(241, 237, 254, 0.7);
   --pixel-panel: #ffffff;
   --pixel-panel-alt: #f1edfe;
-  
+
   --pixel-ink: #1a1528;
   --pixel-ink-soft: #4a4261;
   --pixel-ink-faint: #756a94;
-  
+
   --pixel-border: rgba(124, 92, 255, 0.15);
   --pixel-border-strong: #cbd5e1;
-  
+
   --pixel-accent: #5b3df0;
+  --pixel-accent-soft: #7c5cff;
   --pixel-accent-strong: #7c5cff;
 
-  /* Variables específicas para el Sidebar en Modo Claro (tonos morados suaves/claros) */
+  /* Colores de prioridad (mismos tonos, funcionan en ambos temas) */
+  --pixel-baja: #45e0a8;
+  --pixel-media: #5b3df0;
+  --pixel-alta: #ff6fa5;
+
+  /* Colores por nivel de dificultad (mismos tonos, funcionan en ambos temas) */
+  --pixel-nivel-1: #3ecbf0;
+  --pixel-nivel-2: #57d68d;
+  --pixel-nivel-3: #a374f2;
+  --pixel-nivel-4: #f2a33e;
+  --pixel-nivel-5: #f24e4e;
+
+  /* Variables específicas para el Sidebar en Modo Claro */
   --sidebar-gradient-1: rgba(244, 240, 255, 0);
   --sidebar-gradient-2: rgba(244, 240, 255, 0.75);
   --sidebar-gradient-3: rgba(232, 226, 248, 1);
 }
+
