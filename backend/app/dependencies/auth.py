@@ -1,11 +1,12 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.core.security import decode_access_token
 from app.models.usuario import Usuario
 from app.repositories import usuario_repository as repo
 from app.models.integrante import Integrante  # ajusta la ruta según cómo se llame tu archivo del modelo
+
 security_scheme = HTTPBearer()
 
 CREDENCIALES_INVALIDAS = HTTPException(
@@ -28,21 +29,20 @@ def get_usuario_actual(
     except (TypeError, ValueError):
         raise CREDENCIALES_INVALIDAS
 
-    usuario = db.query(Usuario).filter(Usuario.id_usuario == id_usuario).first()  # ✅ agregado .first()
+    usuario = db.query(Usuario).filter(Usuario.id_usuario == id_usuario).first()
     if not usuario:
         raise CREDENCIALES_INVALIDAS
 
     return usuario
 
 def requerir_admin(usuario: Usuario = Depends(get_usuario_actual)) -> Usuario:
+    # Exige que sea administrador. Se puede usar en cualquier endpoint que solo el admin pueda tocar.
     if not usuario.es_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tiene permisos de administrador"
         )
-    return usuario 
-
-# dependencies/auth.py (o permisos.py)
+    return usuario
 
 def requerir_lider_de_grupo(
     id_grupo: int,
@@ -73,3 +73,6 @@ def requerir_lider_de_grupo(
         )
 
     return usuario
+
+# Alias de compatibilidad para que otros archivos que importan get_current_user sigan funcionando sin error
+get_current_user = get_usuario_actual

@@ -1,7 +1,8 @@
-// src/components/panel/PanelBannerModoPrueba.tsx
+// src/components/layout/BannerModoPrueba.tsx
 import { useNavigate } from 'react-router-dom';
 
-export const PanelBannerModoPrueba = () => {
+// Cambiamos el nombre de la función exportada
+export const BannerModoPrueba = () => {
   const navigate = useNavigate();
 
   return (

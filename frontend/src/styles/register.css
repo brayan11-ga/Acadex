@@ -100,7 +100,7 @@ BOTÓN REGISTRARSE
     color: var(--text-on-azure);
     font-family: var(--font-display);
     font-size: 0.7rem;
-    margin-top: 32px; /* <-- Aquí le damos el respiro al botón */
+    margin-top: 32px;
     background: var(--azure);
     transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
 }

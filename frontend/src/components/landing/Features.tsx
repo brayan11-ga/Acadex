@@ -1,5 +1,5 @@
 export const Features = () => {
-  return (
+    return (
     <section id="funcionalidades" className="section features">
             <div className="container">
 
@@ -49,7 +49,7 @@ export const Features = () => {
 
             </div>
         </section>
-  );
+    );
 };
 
 export default Features;
