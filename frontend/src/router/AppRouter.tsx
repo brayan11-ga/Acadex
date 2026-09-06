@@ -10,6 +10,7 @@ import Tareas from "../pages/Tareas";
 import Perfil from "../pages/Perfil";
 import { Panel } from "../pages/Panel";
 import { AdminPage } from "../pages/Admin";
+import { Calendario } from "../pages/Calendario";
 
 // Rutas de seguridad / control de acceso
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -29,6 +30,7 @@ function AppRouter() {
           <Route path="/panel" element={<Panel />} />
           <Route path="/tareas" element={<Tareas />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/calendario" element={<Calendario />} />
         </Route>
       </Route>
 
