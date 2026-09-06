@@ -1,5 +1,6 @@
 // src/components/layout/BannerModoPrueba.tsx
 import { useNavigate } from 'react-router-dom';
+import '../../styles/BannerPrueba.css'
 
 // Cambiamos el nombre de la función exportada
 export const BannerModoPrueba = () => {

@@ -33,20 +33,34 @@ function AppLayout() {
   // 2. Nuestros estados globales (Perfil, sesión y errores)
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [modalLogoutAbierto, setModalLogoutAbierto] = useState(false);
-  const [errorPerfil, setErrorPerfil] = useState(false);
+  const [errorServidorCaido, setErrorServidorCaido] = useState(false);
 
   const token = localStorage.getItem('access_token');
 
   useEffect(() => {
     if (token) {
       apiFetch<PerfilUsuario>('/perfiles/me')
-        .then((data) => setPerfil(data))
+        .then((data) => {
+          setPerfil(data);
+          setErrorServidorCaido(false);
+        })
         .catch((err) => {
           console.error("Error al cargar perfil:", err);
-          setErrorPerfil(true);
+          
+          // Si el token es inválido o expiró (401), deslogueamos
+          if (err.message && err.message.includes('401')) {
+            localStorage.removeItem('access_token');
+            navigate('/iniciarSesion');
+          } else if (err.message && err.message.includes('Failed to fetch')) {
+            // SOLO si el servidor está apagado activamos el banner de modo prueba
+            setErrorServidorCaido(true);
+          } else {
+            // Cualquier otro error menor (como perfil vacío), el servidor sigue arriba y hay sesión
+            setErrorServidorCaido(false);
+          }
         });
     }
-  }, [token]);
+  }, [token, navigate]);
 
   const cerrarModal = () => {
     setIsModalOpen(false);
@@ -73,7 +87,8 @@ function AppLayout() {
     setIsModalOpen(true);
   };
 
-  const mostrarAvisoSinSesion = !token || errorPerfil;
+  // El banner solo se muestra si NO hay token O si el servidor se cayó por completo
+  const mostrarAvisoSinSesion = !token || errorServidorCaido;
   const nombreUsuario = perfil?.nombre_usuario || (token ? "Usuario Acadex" : "Invitado (Modo Pruebas)");
   const rolUsuario = "Estudiante ADSO"; 
 
@@ -82,7 +97,7 @@ function AppLayout() {
       <Sidebar onCrearRapido={abrirModalCrear} />
 
       <main className="pixel-content">
-        {/* Banner global si no hay sesión */}
+        {/* Banner global: solo aparece sin token o si FastAPI está apagado */}
         {mostrarAvisoSinSesion && <BannerModoPrueba />}
         
         {/* Barra superior global con datos de usuario */}
