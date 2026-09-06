@@ -147,9 +147,11 @@ export const integrantesConfig: EntidadConfig<Integrante> = {
     valoresVacios: { rol: 'miembro', id_usuario: '', id_grupo: '' },
 };
 
-export const TABS: EntidadConfig<any>[] = [
+export const TABS_ADMIN: EntidadConfig<any>[] = [
     usuariosConfig,
-    categoriasConfig,
+];
+
+export const TABS_LIDER: EntidadConfig<any>[] = [
     gruposConfig,
     tareasConfig,
     integrantesConfig,

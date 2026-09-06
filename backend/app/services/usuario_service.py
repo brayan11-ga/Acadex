@@ -1,3 +1,4 @@
+# backend/app/services/usuario_service.py
 from typing import List
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -5,6 +6,7 @@ from fastapi import HTTPException, status
 from app.core.security import create_access_token
 from app.models.usuario import Usuario
 from app.repositories import usuario_repository as repo
+from app.repositories import perfil_repository as perfil_repo
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -21,7 +23,17 @@ def registrar_usuario(db: Session, correo_electronico: str, contrasena: str) -> 
             detail="El correo ya está registrado",
         )
     hashed = hash_password(contrasena)
-    return repo.create_usuario(db, correo_electronico, hashed)
+    usuario = repo.create_usuario(db, correo_electronico, hashed)
+
+    # Todo usuario nuevo nace con su perfil ya creado, para que
+    # /perfiles/me nunca le devuelva 404 la primera vez que entra
+    nombre_por_defecto = correo_electronico.split("@")[0]
+    perfil_repo.create_perfil(db, {
+        "id_usuario": usuario.id_usuario,
+        "nombre_usuario": nombre_por_defecto,
+    })
+
+    return usuario
 
 def login(db: Session, correo_electronico: str, contrasena: str) -> str:
     usuario = repo.get_usuario_by_correo(db, correo_electronico)

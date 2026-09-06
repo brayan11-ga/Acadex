@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
+import type { TareaBackend } from "../services/tareas";
 import { ThemeToggle } from "../components/landing/ThemeToggle";
 import { apiFetch } from "../services/api";
 import { ModalConfirmacion } from "../components/layout/ModalConfirmacion";
 
-// Importamos los componentes que ahora son globales (Te sugiero moverlos a layout después)
+// Importamos los componentes globales
 import { BannerModoPrueba } from '../components/layout/BannerModoPrueba';
 import { Topbar } from '../components/layout/Topbar';
 
@@ -26,7 +27,10 @@ function AppLayout() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Estados globales para el perfil y sesión
+  // 1. Estados de nuestros compañeros (Soporte para edición de tareas)
+  const [tareaEditando, setTareaEditando] = useState<TareaBackend | null>(null);
+
+  // 2. Nuestros estados globales (Perfil, sesión y errores)
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [modalLogoutAbierto, setModalLogoutAbierto] = useState(false);
   const [errorPerfil, setErrorPerfil] = useState(false);
@@ -44,8 +48,13 @@ function AppLayout() {
     }
   }, [token]);
 
-  const manejarTareaCreada = () => {
+  const cerrarModal = () => {
     setIsModalOpen(false);
+    setTareaEditando(null);
+  };
+
+  const manejarTareaGuardada = () => {
+    cerrarModal();
     setRefreshKey((k) => k + 1);
   };
 
@@ -54,18 +63,29 @@ function AppLayout() {
     navigate('/iniciarSesion');
   };
 
+  const abrirModalCrear = () => {
+    setTareaEditando(null);
+    setIsModalOpen(true);
+  };
+
+  const abrirModalEditar = (tarea: TareaBackend) => {
+    setTareaEditando(tarea);
+    setIsModalOpen(true);
+  };
+
   const mostrarAvisoSinSesion = !token || errorPerfil;
   const nombreUsuario = perfil?.nombre_usuario || (token ? "Usuario Acadex" : "Invitado (Modo Pruebas)");
   const rolUsuario = "Estudiante ADSO"; 
 
   return (
     <div className="pixel-app">
-      <Sidebar onCrearRapido={() => setIsModalOpen(true)} />
+      <Sidebar onCrearRapido={abrirModalCrear} />
 
       <main className="pixel-content">
-        {/* 1. Elementos globales superiores */}
+        {/* Banner global si no hay sesión */}
         {mostrarAvisoSinSesion && <BannerModoPrueba />}
         
+        {/* Barra superior global con datos de usuario */}
         <Topbar 
           nombreUsuario={nombreUsuario}
           rolUsuario={rolUsuario}
@@ -73,10 +93,11 @@ function AppLayout() {
           onAbrirModalLogout={() => setModalLogoutAbierto(true)}
         />
 
-        {/* 2. Aquí se inyectan las vistas dinámicas (Panel, Tareas, y pronto Estadísticas) */}
+        {/* Vistas dinámicas con el contexto unificado */}
         <Outlet
           context={{
-            abrirModalGlobal: () => setIsModalOpen(true),
+            abrirModalGlobal: abrirModalCrear,
+            abrirModalEditar,
             refreshKey,
           }}
         />
@@ -90,14 +111,15 @@ function AppLayout() {
         <div className="pixel-modal-overlay">
           <div className="pixel-modal-content">
             <FormularioNuevaTarea
-              onDescartar={() => setIsModalOpen(false)}
-              onTareaCreada={manejarTareaCreada}
+              onDescartar={cerrarModal}
+              onTareaCreada={manejarTareaGuardada}
+              tareaAEditar={tareaEditando}
             />
           </div>
         </div>
       )}
 
-      {/* Modal de cierre de sesión movido a nivel global */}
+      {/* Modal global de cierre de sesión */}
       <ModalConfirmacion
         isOpen={modalLogoutAbierto}
         title="¿Cerrar sesión?"

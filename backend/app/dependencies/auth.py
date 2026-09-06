@@ -5,6 +5,7 @@ from app.dependencies.db import get_db
 from app.core.security import decode_access_token
 from app.models.usuario import Usuario
 from app.repositories import usuario_repository as repo
+from app.models.integrante import Integrante  # ajusta la ruta según cómo se llame tu archivo del modelo
 
 security_scheme = HTTPBearer()
 
@@ -41,6 +42,36 @@ def requerir_admin(usuario: Usuario = Depends(get_usuario_actual)) -> Usuario:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tiene permisos de administrador"
         )
+    return usuario
+
+def requerir_lider_de_grupo(
+    id_grupo: int,
+    usuario: Usuario = Depends(get_usuario_actual),
+    db: Session = Depends(get_db),
+) -> Usuario:
+    """
+    Permite pasar si el usuario es admin de la app,
+    O si es 'lider' específicamente de ESE grupo (id_grupo).
+    """
+    if usuario.es_admin:
+        return usuario
+
+    integrante = (
+        db.query(Integrante)
+        .filter(
+            Integrante.id_usuario == usuario.id_usuario,
+            Integrante.id_grupo == id_grupo,
+            Integrante.rol == "lider",
+        )
+        .first()
+    )
+
+    if not integrante:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos de líder sobre este grupo",
+        )
+
     return usuario
 
 # Alias de compatibilidad para que otros archivos que importan get_current_user sigan funcionando sin error
