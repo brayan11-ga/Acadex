@@ -1,7 +1,8 @@
+// src/components/layout/Topbar.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../styles/Topbar.css'
 
-// Le cambiamos el nombre a la interfaz para que sea genérica
 interface TopbarProps {
   nombreUsuario: string;
   rolUsuario: string;
@@ -35,9 +36,26 @@ export const Topbar = ({ nombreUsuario, rolUsuario, token, onAbrirModalLogout }:
         {menuAbierto && (
           <div className="user-dropdown-menu">
             {token ? (
-              <button onClick={() => { setMenuAbierto(false); onAbrirModalLogout(); }} className="btn-cerrar-sesion">
-                🚪 Cerrar Sesión
-              </button>
+              <>
+                <button 
+                  onClick={() => { 
+                    setMenuAbierto(false); 
+                    navigate('/perfil'); 
+                  }} 
+                  className="btn-dropdown-opcion"
+                >
+                  ⚙️ Configuración
+                </button>
+                <button 
+                  onClick={() => { 
+                    setMenuAbierto(false); 
+                    onAbrirModalLogout(); 
+                  }} 
+                  className="btn-cerrar-sesion"
+                >
+                  🚪 Cerrar Sesión
+                </button>
+              </>
             ) : (
               <button onClick={() => navigate('/iniciarSesion')} className="btn-cerrar-sesion btn-login-link">
                 🔑 Iniciar Sesión

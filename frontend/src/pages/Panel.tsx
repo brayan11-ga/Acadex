@@ -11,21 +11,26 @@ import '../styles/Panel.css';
 export const Panel = () => {
   const dispatch = useAppDispatch();
 
-  const { data: datos, loading: cargando, error } = useAppSelector((state) => state.panel);
+  
+  const { data: datos, loading: cargando } = useAppSelector((state) => state.panel);
 
   useEffect(() => {
     dispatch(fetchPanelData());
   }, [dispatch]);
 
   if (cargando) {
-    return <div className="panel-estado pixel-text">Cargando tu panel desde la base de datos...</div>;
+    return (
+      <div className="panel-contenedor panel-estado-container">
+        <div className="pixel-panel panel-mensaje-cargando">
+          <p className="pixel-text">Cargando tu panel...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (error || !datos) {
-    return <div className="panel-estado pixel-error">{error || "No se encontraron datos."}</div>;
-  }
-
-  const { tareaPrioritaria, progreso, proximasTareas } = datos;
+  const tareaPrioritaria = datos?.tareaPrioritaria;
+  const progreso = datos?.progreso;
+  const proximasTareas = datos?.proximasTareas;
 
   return (
     <div className="panel-contenedor">
