@@ -6,10 +6,12 @@ import { fetchPanelData } from '../store/panelSlice';
 import { PanelHero } from '../components/panel/PanelHero';
 import { PanelTareasRecientes } from '../components/panel/PanelTareasRecientes';
 
-import '../styles/Panel.css'; 
+import '../styles/Panel.css';
 
 export const Panel = () => {
   const dispatch = useAppDispatch();
+
+  
   const { data: datos, loading: cargando } = useAppSelector((state) => state.panel);
 
   useEffect(() => {
@@ -26,7 +28,9 @@ export const Panel = () => {
     );
   }
 
-  const { tareaPrioritaria, progreso, proximasTareas } = datos || {};
+  const tareaPrioritaria = datos?.tareaPrioritaria;
+  const progreso = datos?.progreso;
+  const proximasTareas = datos?.proximasTareas;
 
   return (
     <div className="panel-contenedor">

@@ -21,3 +21,10 @@ def create_usuario(db: Session, correo_electronico: str, contrasena_hash: str) -
 def delete_usuario(db: Session, usuario: Usuario) -> None:
     db.delete(usuario)
     db.commit()
+
+def update_usuario(db: Session, usuario: Usuario, datos: dict) -> Usuario:
+    for campo, valor in datos.items():
+        setattr(usuario, campo, valor)
+    db.commit()
+    db.refresh(usuario)
+    return usuario

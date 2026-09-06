@@ -3,14 +3,11 @@ import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { FormularioModal } from '../components/admin/FormularioModal';
 import { Resumen } from '../components/admin/Resumen';
-import { TABS } from '../services/entidadesConfig';
+import { TABS_LIDER } from '../services/entidadesConfig';
 import '../styles/lider.css';
 
-// Tab especial que no es una entidad de la BD, solo la vista de resumen/gráfica
 const TAB_RESUMEN = { clave: 'resumen', titulo: 'Resumen' };
-
-// Lista completa de pestañas a mostrar (resumen + las entidades reales)
-const TODAS_LAS_TABS = [TAB_RESUMEN, ...TABS];
+const TODAS_LAS_TABS = [TAB_RESUMEN, ...TABS_LIDER];
 
 export const Lider = () => {
     const [tabActivo, setTabActivo] = useState(TAB_RESUMEN.clave);
@@ -21,11 +18,10 @@ export const Lider = () => {
     const [filaEditando, setFilaEditando] = useState<any | null>(null);
     const [error, setError] = useState<string | null>(null);
     const esTabResumen = tabActivo === TAB_RESUMEN.clave;
-  // Solo buscamos la config de entidad si NO estamos en el tab de Resumen
-    const configActual = esTabResumen ? null : TABS.find((t) => t.clave === tabActivo)!;
+    const configActual = esTabResumen ? null : TABS_LIDER.find((t) => t.clave === tabActivo)!; // <-- TABS_LIDER
 
     const cargarDatos = useCallback(async () => {
-    if (!configActual) return; // no hay nada que cargar en el tab de Resumen
+    if (!configActual) return;
     setCargando(true);
     setError(null);
     const datos = await adminApi.listar<any>(configActual.clave);
@@ -55,8 +51,7 @@ export const Lider = () => {
     const guardar = async (datos: Record<string, unknown>) => {
     if (!configActual) return;
     setGuardando(true);
-    const idField = Object.keys(configActual.valoresVacios).includes('id')
-        ? 'id'
+    const idField = Object.keys(configActual.valoresVacios).includes('id')? 'id'
         : Object.keys(filaEditando ?? {}).find((k) => k.startsWith('id_') && filaEditando[k] !== undefined);
 
     const resultado = filaEditando
@@ -81,7 +76,7 @@ export const Lider = () => {
 
     return (
     <div className="admin-page">
-        <h1>Panel de Administración — Acadex</h1>
+        <h1>Panel de Líder — Acadex</h1>
 
         <div className="tabs">
         {TODAS_LAS_TABS.map((tab) => (

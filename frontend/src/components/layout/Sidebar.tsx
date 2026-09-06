@@ -5,15 +5,13 @@ import moonIcon from "../../assets/backgrounds/moon-icon.png";
 import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
 import iconoCalendario from "../../assets/icons/sidebar/calendario_sidebar.png";
 import iconoEstadisticas from "../../assets/icons/sidebar/estadisticas_sidebar.png";
-import iconoAjustes from "../../assets/icons/sidebar/Ajustes_sidebar.png";
 import logoAcadex from "../../assets/logos/logo_acadex.png";
 
 const enlaces = [
   { to: "/panel", label: "Panel", icono: null },
   { to: "/tareas", label: "Tareas", icono: iconoTareas },
   { to: "/calendario", label: "Calendario", icono: iconoCalendario },
-  { to: "/stats", label: "Estadísticas", icono: iconoEstadisticas },
-  { to: "/ajustes", label: "Ajustes", icono: iconoAjustes },
+  { to: "/estadisticas", label: "Estadísticas", icono: iconoEstadisticas },
 ];
 
 interface SidebarProps {
@@ -25,7 +23,7 @@ function Sidebar({ onCrearRapido }: SidebarProps) {
 
   return (
     <aside className={`pixel-sidebar ${isCollapsed ? "collapsed" : ""}`}>
-      {/* Botón de toggle con Bootstrap Icons y estilo para pixel-art (se ajustará en CSS) */}
+      {/* Botón de toggle con Bootstrap Icons y estilo para pixel-art */}
       <button 
         className="btn-toggle-sidebar" 
         onClick={() => setIsCollapsed(!isCollapsed)}

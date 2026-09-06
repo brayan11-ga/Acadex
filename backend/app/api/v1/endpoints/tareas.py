@@ -1,4 +1,3 @@
-# app/api/v1/endpoints/tareas.py
 from datetime import date
 from typing import List, Optional
 

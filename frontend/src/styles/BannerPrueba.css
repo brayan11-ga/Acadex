@@ -1,0 +1,45 @@
+/* --- src/styles/BannerPrueba.css --- */
+
+.panel-banner-aviso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background-color: rgba(242, 163, 62, 0.1);
+  border: 2px solid var(--amber, #f2a33e);
+  padding: 16px 24px;
+  border-radius: var(--radius-panel, 8px);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+}
+
+.panel-banner-texto {
+  font-size: 0.9rem;
+  color: var(--text-main, #ffffff);
+  line-height: 1.4;
+}
+
+.panel-banner-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.panel-btn-chico {
+  padding: 6px 14px;
+  font-size: 0.755rem;
+}
+
+@media (max-width: 768px) {
+  .panel-banner-aviso {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .panel-banner-acciones {
+    justify-content: center;
+  }
+}
