@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.repositories.panel_repository import panel_repository
 from app.schemas.panel_schema import DatosPanelResponse, TareaPanelSchema, ProgresoDiarioSchema, DiaProgresoSchema
+from app.models.tarea import Tarea
 
 class PanelService:
     def _formatear_fecha(self, fecha: datetime) -> str:
@@ -57,17 +58,25 @@ class PanelService:
                 etiqueta=nombre_categoria.upper()
             ))
 
-        # 3. Procesar el Progreso Diario
+        # 3. Procesar el Progreso Diario y Totales reales de la BD
         historial = panel_repository.obtener_historial_semana(db, id_usuario)
         pendientes = panel_repository.contar_tareas_pendientes(db, id_usuario)
         
-        completadas_total = len(historial)
-        total_tareas = completadas_total + pendientes
+        # Consultamos el total absoluto de tareas que tiene este usuario en la BD
+        total_tareas_db = db.query(Tarea).filter(Tarea.id_usuario == id_usuario).count()
+        
+        # Las tareas completadas totales son el total general menos las pendientes actuales
+        completadas_total = total_tareas_db - pendientes
+        if completadas_total < 0:
+            completadas_total = 0
+
+        total_tareas = total_tareas_db
 
         # Mapear los días de la semana (0=LUN, 1=MAR, ..., 6=DOM)
         nombres_dias = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"]
         conteo_dias = {i: 0 for i in range(7)}
         
+        # Cada registro en el historial cuenta para el día de la semana en que se finalizó
         for registro in historial:
             if registro.fechahora_fin:
                 conteo_dias[registro.fechahora_fin.weekday()] += 1

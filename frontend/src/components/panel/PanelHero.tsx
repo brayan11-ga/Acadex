@@ -4,9 +4,10 @@ import type { TareaPanel, ProgresoDiario } from '../../types/panel';
 interface PanelHeroProps {
   tareaPrioritaria?: TareaPanel | null;
   progreso?: ProgresoDiario | null;
+  onCompletarTarea?: (idTarea: number) => void;
 }
 
-export const PanelHero = ({ tareaPrioritaria, progreso }: PanelHeroProps) => {
+export const PanelHero = ({ tareaPrioritaria, progreso, onCompletarTarea }: PanelHeroProps) => {
   return (
     <section className="panel-grid-top">
       {tareaPrioritaria && (
@@ -22,8 +23,16 @@ export const PanelHero = ({ tareaPrioritaria, progreso }: PanelHeroProps) => {
           <p className="prioridad-desc">{tareaPrioritaria.descripcion}</p>
           
           <div className="prioridad-acciones">
-            <button className="pixel-btn-play"><span className="icon">▶</span> Iniciar Tarea</button>
-            <button className="pixel-btn-outline-success"><span className="icon">✔</span> Completar</button>
+            <button type="button" className="pixel-btn-play">
+              <span className="icon">▶</span> Iniciar Tarea
+            </button>
+            <button 
+              type="button" 
+              className="pixel-btn-outline-success"
+              onClick={() => onCompletarTarea && onCompletarTarea(tareaPrioritaria.id)}
+            >
+              <span className="icon">✔</span> Completar
+            </button>
           </div>
         </div>
       )}
@@ -40,15 +49,20 @@ export const PanelHero = ({ tareaPrioritaria, progreso }: PanelHeroProps) => {
           </p>
           
           <div className="progreso-grafico">
-            {progreso.dias.map((dia, idx) => (
-              <div key={idx} className="grafico-columna">
-                <div 
-                  className={`grafico-barra ${dia.actual ? 'barra-activa' : ''}`}
-                  style={{ height: `${dia.cantidad > 0 ? dia.cantidad * 25 : 10}%` }}
-                ></div>
-                <span className={`grafico-dia ${dia.actual ? 'dia-activo' : ''}`}>{dia.dia}</span>
-              </div>
-            ))}
+            {progreso.dias.map((dia, idx) => {
+              const tieneTareas = dia.cantidad > 0;
+              const alturaBarra = tieneTareas ? Math.max(dia.cantidad * 40, 35) : 8;
+
+              return (
+                <div key={idx} className="grafico-columna">
+                  <div 
+                    className={`grafico-barra ${dia.actual || tieneTareas ? 'barra-activa' : ''}`}
+                    style={{ height: `${alturaBarra}%` }}
+                  ></div>
+                  <span className={`grafico-dia ${dia.actual ? 'dia-activo' : ''}`}>{dia.dia}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
