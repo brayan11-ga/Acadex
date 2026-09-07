@@ -55,6 +55,7 @@ export const usuariosConfig: EntidadConfig<Usuarios> = {
     clave: 'usuarios',
     titulo:'Usuarios',
     columnas:[
+        {key:'id_usuario', label:'ID'},
         {key:'correo_electronico',label:'Correo'},
         {key:'fecha_registro',label:'Fecha de registro'},
         {key:'es_admin', label:'admin',render:(row)=>(row.es_admin ? 'Si':'No'),},

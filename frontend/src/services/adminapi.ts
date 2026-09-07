@@ -28,6 +28,13 @@ export const adminApi = {
     eliminar: (entidad: string, id: number | string) =>
     fetchJSON<void>(`/${entidad}/${id}`, { method: 'DELETE', headers: headersConToken() }),
 
+    // restablecer contraseña hasheada
+    restablecerPassword: <T>(id: number | string) =>
+    fetchJSON<T>(`/usuarios/${id}/restablecer-password`, {
+        method: 'POST',
+        headers: headersConToken(),
+    }),
+    
     actualizar: <T>(entidad: string, id: number | string, datos: Record<string, unknown>) =>
     fetchJSON<T>(`/${entidad}/${id}`, {
         method: 'PUT',
@@ -44,3 +51,4 @@ export const adminApi = {
 
     obtenerMe: <T>() => fetchJSON<T>('/usuarios/me', { headers: headersConToken() }),
 };
+

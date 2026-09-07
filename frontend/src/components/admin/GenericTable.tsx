@@ -1,4 +1,11 @@
 import type { ColumnConfig } from './Types';
+
+interface AccionExtra<T> {
+    etiqueta: string;
+    onClick: (fila: T) => void;
+    claseCss?: string;
+}
+
 interface GenericTableProps<T> {
     columnas: ColumnConfig<T>[];
     filas: T[];
@@ -6,6 +13,7 @@ interface GenericTableProps<T> {
     soloLectura?: boolean;
     onEditar?: (fila: T) => void;
     onEliminar?: (fila: T) => void;
+    accionesExtra?: AccionExtra<T>[]; // <-- nuevo
 }
 
 export function GenericTable<T extends Record<string, any>>({
@@ -15,6 +23,7 @@ export function GenericTable<T extends Record<string, any>>({
     soloLectura = false,
     onEditar,
     onEliminar,
+    accionesExtra = [],
 }: GenericTableProps<T>) {
     if (cargando) return <p>Cargando...</p>;
     if (filas.length === 0) return <p>No hay registros.</p>;
@@ -45,6 +54,15 @@ export function GenericTable<T extends Record<string, any>>({
                 <button className="btn btn-peligro" onClick={() => onEliminar?.(fila)}>
                     Eliminar
                 </button>
+                {accionesExtra.map((accion) => (
+                    <button
+                    key={accion.etiqueta}
+                    className={accion.claseCss ?? 'btn btn-secundario'}
+                    onClick={() => accion.onClick(fila)}
+                    >
+                    {accion.etiqueta}
+                    </button>
+                ))}
                 </td>
             )}
             </tr>

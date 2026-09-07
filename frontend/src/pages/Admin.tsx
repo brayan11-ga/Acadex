@@ -75,6 +75,20 @@ export const Admin = () => {
     cargarDatos();
     };
 
+    //  generar contraseña haseada aleatoria
+const restablecerPassword = async (fila: any) => {
+    const idField = Object.keys(fila).find((k) => k.startsWith('id_'));
+    if (!confirm(`¿Restablecer la contraseña de ${fila.correo_electronico ?? 'este usuario'}?`)) return;
+
+    const resultado = await adminApi.restablecerPassword<any>(fila[idField!]);
+    if (resultado === null) {
+    setError('No se pudo restablecer la contraseña.');
+    return;
+    }
+
+    alert(`Restablecimiento iniciado.\nToken: ${resultado.token ?? JSON.stringify(resultado)}`);
+};
+
     return (
     <div className="admin-page">
         <h1>Panel de Administración — Acadex</h1>
@@ -112,6 +126,17 @@ export const Admin = () => {
             soloLectura={configActual!.soloLectura}
             onEditar={abrirEditar}
             onEliminar={eliminar}
+            accionesExtra={
+                configActual!.clave === 'usuarios'
+                ? [
+                    {
+                        etiqueta: 'Restablecer contraseña',
+                        onClick: restablecerPassword,
+                        claseCss: 'btn btn-secundario',
+                    },
+                    ]
+                : []
+            }
             />
 
             {!configActual!.soloLectura && (
