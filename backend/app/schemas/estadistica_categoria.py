@@ -9,3 +9,13 @@ class EstadisticaCategoriaOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class EstadisticaCategoriaGrupoOut(BaseModel):
+    nombre_categoria: str
+    promedio_tiempo: Optional[float] = None
+    promedio_dificultad: Optional[float] = None
+    total_tareas: Optional[int] = None
+
+    class Config:
+        from_attributes = True

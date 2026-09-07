@@ -43,10 +43,17 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
                 nuevo_historial = HistorialTarea(
                     id_tarea=tarea_actualizada.id_tarea,
                     id_usuario=tarea_actualizada.id_usuario,
-                    fechahora_fin=datetime.now()
+                    fechahora_fin=datetime.now(),
+                    tiempo_real=tarea_actualizada.tiempo_acumulado,
+                    dificultad_real=tarea_actualizada.dificultad_estimada,
                 )
                 db.add(nuevo_historial)
                 db.commit()
+
+                from app.services import estadistica_service
+                estadistica_service.recalcular_estadistica_categoria(
+                    db, tarea_actualizada.id_usuario, tarea_actualizada.id_categoria
+                )
 
         # Si se reabrió (pasa de completada a pendiente/otro estado)
         elif estado_nuevo.lower() != "completada" and estado_anterior.lower() == "completada":
@@ -55,6 +62,11 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
                 HistorialTarea.id_usuario == tarea_actualizada.id_usuario
             ).delete()
             db.commit()
+
+            from app.services import estadistica_service
+            estadistica_service.recalcular_estadistica_categoria(
+                db, tarea_actualizada.id_usuario, tarea_actualizada.id_categoria
+            )
 
     return tarea_actualizada
 

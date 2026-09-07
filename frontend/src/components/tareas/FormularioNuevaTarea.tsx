@@ -71,6 +71,12 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       return;
     }
 
+    const tiempoEstimadoNum = Number(tiempoEstimado);
+    if (!tiempoEstimado.trim() || !Number.isFinite(tiempoEstimadoNum) || tiempoEstimadoNum <= 0) {
+      setError("El tiempo estimado debe ser un número mayor a 0 minutos");
+      return;
+    }
+
     setEnviando(true);
     try {
       if (tareaAEditar) {
@@ -79,7 +85,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
-          tiempo_estimado: Number(tiempoEstimado) || 0,
+          tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
         });
       } else {
@@ -88,7 +94,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
-          tiempo_estimado: Number(tiempoEstimado) || 0,
+          tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
           // Ya no enviamos id_usuario estático; el backend lo asigna de forma segura mediante el token
         });
