@@ -23,13 +23,23 @@ export const Calendario: React.FC = () => {
     const cargarTareas = async () => {
       setCargando(true);
       try {
-        const fechaInicio = `${año}-${String(mes + 1).padStart(2, '0')}-01`;
-        const fechaFin = `${año}-${String(mes + 1).padStart(2, '0')}-${totalDiasMes}`;
+        const diaFinPadded = String(totalDiasMes).padStart(2, '0');
+        const mesPadded = String(mes + 1).padStart(2, '0');
+        
+        const fechaInicio = `${año}-${mesPadded}-01`;
+        const fechaFin = `${año}-${mesPadded}-${diaFinPadded}`;
 
         const data = await obtenerTareasCalendario(fechaInicio, fechaFin);
-        setTareas(data);
+        
+        // Asignación segura garantizando que data sea un arreglo
+        if (Array.isArray(data)) {
+          setTareas(data);
+        } else {
+          setTareas([]);
+        }
       } catch (error) {
         console.error('Error al cargar tareas del calendario:', error);
+        setTareas([]);
       } finally {
         setCargando(false);
       }
@@ -44,6 +54,18 @@ export const Calendario: React.FC = () => {
   const añoSiguiente = () => setFechaActual(new Date(año + 1, mes, 1));
   const irHoy = () => setFechaActual(new Date());
 
+  // Función auxiliar para normalizar y comparar fechas sin problemas de horas o UTC
+  const coincideFecha = (fechaEntregaStr: string, fechaFiltro: string) => {
+    if (!fechaEntregaStr) return false;
+    
+    // Extrae únicamente la parte YYYY-MM-DD
+    const soloFecha = fechaEntregaStr.includes('T') 
+      ? fechaEntregaStr.split('T')[0] 
+      : fechaEntregaStr.split(' ')[0];
+
+    return soloFecha === fechaFiltro;
+  };
+
   const renderDias = () => {
     const celdas = [];
 
@@ -54,10 +76,8 @@ export const Calendario: React.FC = () => {
     for (let dia = 1; dia <= totalDiasMes; dia++) {
       const fechaString = `${año}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
-      const tareasDelDia = tareas.filter((t) => {
-        if (!t.fecha_entrega) return false;
-        return t.fecha_entrega.split('T')[0] === fechaString;
-      });
+      // Filtrado robusto
+      const tareasDelDia = tareas.filter((t) => coincideFecha(t.fecha_entrega, fechaString));
 
       const esHoy = new Date().toDateString() === new Date(año, mes, dia).toDateString();
 
@@ -65,15 +85,18 @@ export const Calendario: React.FC = () => {
         <div key={dia} className={`dia-celda ${esHoy ? 'hoy' : ''}`}>
           <span className="numero-dia">{dia}</span>
           <div className="lista-eventos">
-            {tareasDelDia.map((t) => (
-              <div
-                key={t.id_tarea}
-                className={`evento-badge estado-${t.estado}`}
-                title={`${t.nombre} (${t.estado.replace('_', ' ')})`}
-              >
-                {t.nombre}
-              </div>
-            ))}
+            {tareasDelDia.map((t) => {
+              const estadoLimpio = (t.estado || 'pendiente').toLowerCase();
+              return (
+                <div
+                  key={t.id_tarea}
+                  className={`evento-badge estado-${estadoLimpio}`}
+                  title={`${t.nombre} (${estadoLimpio.replace('_', ' ')})`}
+                >
+                  {t.nombre}
+                </div>
+              );
+            })}
           </div>
         </div>
       );
