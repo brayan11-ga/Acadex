@@ -43,13 +43,13 @@ export function obtenerTarea(idTarea: number): Promise<TareaBackend> {
   return apiFetch<TareaBackend>(`/tareas/${idTarea}`);
 }
 
-// Nueva función para obtener las tareas por rango de fechas en el calendario
+// Mapeo corregido a 'desde' y 'hasta' para cumplir con los requerimientos de FastAPI
 export function obtenerTareasCalendario(
   fechaInicio: string,
   fechaFin: string
 ): Promise<TareaBackend[]> {
   return apiFetch<TareaBackend[]>(
-    `/tareas/calendario?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+    `/tareas/calendario?desde=${fechaInicio}&hasta=${fechaFin}`
   );
 }
 
