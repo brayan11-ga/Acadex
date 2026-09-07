@@ -1,0 +1,143 @@
+/* Contenedor principal integrado al espacio de trabajo */
+.calendario-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+  color: #ffffff;
+  font-family: inherit;
+}
+
+/* Encabezado del mes y botones de navegación */
+.calendario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calendario-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.calendario-controles {
+  display: flex;
+  gap: 8px;
+}
+
+.calendario-controles button {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #6366f1;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.calendario-controles button:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+/* Grilla del Calendario (7 columnas exactas) */
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.encabezado-dia {
+  text-align: center;
+  font-weight: 700;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: #a5b4fc;
+}
+
+/* Celdas de días */
+.dia-celda {
+  min-height: 110px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease;
+}
+
+.dia-celda:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.dia-celda.vacia {
+  background: transparent;
+  border: none;
+}
+
+.dia-celda.hoy {
+  border: 2px solid #818cf8;
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.numero-dia {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+}
+
+/* Badges de eventos y tareas */
+.lista-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.evento-badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Colores según el estado de la tarea (Pendiente, En Proceso, Completada, Cancelada) */
+.estado-pendiente {
+  background-color: #f59e0b; /* Naranja / Ámbar */
+  color: #ffffff;
+}
+
+.estado-en_proceso {
+  background-color: #3b82f6; /* Azul */
+  color: #ffffff;
+}
+
+.estado-completada {
+  background-color: #10b981; /* Verde */
+  color: #ffffff;
+}
+
+.estado-cancelada {
+  background-color: #6b7280; /* Gris */
+  color: #ffffff;
+}

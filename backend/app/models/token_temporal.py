@@ -1,9 +1,13 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, CheckConstraint, func
 from app.db.base import Base
+from pydantic import BaseModel
+from datetime import datetime
 
 class TokenTemporal(Base):
     __tablename__ = "tokens_temporales"
 
+    class Config:
+        from_attributes = True
     id_token = Column(Integer, primary_key=True, index=True)
     tipo_token = Column(String(50), nullable=False)
     valor_token = Column(String(50), nullable=False, unique=True)
@@ -16,3 +20,8 @@ class TokenTemporal(Base):
     __table_args__ = (
         CheckConstraint("fecha_expiracion > fecha_creacion", name="chk_fecha_token"),
     )
+
+class TokenResetOut(BaseModel):
+    valor_token: str
+    fecha_expiracion: datetime
+    id_usuario: int

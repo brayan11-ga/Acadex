@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.tarea import Tarea
+from app.models.historial_tarea import HistorialTarea
 from app.repositories import tarea_repository
 from app.schemas.tarea import TareaCreate, TareaUpdate
 
@@ -23,7 +24,51 @@ def listar_tareas(db: Session) -> List[Tarea]:
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
     tarea = obtener_tarea(db, id_tarea)
-    return tarea_repository.actualizar_tarea(db, tarea, datos)
+    estado_anterior = tarea.estado
+
+    # Actualizamos la tarea mediante el repositorio
+    tarea_actualizada = tarea_repository.actualizar_tarea(db, tarea, datos)
+    estado_nuevo = tarea_actualizada.estado
+
+    # Sincronización automática con la tabla HistorialTarea para el gráfico del panel
+    if estado_nuevo and estado_anterior:
+        # Si se completó y antes no lo estaba
+        if estado_nuevo.lower() == "completada" and estado_anterior.lower() != "completada":
+            historial_existente = db.query(HistorialTarea).filter(
+                HistorialTarea.id_tarea == tarea_actualizada.id_tarea,
+                HistorialTarea.id_usuario == tarea_actualizada.id_usuario
+            ).first()
+
+            if not historial_existente:
+                nuevo_historial = HistorialTarea(
+                    id_tarea=tarea_actualizada.id_tarea,
+                    id_usuario=tarea_actualizada.id_usuario,
+                    fechahora_fin=datetime.now(),
+                    tiempo_real=tarea_actualizada.tiempo_acumulado,
+                    dificultad_real=tarea_actualizada.dificultad_estimada,
+                )
+                db.add(nuevo_historial)
+                db.commit()
+
+                from app.services import estadistica_service
+                estadistica_service.recalcular_estadistica_categoria(
+                    db, tarea_actualizada.id_usuario, tarea_actualizada.id_categoria
+                )
+
+        # Si se reabrió (pasa de completada a pendiente/otro estado)
+        elif estado_nuevo.lower() != "completada" and estado_anterior.lower() == "completada":
+            db.query(HistorialTarea).filter(
+                HistorialTarea.id_tarea == tarea_actualizada.id_tarea,
+                HistorialTarea.id_usuario == tarea_actualizada.id_usuario
+            ).delete()
+            db.commit()
+
+            from app.services import estadistica_service
+            estadistica_service.recalcular_estadistica_categoria(
+                db, tarea_actualizada.id_usuario, tarea_actualizada.id_categoria
+            )
+
+    return tarea_actualizada
 
 def eliminar_tarea(db: Session, id_tarea: int) -> None:
     tarea = obtener_tarea(db, id_tarea)

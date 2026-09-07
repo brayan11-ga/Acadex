@@ -22,11 +22,9 @@ export interface NuevaTareaPayload {
   dificultad_estimada: number;
   tiempo_estimado: number;
   id_categoria: number;
-  id_usuario: number;
+  id_usuario?: number;
 }
 
-// Payload para editar: todos los campos son opcionales porque tu TareaUpdate
-// del backend permite mandar solo lo que cambió
 export interface ActualizarTareaPayload {
   nombre?: string;
   descripcion?: string;
@@ -43,6 +41,16 @@ export function listarTareas(): Promise<TareaBackend[]> {
 
 export function obtenerTarea(idTarea: number): Promise<TareaBackend> {
   return apiFetch<TareaBackend>(`/tareas/${idTarea}`);
+}
+
+// Nueva función para obtener las tareas por rango de fechas en el calendario
+export function obtenerTareasCalendario(
+  fechaInicio: string,
+  fechaFin: string
+): Promise<TareaBackend[]> {
+  return apiFetch<TareaBackend[]>(
+    `/tareas/calendario?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+  );
 }
 
 export function crearTarea(datos: NuevaTareaPayload): Promise<TareaBackend> {

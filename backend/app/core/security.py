@@ -12,7 +12,6 @@ def create_access_token(subject: str, expires_delta: Optional[timedelta] = None)
     to_encode = {"sub": subject, "exp": expire, "iat": now}
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
-
 def decode_access_token(token: str) -> Optional[TokenPayload]:
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])

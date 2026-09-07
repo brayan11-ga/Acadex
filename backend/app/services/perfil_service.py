@@ -11,9 +11,9 @@ def crear_perfil(db: Session, data: dict) -> Perfil:
         )
     return repo.create_perfil(db, data)
 
-def obtener_perfil_por_usuario(db: Session, id_usuario: int) -> Perfil:
+def obtener_perfil_por_usuario(db: Session, id_usuario: int, lanzar_error: bool = True):
     perfil = repo.get_perfil_by_usuario(db, id_usuario)
-    if not perfil:
+    if not perfil and lanzar_error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Perfil no encontrado",
