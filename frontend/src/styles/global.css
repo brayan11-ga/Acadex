@@ -4,7 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap');
 
 /* =========================
-   VARIABLES (Adaptadas a Pixel Theme)
+   VARIABLES (Adaptadas a Pixel Theme y Modo Global)
 ========================= */
 
 :root {
@@ -12,8 +12,9 @@
     --paper: #0d1526;       /* pixel-bg-start */
     --paper-deep: #070c17;  /* pixel-bg-end */
     --paper-soft: rgba(20, 30, 58, 0.55); /* pixel-sidebar */
-    --panel: #17233f;       /* pixel-panel */
+    --panel: #151b28;       /* Sincronizado para componentes y tarjetas */
     --panel-alt: #1f2e52;   /* pixel-panel-alt */
+    --background: #0b0f19;  /* Fondo global principal de vistas privadas */
 
     /* texto */
     --ink: #f1eaff;         /* pixel-ink */
@@ -21,10 +22,12 @@
     --ink-faint: #7e739e;   /* pixel-ink-faint */
     --panel-ink: #f1eaff;
     --panel-ink-soft: #b9aee0;
+    --text-main: #ffffff;   /* Sincronizado para textos generales */
+    --text-muted: #94a3b8;  /* Sincronizado para textos secundarios */
 
     /* líneas */
     --line: rgba(255, 255, 255, 0.08);       /* pixel-border */
-    --line-strong: rgba(255, 255, 255, 0.16); /* pixel-border-strong */
+    --line-strong: #2a3548;                  /* Sincronizado para bordes fuertes */
     --line-panel: rgba(255, 255, 255, 0.08);
 
     /* marca & prioridades */
@@ -35,7 +38,7 @@
     --amber: #f2a33e;       /* pixel-nivel-4 */
     --coral: #ff6fa5;       /* pixel-alta */
 
-    /* forma (Bordes más cuadrados para estilo pixel) */
+    /* forma */
     --radius-panel: 10px;   /* pixel-radius */
     --radius-chip: 6px;     /* pixel-radius-sm */
 
@@ -68,28 +71,31 @@ html {
     scroll-behavior: smooth;
 }
 
-/* OVERRIDES PARA MODO CLARO (Adaptado a tonos morados claros) */
+/* OVERRIDES PARA MODO CLARO GLOBAL */
 html.light-mode {
     --paper: #f4f0ff;
     --paper-deep: #e8e2f8;
     --paper-soft: rgba(124, 92, 255, 0.08);
-    --panel: #ffffff;
+    --panel: #ffffff;       /* Tarjetas y paneles limpios en blanco */
+    --background: #f8fafc;  /* Fondo general claro unificado */
     
     --ink: #1a1528;
     --ink-soft: #4a4261;
     --ink-faint: #756a94;
     --panel-ink: #1a1528;
     --panel-ink-soft: #4a4261;
+    --text-main: #1e293b;   /* Texto principal oscuro para modo claro */
+    --text-muted: #64748b;  /* Texto secundario para modo claro */
 
     --line: rgba(124, 92, 255, 0.15);
-    --line-strong: rgba(124, 92, 255, 0.25);
+    --line-strong: #cbd5e1; /* Bordes claros consistentes */
     --line-panel: rgba(124, 92, 255, 0.15);
 
     --text-on-azure: white;
     --header-bg: rgba(244, 240, 255, 0.85);
     --track-bg: rgba(124, 92, 255, 0.1);
 
-    --azure: #5b3df0; /* pixel-accent-strong para contraste en claro */
+    --azure: #5b3df0; 
     --azure-soft: #7c5cff;
 }
 
@@ -140,7 +146,6 @@ h1, h2, h3, h4 {
 }
 
 h1 {
-    /* Reducido ligeramente porque Press Start 2P es muy ancha */
     font-size: clamp(1.4rem, 3vw, 2.2rem);
     font-weight: 400;
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import '../../styles/register.css'; // <-- Importamos su propia hoja de estilos
+import '../../styles/register.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { registrarUsuario } from '../../services/authService';
 

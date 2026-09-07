@@ -2,8 +2,8 @@
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./router/AppRouter";
-import { Provider } from "react-redux"; // <-- Importar Provider
-import { store } from "./store/store"; // <-- Importar tu store
+import { Provider } from "react-redux";
+import { store } from "./store/store"; 
 
 function App() {
   return (

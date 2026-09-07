@@ -3,17 +3,25 @@ import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 interface ThemeContextType {
-    isDarkMode: boolean; // <-- Cambiado de Boolean a boolean
+    isDarkMode: boolean;
     toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    // Inicializamos leyendo del localStorage para que persista al cambiar de ruta
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedTheme = localStorage.getItem('acadex_dark_mode');
+        return savedTheme !== null ? JSON.parse(savedTheme) : true;
+    });
 
     const toggleTheme = () => {
-        setIsDarkMode((prev) => !prev);
+        setIsDarkMode((prev: boolean) => {
+            const nextMode = !prev;
+            localStorage.setItem('acadex_dark_mode', JSON.stringify(nextMode));
+            return nextMode;
+        });
     };
 
     useEffect(() => {

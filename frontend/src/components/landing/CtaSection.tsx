@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 // src/components/landing/CtaSection.tsx
 export const CtaSection = () => {
-  return (
+    return (
     <section className="section cta-section">
             <div className="container cta-inner" data-reveal>
                 <span className="eyebrow">Empieza hoy</span>
@@ -14,7 +14,7 @@ export const CtaSection = () => {
                 <Link to="/registrarse" className="btn btn-primary">Regístrate aquí</Link>
             </div>
         </section>
-  );
+    );
 };
 
 export default CtaSection;

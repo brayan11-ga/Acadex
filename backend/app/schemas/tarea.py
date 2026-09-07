@@ -1,3 +1,4 @@
+# backend/app/schemas/tarea.py
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -17,11 +18,9 @@ class TareaCreate(TareaBase):
 
     @model_validator(mode="after")
     def validar_owner(self):
-        tiene_usuario = self.id_usuario is not None
-        tiene_grupo = self.id_grupo is not None
-        if tiene_usuario == tiene_grupo:
+        if self.id_usuario is not None and self.id_grupo is not None:
             raise ValueError(
-                "La tarea debe pertenecer a un usuario O a un grupo, no a ambos ni a ninguno"
+                "La tarea no puede pertenecer a un usuario y a un grupo al mismo tiempo"
             )
         return self
 

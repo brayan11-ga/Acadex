@@ -1,6 +1,4 @@
-# app/schemas/categoria.py
 from pydantic import BaseModel, ConfigDict
-
 
 class CategoriaResponse(BaseModel):
     id_categoria: int

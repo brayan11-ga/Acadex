@@ -43,8 +43,6 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
     listarCategorias()
       .then((datos) => {
         setCategorias(datos);
-        // Solo ponemos una categoría por defecto si estamos CREANDO,
-        // no si vamos a rellenar el formulario con una tarea existente
         if (!tareaAEditar && datos.length > 0) {
           setIdCategoria(datos[0].id_categoria);
         }
@@ -73,6 +71,12 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       return;
     }
 
+    const tiempoEstimadoNum = Number(tiempoEstimado);
+    if (!tiempoEstimado.trim() || !Number.isFinite(tiempoEstimadoNum) || tiempoEstimadoNum <= 0) {
+      setError("El tiempo estimado debe ser un número mayor a 0 minutos");
+      return;
+    }
+
     setEnviando(true);
     try {
       if (tareaAEditar) {
@@ -81,7 +85,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
-          tiempo_estimado: Number(tiempoEstimado) || 0,
+          tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
         });
       } else {
@@ -90,9 +94,9 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
-          tiempo_estimado: Number(tiempoEstimado) || 0,
+          tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-          id_usuario: 1, // TODO: reemplazar por el id del usuario logueado
+          // Ya no enviamos id_usuario estático; el backend lo asigna de forma segura mediante el token
         });
       }
       onTareaCreada();
