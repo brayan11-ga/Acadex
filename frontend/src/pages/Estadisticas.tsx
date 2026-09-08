@@ -1,72 +1,91 @@
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../services/api';
-import { Estadisticas as GraficaEstadisticas } from '../components/estadisticas/Estadisticas';
-import '../styles/admin.css';
+// src/pages/Estadisticas.tsx
+import React, { useEffect, useState } from 'react';
+import { obtenerEstadisticas } from '../services/estadisticasService';
+import type { ResumenEstadisticas } from '../types/estadisticas';
 
-interface EstadisticaCategoria {
-    nombre_categoria: string;
-    promedio_tiempo: number | null;
-    promedio_dificultad: number | null;
-    total_tareas: number | null;
-}
+import { WeeklyGoalCard } from '../components/estadisticas/WeeklyGoalCard';
+import { TasksCompletedChart } from '../components/estadisticas/TasksCompletedChart';
+import { StatCard } from '../components/estadisticas/StatCard';
+import { EfficiencyInsights } from '../components/estadisticas/EfficiencyInsights';
 
-export const Estadisticas = () => {
-    const [datos, setDatos] = useState<EstadisticaCategoria[]>([]);
-    const [cargando, setCargando] = useState(true);
+// Importamos los estilos independientes
+import '../styles/estadisticas.css';
 
-    useEffect(() => {
-    const cargar = async () => {
-        setCargando(true);
-        const resultado = await apiFetch<EstadisticaCategoria[]>('/estadisticas/me');
-        setDatos(resultado ?? []);
-        setCargando(false);
-    };
-    cargar();
-    }, []);
+export const Estadisticas: React.FC = () => {
+  const [data, setData] = useState<ResumenEstadisticas | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const itemsTotalTareas = datos.map((d) => ({
-    label: d.nombre_categoria,
-    valor: d.total_tareas ?? 0,
-    }));
+  useEffect(() => {
+    obtenerEstadisticas()
+      .then((res) => {
+        setData(res);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError('No se pudieron cargar las estadísticas.');
+        setLoading(false);
+        console.error(err);
+      });
+  }, []);
 
+  if (loading) {
     return (
-    <div className="admin-page">
-        <h1>Mis Estadísticas por Categoría</h1>
-
-        <GraficaEstadisticas
-        titulo="Total de tareas por categoría"
-        items={itemsTotalTareas}
-        cargando={cargando}
-        />
-
-        {!cargando && datos.length > 0 && (
-        <table className="tabla-admin" style={{ marginTop: '2rem' }}>
-            <thead>
-            <tr>
-                <th>Categoría</th>
-                <th>Promedio tiempo (min)</th>
-                <th>Promedio dificultad</th>
-                <th>Total tareas</th>
-            </tr>
-            </thead>
-            <tbody>
-            {datos.map((d) => (
-                <tr key={d.nombre_categoria}>
-                <td>{d.nombre_categoria}</td>
-                <td>{d.promedio_tiempo?.toFixed(1) ?? '-'}</td>
-                <td>{d.promedio_dificultad?.toFixed(1) ?? '-'}</td>
-                <td>{d.total_tareas ?? 0}</td>
-                </tr>
-            ))}
-            </tbody>
-        </table>
-        )}
-
-        {!cargando && datos.length === 0 && (
-        <p>Aún no tienes estadísticas registradas. ¡Completa algunas tareas primero!</p>
-        )}
-    </div>
+      <div className="stats-page stats-state-container">
+        <div className="stats-spinner"></div>
+        <span className="stats-loading-text">Cargando estadísticas de Acadex...</span>
+      </div>
     );
-};
+  }
 
-export default Estadisticas;
+  if (error || !data) {
+    return (
+      <div className="stats-page stats-state-container stats-error-text">
+        {error || 'Error al cargar datos'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="stats-page">
+      <header className="stats-header">
+        <h1>Estadísticas de Acadex</h1>
+        <p>Analítica de rendimiento para Acadex esta semana.</p>
+      </header>
+
+      <div className="stats-grid-top">
+        <WeeklyGoalCard data={data.meta_semanal} />
+        <TasksCompletedChart dias={data.grafico_diario} />
+      </div>
+
+      <div className="stats-grid-middle">
+        <StatCard 
+          titulo="Focus Score" 
+          valorPrincipal={`${data.focus_score.puntaje}/100`} 
+          subtexto={data.focus_score.nivel} 
+          icono="zap"
+          colorSubtexto="positive"
+        />
+        <StatCard 
+          titulo="Top Category" 
+          valorPrincipal={data.categoria_top.nombre} 
+          subtexto={`${data.categoria_top.horas_dedicadas} hrs logged`} 
+          icono="rocket"
+          colorSubtexto="neutral"
+        />
+        <StatCard 
+          titulo="Avg. Completion" 
+          valorPrincipal={`${data.promedio_tiempo.minutos} min`} 
+          subtexto={data.promedio_tiempo.tendencia} 
+          icono="clock"
+          colorSubtexto="positive"
+        />
+      </div>
+
+      <EfficiencyInsights 
+        insights={data.insights} 
+        sugerenciaIa={data.sugerencia_ia} 
+      />
+    </div>
+  );
+};

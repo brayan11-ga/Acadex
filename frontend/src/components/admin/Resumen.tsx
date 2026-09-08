@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../services/adminapi';
-import { Estadisticas } from '../estadisticas/Estadisticas';
-import type { ItemResumen } from '../estadisticas/Estadisticas';
+import { EstadisticasAdmin } from '../estadisticas/EstadisticasAdmin';
+import type { ItemResumen } from '../estadisticas/EstadisticasAdmin';
 
 export const Resumen = () => {
     const [items, setItems] = useState<ItemResumen[]>([]);
@@ -30,7 +30,7 @@ export const Resumen = () => {
     cargar();
     }, []);
 
-    return <Estadisticas titulo="Resumen general de Acadex" items={items} cargando={cargando} />;
+    return <EstadisticasAdmin titulo="Resumen general de Acadex" items={items} cargando={cargando} />;
 };
 
 export default Resumen;
