@@ -4,7 +4,6 @@ import { obtenerEstadisticas } from '../services/estadisticasService';
 import type { ResumenEstadisticas } from '../types/estadisticas';
 
 import { WeeklyGoalCard } from '../components/estadisticas/WeeklyGoalCard';
-import { TasksCompletedChart } from '../components/estadisticas/TasksCompletedChart';
 import { StatCard } from '../components/estadisticas/StatCard';
 import { EfficiencyInsights } from '../components/estadisticas/EfficiencyInsights';
 
@@ -55,7 +54,6 @@ export const Estadisticas: React.FC = () => {
 
       <div className="stats-grid-top">
         <WeeklyGoalCard data={data.meta_semanal} />
-        <TasksCompletedChart dias={data.grafico_diario} />
       </div>
 
       <div className="stats-grid-middle">
