@@ -1,19 +1,20 @@
 .panel-contenedor {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--container-width, 1180px);
   margin: 0 auto;
-  padding: 24px;
+  padding: 28px 24px 40px;
   box-sizing: border-box;
 }
 
-.panel-estado {
+.panel-estado,
+.panel-estado-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60vh;
+  min-height: 60vh;
   font-size: 1.2rem;
   color: var(--text-muted, #94a3b8);
 }
@@ -22,7 +23,7 @@
 .panel-header-titulos {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pixel-title-main {
@@ -48,13 +49,33 @@
 /* --- Grids --- */
 .panel-grid-top {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 3fr) minmax(22rem, 2fr);
   gap: 24px;
+  align-items: stretch;
+}
+
+/* El gráfico se reutiliza desde Estadísticas, pero en el Panel debe ocupar
+   únicamente su columna para convivir con la tarea prioritaria. */
+.panel-grid-top .chart-container {
+  grid-column: auto;
+  min-width: 0;
+  min-height: 19rem;
+}
+
+.panel-grid-top .chart-container .bars-wrapper {
+  flex: 1;
+  height: auto;
+  min-height: 9rem;
+  padding-top: 1rem;
 }
 
 @media (max-width: 1024px) {
   .panel-grid-top {
     grid-template-columns: 1fr;
+  }
+
+  .panel-grid-top .chart-container {
+    min-height: auto;
   }
 }
 
@@ -73,7 +94,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
+  min-height: 19rem;
 }
 
 .prioridad-top {
@@ -99,7 +121,7 @@
 }
 
 .prioridad-titulo {
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
   font-weight: bold;
   color: var(--text-main, #ffffff);
   margin: 0;
@@ -116,7 +138,7 @@
 .prioridad-acciones {
   display: flex;
   gap: 12px;
-  margin-top: 8px;
+  margin-top: auto;
 }
 
 .pixel-btn-outline-success {
@@ -137,11 +159,50 @@
   background-color: rgba(69, 224, 168, 0.1);
 }
 
+/* La información de la tarea y el temporizador quedan balanceados en escritorio. */
+@media (min-width: 1200px) {
+  .tarjeta-prioridad {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(12rem, 0.8fr);
+    grid-template-areas:
+      "meta meta"
+      "title timer"
+      "description timer"
+      "actions timer";
+    align-items: center;
+    column-gap: 2rem;
+    row-gap: 0.85rem;
+  }
+
+  .prioridad-top {
+    grid-area: meta;
+  }
+
+  .prioridad-titulo {
+    grid-area: title;
+  }
+
+  .prioridad-desc {
+    grid-area: description;
+  }
+
+  .tarjeta-prioridad > .cronometro-contenedor {
+    grid-area: timer;
+    align-self: center;
+  }
+
+  .prioridad-acciones {
+    grid-area: actions;
+    margin-top: 0;
+    align-self: end;
+  }
+}
+
 /* --- Grid Inferior: Próximas Tareas --- */
 .panel-grid-bottom {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .bottom-header {
@@ -163,22 +224,23 @@
 
 .proximas-tareas-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 1024px) {
-  .proximas-tareas-grid {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 24px;
 }
 
 .tarjeta-mini {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 160px;
+  gap: 14px;
+  min-height: 12.5rem;
+  padding: 20px;
+  transition: transform var(--transition, 0.2s ease), border-color var(--transition, 0.2s ease);
+}
+
+.tarjeta-mini:hover {
+  transform: translateY(-2px);
+  border-color: var(--azure, #7c5cff);
 }
 
 .tarjeta-mini-top {
@@ -212,7 +274,8 @@
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
 }
 
 .pixel-chip-tech {
@@ -266,4 +329,27 @@
   color: var(--text-main, #ffffff);
   margin-left: auto;
   font-weight: bold;
+}
+
+@media (max-width: 640px) {
+  .panel-contenedor {
+    gap: 22px;
+    padding: 20px 16px 32px;
+  }
+
+  .prioridad-top,
+  .bottom-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .prioridad-acciones,
+  .pixel-btn-outline-success {
+    width: 100%;
+  }
+
+  .pixel-btn-outline-success {
+    justify-content: center;
+  }
 }

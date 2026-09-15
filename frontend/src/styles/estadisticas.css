@@ -106,13 +106,6 @@
   grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-@media (min-width: 1024px) {
-  .stats-grid-top {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 .stats-grid-middle {
@@ -125,6 +118,89 @@
 @media (min-width: 768px) {
   .stats-grid-middle {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* La meta ocupa toda la fila y aprovecha el ancho disponible. */
+  .stats-grid-top > .stat-card {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(15rem, 1.2fr);
+    grid-template-areas:
+      "header header"
+      "progress summary";
+    align-items: center;
+    column-gap: 2rem;
+    row-gap: 1rem;
+    min-height: 15rem;
+  }
+
+  .stats-grid-top .stat-card-header {
+    grid-area: header;
+    margin-bottom: 0;
+  }
+
+  .stats-grid-top .stat-card-body {
+    grid-area: progress;
+    display: flex;
+    justify-content: center;
+  }
+
+  .stats-grid-top .stat-card-footer {
+    grid-area: summary;
+    min-height: 8rem;
+    justify-content: center;
+    margin-top: 0;
+    padding: 0 0 0 1.5rem;
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}
+
+/* En escritorio, la meta y el Focus Score comparten la primera fila. */
+@media (min-width: 1024px) {
+  .stats-page:not(.stats-state-container) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .stats-header,
+  .stats-grid-bottom {
+    grid-column: 1 / -1;
+  }
+
+  .stats-header {
+    margin-bottom: 0;
+  }
+
+  /* Permite ubicar las tarjetas de ambos grupos en una sola cuadrícula. */
+  .stats-grid-top,
+  .stats-grid-middle {
+    display: contents;
+  }
+
+  .stats-grid-top > .stat-card {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .stats-grid-middle > .stat-card:nth-child(1) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .stats-grid-middle > .stat-card:nth-child(2) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .stats-grid-middle > .stat-card:nth-child(3) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .stats-page:not(.stats-state-container) .stats-grid-bottom {
+    margin-top: 0;
   }
 }
 
