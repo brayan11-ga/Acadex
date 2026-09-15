@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCronometro } from '../../hooks/useCronometro';
-import { PixelHourglass } from './Pixelhourglass';
+import { PixelHourglass } from './PixelHourglass';
 import '../../styles/Cronometro.css';
 
 interface CronometroProps {

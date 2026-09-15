@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import '../../styles/Pixelhourglass.css';
 
-const FRAMES_COUNT = 10; // pasos de la animación de vaciado/llenado
-const STEP_MS = 10; // duración de cada paso
-const FLIP_MS = 10; // duración del giro al terminar el ciclo
+// esta en mili Segundos
+const FRAMES_COUNT = 9; // pasos de vaciado/llenado
+const STEP_MS = 260; // duración de cada paso
+const FLIP_MS = 400; // duración del giro al terminar el ciclo
 
 // 1 = marco de vidrio del reloj
 const FRAME: number[][] = [
@@ -20,26 +21,25 @@ const FRAME: number[][] = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
-// Celdas de arena en la cámara de ARRIBA
+// Celdas de arena 
 const TOP_CELLS: [number, number][] = [
-  [4, 4],
-  [3, 3], [3, 4], [3, 5],
-  [2, 2], [2, 3], [2, 4], [2, 5], [2, 6],
-  [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7],
+    [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7],
+    [2, 2], [2, 3], [2, 4], [2, 5], [2, 6],
+    [3, 3], [3, 4], [3, 5],
+    [4, 4],
 ];
 
-// Celdas de arena en la cámara de ABAJO,
 const BOTTOM_CELLS: [number, number][] = [
-  [9, 1], [9, 2], [9, 3], [9, 4], [9, 5], [9, 6], [9, 7],
-  [8, 2], [8, 3], [8, 4], [8, 5], [8, 6],
-  [7, 3], [7, 4], [7, 5],
-  [6, 4],
+    [9, 1], [9, 2], [9, 3], [9, 4], [9, 5], [9, 6], [9, 7],
+    [8, 2], [8, 3], [8, 4], [8, 5], [8, 6],
+    [7, 3], [7, 4], [7, 5],
+    [6, 4],
 ];
 
 const TOTAL_SAND = TOP_CELLS.length; 
 
 interface PixelHourglassProps {
-  className?: string;
+    className?: string;
 }
 
 export const PixelHourglass = ({ className }: PixelHourglassProps) => {
