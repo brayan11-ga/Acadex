@@ -75,3 +75,25 @@ export function eliminarTarea(idTarea: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+// frontend/src/services/tareas.ts
+
+// Esta interfaz coincide con lo que Pydantic nos devuelve
+export interface TareaPropuestaIA {
+  titulo: string;
+  descripcion: string;
+  dificultad_estimada: number;
+  tiempo_estimado: number;
+  id_categoria: number | null;
+}
+
+export async function analizarDocumentoIA(archivo: File): Promise<TareaPropuestaIA> {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  // Usamos apiFetch. Como pasamos formData, se manejarán los headers correctamente
+  return apiFetch<TareaPropuestaIA>("/tareas/analizar-documento", {
+    method: "POST",
+    body: formData,
+  });
+}

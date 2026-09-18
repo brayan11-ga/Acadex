@@ -2,14 +2,15 @@
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual
 from app.models.usuario import Usuario
-from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse
+from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse, TareaPropuestaIA
 from app.services import tarea_service
+from app.services import ia_service
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
@@ -56,3 +57,35 @@ def actualizar_tarea(id_tarea: int, datos: TareaUpdate, db: Session = Depends(ge
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_tarea(id_tarea: int, db: Session = Depends(get_db)):
     tarea_service.eliminar_tarea(db, id_tarea)
+    
+
+@router.post("/analizar-documento", response_model=TareaPropuestaIA)
+def analizar_documento(
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual)
+):
+    """
+    Recibe un archivo PDF, lo analiza en memoria usando Gemini IA y
+    devuelve una propuesta de tarea sin guardarla en la base de datos.
+    """
+    if archivo.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Solo se admiten documentos en formato PDF."
+        )
+    
+    # Validar tamaño aproximado (ej. 5MB) leyendo el buffer
+    archivo.file.seek(0, 2) # Ir al final del archivo
+    tamanio = archivo.file.tell()
+    archivo.file.seek(0) # Volver al inicio para que pdfplumber pueda leerlo
+    
+    if tamanio > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="El archivo supera el límite de 5MB."
+        )
+
+    return ia_service.analizar_documento_con_ia(db, archivo)
+
+# ... @router.post("/") def crear_tarea(...) ...
