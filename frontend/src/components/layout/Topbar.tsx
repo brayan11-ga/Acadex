@@ -1,7 +1,8 @@
 // src/components/layout/Topbar.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../styles/Topbar.css'
+import { PanelNotificaciones } from '../common/PanelNotificaciones'; 
+import '../../styles/Topbar.css';
 
 interface TopbarProps {
   nombreUsuario: string;
@@ -22,16 +23,18 @@ export const Topbar = ({ nombreUsuario, rolUsuario, token, onAbrirModalLogout }:
       </div>
       
       <div className="user-profile-wrapper">
-        <button className="user-profile-clickable" onClick={() => setMenuAbierto(!menuAbierto)}>
-          <div className="user-profile">
-            <div className="btn-notificacion" aria-label="Notificaciones">🔔</div>
-            <div className="user-info">
+        <div className="user-profile">
+          {/* Aquí insertamos el componente global conectado a Redux y a la API */}
+          <PanelNotificaciones />
+
+          <button className="user-profile-clickable" onClick={() => setMenuAbierto(!menuAbierto)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="user-info" style={{ textAlign: 'right' }}>
               <span className="user-name">{nombreUsuario}</span>
               <span className="user-role">{rolUsuario}</span>
             </div>
             <div className="user-avatar pixel-avatar"></div>
-          </div>
-        </button>
+          </button>
+        </div>
 
         {menuAbierto && (
           <div className="user-dropdown-menu">

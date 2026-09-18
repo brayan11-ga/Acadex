@@ -1,10 +1,12 @@
 // src/store/store.ts
 import { configureStore } from "@reduxjs/toolkit";
 import panelReducer from "./panelSlice";
+import notificacionesReducer from "./notificacionesSlice";
 
 export const store = configureStore({
   reducer: {
     panel: panelReducer,
+    notificaciones: notificacionesReducer
   },
 });
 
