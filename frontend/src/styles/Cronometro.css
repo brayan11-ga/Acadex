@@ -1,0 +1,115 @@
+.cronometro-contenedor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.cronometro-tiempo {
+    font-family: monospace;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.cronometro-estado {
+    font-size: 12px;
+    opacity: 0.75;
+    margin: 0;
+}
+
+.cronometro-barra-limite {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.cronometro-barra-relleno {
+    height: 100%;
+    background: #ffd54a;
+    transition: width 0.3s;
+}
+
+.cronometro-acciones {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.cronometro-acciones button {
+    flex: 1;
+}
+
+.pixel-btn-play {
+    background-color: var(--azure, #0275ff);
+    color: white;
+    border: 2px solid #0056b3;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s;
+}
+
+.pixel-btn-play:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+}
+
+.pixel-btn-outline {
+    background-color: transparent;
+    color: var(--text-main, #ffffff);
+    border: 2px solid var(--line-strong, #2a3548);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.pixel-btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.pixel-btn-danger {
+    background-color: transparent;
+    color: #ff5c5c;
+    border: 2px solid #ff5c5c;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.pixel-btn-danger:hover {
+    background-color: rgba(255, 92, 92, 0.1);
+}
+
+.cronometro-confirmacion {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    background: rgba(255, 0, 0, 0.08);
+    text-align: center;
+}
+
+.cronometro-confirmacion p {
+    font-size: 13px;
+    margin: 0 0 8px;
+}
+
+.cronometro-confirmacion-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.cronometro-confirmacion-acciones button {
+    flex: 1;
+}

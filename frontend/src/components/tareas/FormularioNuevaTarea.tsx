@@ -1,5 +1,5 @@
 // src/components/tareas/FormularioNuevaTarea.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import caraNivel1 from "../../assets/icons/dificultad/1.png";
 import caraNivel2 from "../../assets/icons/dificultad/2.png";
 import caraNivel3 from "../../assets/icons/dificultad/3.png";
@@ -9,7 +9,7 @@ import iconoCategorias from "../../assets/icons/ui/categorias.png";
 import iconoCalendario from "../../assets/icons/ui/calendario.png";
 import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
-import { crearTarea, actualizarTarea, type TareaBackend } from "../../services/tareas";
+import { crearTarea, actualizarTarea, analizarDocumentoIA, type TareaBackend } from "../../services/tareas";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -36,9 +36,13 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados y referencias para la IA
+  const [archivoIA, setArchivoIA] = useState<File | null>(null);
+  const [analizando, setAnalizando] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
 
-  // Traemos las categorías reales al abrir el formulario
   useEffect(() => {
     listarCategorias()
       .then((datos) => {
@@ -50,7 +54,6 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       .catch(() => setError("No se pudieron cargar las categorías"));
   }, [tareaAEditar]);
 
-  // Si nos pasaron una tarea para editar, rellenamos el formulario con sus datos
   useEffect(() => {
     if (tareaAEditar) {
       setTitulo(tareaAEditar.nombre);
@@ -61,6 +64,31 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       setDescripcion(tareaAEditar.descripcion ?? "");
     }
   }, [tareaAEditar]);
+
+  const manejarAnalisisIA = async () => {
+    if (!archivoIA) return;
+    
+    setAnalizando(true);
+    setError(null);
+    
+    try {
+      const propuesta = await analizarDocumentoIA(archivoIA);
+      
+      setTitulo(propuesta.titulo);
+      setDescripcion(propuesta.descripcion);
+      setDificultad(propuesta.dificultad_estimada);
+      setTiempoEstimado(String(propuesta.tiempo_estimado));
+      
+      if (propuesta.id_categoria && categorias.some(c => c.id_categoria === propuesta.id_categoria)) {
+        setIdCategoria(propuesta.id_categoria);
+      }
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al analizar el documento con IA");
+    } finally {
+      setAnalizando(false);
+    }
+  };
 
   const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault();
@@ -96,7 +124,6 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           dificultad_estimada: dificultad,
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-          // Ya no enviamos id_usuario estático; el backend lo asigna de forma segura mediante el token
         });
       }
       onTareaCreada();
@@ -118,6 +145,29 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           × Descartar
         </button>
       </div>
+
+      {!tareaAEditar && (
+        <div className="pixel-ia-section">
+          <p className="pixel-ia-title">✨ Autocompletar con IA</p>
+          <div className="pixel-ia-controls">
+            <input 
+              type="file" 
+              accept=".pdf"
+              ref={fileInputRef}
+              onChange={(e) => setArchivoIA(e.target.files?.[0] || null)}
+              className="pixel-input-file"
+            />
+            <button 
+              type="button" 
+              onClick={manejarAnalisisIA}
+              disabled={!archivoIA || analizando}
+              className="pixel-btn-ia"
+            >
+              {analizando ? "Analizando PDF..." : "Extraer datos"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && <p className="pixel-error">{error}</p>}
 

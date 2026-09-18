@@ -1,25 +1,24 @@
 from fastapi import APIRouter, Depends
-from typing import List
 from sqlalchemy.orm import Session
+
 from app.dependencies.db import get_db
-from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo
-from app.models.usuario import Usuario
-from app.schemas.estadistica_categoria import EstadisticaCategoriaOut, EstadisticaCategoriaGrupoOut
-from app.services import estadistica_service as service
+# Asegúrate de importar tu dependencia real de autenticación (ajusta la ruta según tu estructura)
+from app.dependencies.auth import get_current_user 
 
-router = APIRouter(prefix="/estadisticas", tags=["estadisticas"])
+from app.services.estadisticas_service import obtener_resumen_estadisticas
+from app.schemas.estadisticas_schema import ResumenEstadisticasResponse
 
-@router.get("/me", response_model=List[EstadisticaCategoriaOut])
-def mis_estadisticas_categoria(
+router = APIRouter(prefix="/estadisticas", tags=["Estadísticas Dashboard"])
+
+@router.get("/resumen", response_model=ResumenEstadisticasResponse)
+def obtener_resumen_dashboard(
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(get_usuario_actual),
+    usuario_actual = Depends(get_current_user)  # <-- Se coloca aquí dentro como parámetro de la función
 ):
-    return service.obtener_estadisticas_categoria_usuario(db, usuario.id_usuario)
-
-@router.get("/grupo/{id_grupo}", response_model=List[EstadisticaCategoriaGrupoOut])
-def estadisticas_de_mi_grupo(
-    id_grupo: int,
-    db: Session = Depends(get_db),
-    usuario: Usuario = Depends(requerir_lider_de_grupo),
-):
-    return service.obtener_estadisticas_categoria_grupo(db, id_grupo)
+    """
+    Obtiene el resumen dinámico de estadísticas del usuario autenticado.
+    """
+    # Extraemos el ID real del usuario logueado a través del token JWT
+    id_usuario = usuario_actual.id_usuario  # O usuario_actual.id según tu modelo
+    
+    return obtener_resumen_estadisticas(db, id_usuario)

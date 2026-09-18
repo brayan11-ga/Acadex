@@ -1,0 +1,35 @@
+.pixel-hourglass-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pixel-hourglass {
+  display: grid;
+  grid-template-columns: repeat(9, 8px);
+  grid-template-rows: repeat(11, 8px);
+  transition: transform 400ms steps(4);
+  image-rendering: pixelated;
+}
+
+.pixel-hourglass.pixel-hourglass-flip {
+  transform: rotate(180deg);
+}
+
+.pixel-hourglass .px {
+  width: 8px;
+  height: 8px;
+}
+
+.pixel-hourglass .px-empty {
+  background: transparent;
+}
+
+/* Ajusta estos colores a la paleta pixel de tu app (variables de Panel.css) */
+.pixel-hourglass .px-frame {
+  background: #3a3a3a;
+}
+
+.pixel-hourglass .px-sand {
+  background: #ffd54a;
+}

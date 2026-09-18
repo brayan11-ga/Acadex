@@ -11,6 +11,13 @@ class TareaBase(BaseModel):
     tiempo_estimado: int
     prioridad: Optional[int] = None
     id_categoria: int
+    
+class TareaPropuestaIA(BaseModel):
+    titulo: str
+    descripcion: str
+    dificultad_estimada: int # Debe validarse entre 1 y 5
+    tiempo_estimado: int # En minutos
+    id_categoria: Optional[int] = None
 
 class TareaCreate(TareaBase):
     id_usuario: Optional[int] = None
@@ -43,3 +50,35 @@ class TareaResponse(TareaBase):
     id_grupo: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+    
+# backend/app/schemas/tarea.py (Añadir al final)
+
+class TareaPropuestaIA(BaseModel):
+    titulo: str
+    descripcion: str
+    dificultad_estimada: int
+    tiempo_estimado: int
+    id_categoria: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validar_restricciones_ia(self):
+        if not (1 <= self.dificultad_estimada <= 5):
+            self.dificultad_estimada = 3 # Valor por defecto seguro
+        if self.tiempo_estimado <= 0:
+            self.tiempo_estimado = 60 # 1 hora por defecto si la IA falla
+        return self# backend/app/schemas/tarea.py (Añadir al final)
+
+class TareaPropuestaIA(BaseModel):
+    titulo: str
+    descripcion: str
+    dificultad_estimada: int
+    tiempo_estimado: int
+    id_categoria: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validar_restricciones_ia(self):
+        if not (1 <= self.dificultad_estimada <= 5):
+            self.dificultad_estimada = 3 # Valor por defecto seguro
+        if self.tiempo_estimado <= 0:
+            self.tiempo_estimado = 60 # 1 hora por defecto si la IA falla
+        return self

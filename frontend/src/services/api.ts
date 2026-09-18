@@ -8,9 +8,14 @@ export async function apiFetch<T>(
   // 1. Recuperamos el token JWT guardado en el login
   const token = localStorage.getItem('access_token');
 
+  // Detectamos si estamos enviando un archivo (FormData)
+  const esFormData = opciones.body instanceof FormData;
+
+
   // 2. Construimos los headers incluyendo la autorización si el token existe
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    // Solo ponemos application/json si NO es FormData
+    ...(esFormData ? {} : { "Content-Type": "application/json" }),
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     ...opciones.headers,
   };
