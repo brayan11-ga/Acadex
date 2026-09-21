@@ -27,7 +27,18 @@ export async function apiFetch<T>(
 
   if (!respuesta.ok) {
     const detalle = await respuesta.text();
-    throw new Error(`Error ${respuesta.status}: ${detalle}`);
+    let mensajeAmigable = detalle;
+    try {
+      const parsed = JSON.parse(detalle);
+      if (parsed.detail) {
+        mensajeAmigable = typeof parsed.detail === 'string' 
+          ? parsed.detail 
+          : JSON.stringify(parsed.detail);
+      }
+    } catch (e) {
+      // Si no es JSON, dejamos el texto crudo
+    }
+    throw new Error(mensajeAmigable);
   }
 
   if (respuesta.status === 204) {
