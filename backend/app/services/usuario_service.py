@@ -45,8 +45,22 @@ def login(db: Session, correo_electronico: str, contrasena: str) -> str:
 
     if not usuario:
         raise credenciales_incorrectas
+
+    if usuario.bloqueado:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Cuenta bloqueada por demasiados intentos fallidos",
+        )
+
     if not verify_password(contrasena, usuario.contrasena):
+        usuario.intentos_fallidos += 1
+        if usuario.intentos_fallidos >= 3:
+            usuario.bloqueado = True
+        db.commit()
         raise credenciales_incorrectas
+
+    usuario.intentos_fallidos = 0
+    db.commit()
 
     return create_access_token(subject=str(usuario.id_usuario))
 

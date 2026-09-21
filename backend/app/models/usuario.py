@@ -9,3 +9,5 @@ class Usuario(Base):
     contrasena = Column(String(60), nullable=False)
     fecha_registro = Column(Date, nullable=False, server_default=func.current_date())
     es_admin = Column(Boolean, nullable=False, default=False)
+    intentos_fallidos = Column(Integer, nullable=False, default=0)
+    bloqueado = Column(Boolean, nullable=False, default=False)
