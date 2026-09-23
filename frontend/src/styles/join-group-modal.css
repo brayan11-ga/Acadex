@@ -1,0 +1,149 @@
+/* frontend/src/styles/join-group-modal.css */
+.join-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(5, 4, 15, 0.72);
+  backdrop-filter: blur(4px);
+  animation: join-fade-in 0.15s ease-out;
+}
+.join-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 14px;
+  background: #14121f;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  color: #e5e7eb;
+  animation: join-pop-in 0.18s ease-out;
+}
+.join-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b8ba7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.join-close:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: #fff;
+}
+.join-title {
+  margin: 0;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  color: #f5f3ff;
+}
+.join-subtitle {
+  margin: 0.6rem 0 1.5rem;
+  font-size: 0.9rem;
+  color: #9b9bb3;
+}
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+.join-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.join-field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c7c7d9;
+}
+.join-field-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+.join-code-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 9px;
+  background: #0d0b16;
+  color: #a78bfa;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.05rem;
+  letter-spacing: 6px;
+  text-align: center;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.join-code-input::placeholder {
+  color: #4a4a5f;
+  letter-spacing: 6px;
+}
+.join-code-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+.join-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+.join-btn {
+  padding: 0.62rem 1.15rem;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+}
+.join-btn:active {
+  transform: translateY(1px);
+}
+.join-btn-primary {
+  background: #8b5cf6;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
+}
+.join-btn-primary:hover {
+  background: #7c48f0;
+}
+.join-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.join-btn-ghost {
+  background: transparent;
+  color: #c7c7d9;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+.join-btn-ghost:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+@keyframes join-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes join-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
