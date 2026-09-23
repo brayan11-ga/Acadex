@@ -27,6 +27,10 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
   const [tareaDetalle, setTareaDetalle] = useState<TareaBackend | null>(null);
   const [filtroActivo, setFiltroActivo] = useState<string>("todas");
 
+  // NUEVO: Estados para la paginación
+  const [paginaActual, setPaginaActual] = useState<number>(1);
+  const tareasPorPagina = 6;
+
   useEffect(() => {
     setCargando(true);
     Promise.all([listarTareas(), listarCategorias()])
@@ -38,6 +42,11 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       .catch(() => setError("No se pudieron cargar las tareas"))
       .finally(() => setCargando(false));
   }, [refreshKey]);
+
+  // NUEVO: Volver a la primera página si cambia el filtro o la cantidad de tareas
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtroActivo, tareas.length]);
 
   const nombreCategoria = (id: number) =>
     categorias.find((c) => c.id_categoria === id)?.nombre_categoria ?? "Sin categoría";
@@ -58,6 +67,16 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
     if (filtroActivo === "completadas") return tarea.estado === "Completada";
     return true;
   });
+
+  // NUEVO: Cálculos de Paginación
+  const indiceUltimaTarea = paginaActual * tareasPorPagina;
+  const indicePrimeraTarea = indiceUltimaTarea - tareasPorPagina;
+  const tareasPaginadas = tareasFiltradas.slice(indicePrimeraTarea, indiceUltimaTarea);
+  const totalPaginas = Math.ceil(tareasFiltradas.length / tareasPorPagina);
+
+  const irAPagina = (numeroPagina: number) => {
+    setPaginaActual(numeroPagina);
+  };
 
   const manejarEliminar = async (id: number) => {
     if (!window.confirm("¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer.")) return;
@@ -115,26 +134,52 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       {error && <p className="pixel-error">{error}</p>}
 
       {!cargando && !error && (
-        <section className="pixel-tareas-lista">
-          {tareasFiltradas.length === 0 ? (
-            <p className="pixel-tareas-subtitle" style={{ textAlign: "center", padding: "20px" }}>
-              No hay tareas para mostrar en este filtro.
-            </p>
-          ) : (
-            tareasFiltradas.map((tarea) => (
-              <TarjetaTarea
-                key={tarea.id_tarea}
-                tarea={tarea}
-                nombreCategoria={nombreCategoria}
-                formatearFecha={formatearFecha}
-                onVerDetalles={manejarVerDetalles}
-                onEditar={onEditarTarea}
-                onEliminar={manejarEliminar}
-                onCambiarEstado={manejarCambiarEstado}
-              />
-            ))
+        <>
+          <section className="pixel-tareas-lista">
+            {tareasFiltradas.length === 0 ? (
+              <p className="pixel-tareas-subtitle" style={{ textAlign: "center", padding: "20px" }}>
+                No hay tareas para mostrar en este filtro.
+              </p>
+            ) : (
+              tareasPaginadas.map((tarea) => (
+                <TarjetaTarea
+                  key={tarea.id_tarea}
+                  tarea={tarea}
+                  nombreCategoria={nombreCategoria}
+                  formatearFecha={formatearFecha}
+                  onVerDetalles={manejarVerDetalles}
+                  onEditar={onEditarTarea}
+                  onEliminar={manejarEliminar}
+                  onCambiarEstado={manejarCambiarEstado}
+                />
+              ))
+            )}
+          </section>
+
+          {totalPaginas > 1 && (
+            <div className="pixel-paginacion-container">
+              <button 
+                className="pixel-btn-primario" 
+                style={{ padding: '8px 16px', background: paginaActual === 1 ? '#ccc' : undefined }}
+                disabled={paginaActual === 1}
+                onClick={() => irAPagina(paginaActual - 1)}
+              >
+                Anterior
+              </button>
+              <span className="pixel-paginacion-texto">
+                Página {paginaActual} de {totalPaginas}
+              </span>
+              <button 
+                className="pixel-btn-primario"
+                style={{ padding: '8px 16px', background: paginaActual === totalPaginas ? '#ccc' : undefined }}
+                disabled={paginaActual === totalPaginas}
+                onClick={() => irAPagina(paginaActual + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
           )}
-        </section>
+        </>
       )}
 
       {tareaDetalle && (
