@@ -1,3 +1,4 @@
+// frontend/src/router/AppRouter.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
@@ -10,6 +11,7 @@ import { Admin } from "../pages/Admin";
 import { Lider } from "../pages/Lider";
 import { Estadisticas } from "../pages/Estadisticas";
 import { Calendario } from "../pages/Calendario";
+import Grupos from "../pages/Grupos";
 
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
@@ -31,6 +33,7 @@ function AppRouter() {
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/estadisticas" element={<Estadisticas />} />
+          <Route path="/grupos" element={<Grupos />} />
         </Route>
       </Route>
 

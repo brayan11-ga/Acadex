@@ -1,0 +1,192 @@
+/* frontend/src/styles/group-detail.css */
+.detail-view {
+  width: 100%;
+  color: #e5e7eb;
+}
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.5rem;
+  padding: 0.4rem 0.2rem;
+  border: none;
+  background: transparent;
+  color: #a78bfa;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.detail-back:hover {
+  color: #c4b5fd;
+}
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.14);
+}
+.detail-header-info {
+  min-width: 0;
+}
+.detail-title {
+  margin: 0;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.6rem;
+  line-height: 1.35;
+  letter-spacing: 1px;
+  color: #f5f3ff;
+}
+.detail-desc {
+  margin: 0.9rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #9b9bb3;
+  max-width: 60ch;
+}
+.detail-btn {
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.detail-btn:active {
+  transform: translateY(1px);
+}
+.detail-btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.detail-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+.detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+.detail-count {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+  font-size: 0.78rem;
+}
+.member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid rgba(139, 92, 246, 0.14);
+  border-radius: 12px;
+  background: #14121f;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.member-row:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: #171528;
+}
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.member-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.18);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.member-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.member-email {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  overflow-wrap: anywhere;
+}
+.member-you {
+  padding: 0.05rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.member-role {
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.member-role--leader {
+  color: #c4b5fd;
+}
+.member-role--member {
+  color: #7ee0bd;
+}
+.member-kick {
+  flex-shrink: 0;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.member-kick:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+.detail-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(139, 92, 246, 0.14);
+}
+@media (max-width: 640px) {
+  .detail-title { font-size: 1.2rem; }
+  .member-row { flex-wrap: wrap; }
+}
