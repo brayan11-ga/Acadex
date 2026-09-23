@@ -1,3 +1,5 @@
+/* src/styles/contenido-tareas.css */
+
 /* Contenedor principal */
 .pixel-tareas-main {
   padding: 2rem 3rem;
@@ -79,7 +81,10 @@
   color: var(--pixel-ink);
 }
 
-/* Tarjetas de tareas */
+/* =========================================
+   TARJETAS DE TAREAS - ESTRUCTURA BASE
+   ========================================= */
+
 .pixel-tareas-lista {
   display: flex;
   flex-direction: column;
@@ -94,6 +99,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem; /* Espacio mínimo entre texto y botones */
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -105,11 +111,19 @@
   opacity: 0.5;
 }
 
+/* Corrección de Flexbox: Evitar espichamiento */
+.pixel-tarea-info {
+  flex: 1; /* Ocupa todo el espacio disponible */
+  min-width: 0; /* Permite que el texto largo se trunque en lugar de empujar el layout */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .pixel-tarea-header-card {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 0.8rem;
 }
 
 .pixel-tarea-titulo {
@@ -118,6 +132,10 @@
   font-family: var(--pixel-font-body);
   font-weight: 500;
   color: var(--pixel-ink);
+  /* Truncamiento para textos muy largos */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Etiquetas de dificultad */
@@ -129,6 +147,7 @@
   text-transform: uppercase;
   background-color: transparent;
   border: 1px solid currentColor;
+  flex-shrink: 0; /* Evita que el badge se encoja */
 }
 
 .pixel-badge-dificultad.nivel-1 { color: var(--pixel-nivel-1); }
@@ -139,9 +158,19 @@
 
 .pixel-tarea-detalles {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
   color: var(--pixel-ink-faint);
   font-size: 0.85rem;
+}
+
+/* Contenedor de botones a la derecha (modo lista) */
+.pixel-tarea-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.8rem;
+  flex-shrink: 0; /* IMPIDE QUE LOS BOTONES SE ESPICHEN */
 }
 
 .pixel-estado-badge {
@@ -151,6 +180,7 @@
   font-weight: 600;
   background-color: var(--pixel-panel-alt);
   color: var(--pixel-ink-soft);
+  display: inline-block;
 }
 
 .pixel-estado-badge.completada {
@@ -162,7 +192,8 @@
 .pixel-tarea-botones {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .pixel-btn-icono {
@@ -195,6 +226,47 @@
   color: #ff4d6d;
 }
 
+/* =========================================
+   MODO CUADRÍCULA (GRID VIEW)
+   ========================================= */
+
+.pixel-tareas-lista.vista-cuadricula {
+  display: grid;
+  /* Crea columnas responsivas: mínimo 320px de ancho cada una */
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.pixel-tareas-lista.vista-cuadricula .pixel-tarea-card {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pixel-tareas-lista.vista-cuadricula .pixel-tarea-info {
+  width: 100%;
+}
+
+.pixel-tareas-lista.vista-cuadricula .pixel-tarea-titulo {
+  /* En cuadrícula, podemos dejar que el texto baje de línea si lo prefieres, 
+     o mantenerlo en una línea. Lo mantendremos en una línea para consistencia */
+  white-space: nowrap;
+}
+
+.pixel-tareas-lista.vista-cuadricula .pixel-tarea-acciones {
+  width: 100%;
+  align-items: flex-start; /* Alinea los botones a la izquierda en cuadrícula */
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.pixel-tareas-lista.vista-cuadricula .pixel-tarea-botones {
+  justify-content: flex-start;
+}
+
+/* =========================================
+   PAGINACIÓN
+   ========================================= */
+
 .pixel-paginacion-container {
   display: flex;
   justify-content: center;
@@ -202,18 +274,96 @@
   gap: 20px;
   margin-top: 30px;
   padding: 20px 0;
-  border-top: 1px solid #e0e0e0; /* Ajusta el color según el modo claro/oscuro de Acadex */
+  border-top: 1px solid #e0e0e0;
 }
 
 .pixel-paginacion-texto {
   font-size: 14px;
   font-weight: 500;
-  color: #555; /* Ajusta según tu paleta */
+  color: #555;
 }
 
-/* Reutilizando tu clase de botón secundario si ya la tienes, o definiendo el estado deshabilitado */
 .pixel-btn-secundario:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background-color: #f5f5f5;
+}
+
+/* =========================================
+   MENÚ DE 3 PUNTOS (KEBAB MENU)
+   ========================================= */
+
+.pixel-menu-kebab-container {
+  position: relative;
+  display: inline-block;
+}
+
+.pixel-btn-kebab {
+  background: transparent;
+  border: 1px  var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+  color: var(--pixel-ink-soft);
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0.1rem 0.rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pixel-btn-kebab:hover {
+  background-color: var(--pixel-panel-alt);
+  color: var(--pixel-ink);
+}
+
+.pixel-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 5px;
+  background-color: var(--pixel-panel);
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 100; /* Asegura que flote sobre otras tarjetas */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pixel-dropdown-menu button {
+  background: transparent;
+  border: none;
+  padding: 0.8rem 1rem;
+  text-align: left;
+  font-family: var(--pixel-font-body);
+  font-size: 0.85rem;
+  color: var(--pixel-ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pixel-dropdown-menu button:hover {
+  background-color: var(--pixel-panel-alt);
+}
+
+.pixel-dropdown-divisor {
+  height: 1px;
+  background-color: var(--pixel-border);
+  margin: 0;
+}
+
+.pixel-btn-peligro-texto {
+  color: #ff4d6d !important;
+}
+
+.pixel-btn-peligro-texto:hover {
+  background-color: rgba(255, 77, 109, 0.08) !important;
 }

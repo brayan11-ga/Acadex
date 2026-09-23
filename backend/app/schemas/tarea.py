@@ -13,7 +13,6 @@ class TareaBase(BaseModel):
     id_categoria: int
     
 class TareaPropuestaIA(BaseModel):
-<<<<<<< HEAD
     titulo: str = Field(..., max_length=100)
     descripcion: Optional[str] = ""
     dificultad_estimada: int = Field(default=3, ge=1, le=5)
@@ -30,13 +29,6 @@ class TareaPropuestaIA(BaseModel):
         if len(self.titulo) > 100:
             self.titulo = self.titulo[:97] + "..."
         return self
-=======
-    titulo: str
-    descripcion: str
-    dificultad_estimada: int # Debe validarse entre 1 y 5
-    tiempo_estimado: int # En minutos
-    id_categoria: Optional[int] = None
->>>>>>> main
 
 class TareaCreate(TareaBase):
     id_usuario: Optional[int] = None
