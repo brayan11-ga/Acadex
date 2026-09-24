@@ -1,0 +1,209 @@
+/* frontend/src/styles/create-group-modal.css*/
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(5, 4, 15, 0.72);
+  backdrop-filter: blur(4px);
+  animation: modal-fade-in 0.15s ease-out;
+}
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 2rem;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #16132400, #161324), #14121f;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.06) inset;
+  color: #e5e7eb;
+  animation: modal-pop-in 0.18s ease-out;
+}
+.modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b8ba7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.modal-close:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: #fff;
+}
+.modal-title {
+  margin: 0;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  color: #f5f3ff;
+}
+.modal-subtitle {
+  margin: 0.6rem 0 1.5rem;
+  font-size: 0.9rem;
+  color: #9b9bb3;
+}
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c7c7d9;
+}
+.field-optional {
+  font-weight: 400;
+  color: #7a7a92;
+}
+.field-input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 9px;
+  background: #0d0b16;
+  color: #e5e7eb;
+  font-size: 0.92rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+.field-input::placeholder {
+  color: #6b6b84;
+}
+.field-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+.field-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+.field-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 0.4rem;
+}
+.modal-actions-center {
+  justify-content: center;
+}
+.btn {
+  padding: 0.62rem 1.15rem;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: #8b5cf6;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
+}
+.btn-primary:hover {
+  background: #7c48f0;
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.btn-ghost {
+  background: transparent;
+  color: #c7c7d9;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+.btn-ghost:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+/* Success view */
+.success-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.success-check {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  color: #34d399;
+  font-size: 1.4rem;
+}
+.code-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin: 1.25rem 0 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+  border: 1px dashed rgba(139, 92, 246, 0.45);
+  border-radius: 10px;
+  background: #0d0b16;
+}
+.code-value {
+  flex: 1;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.05rem;
+  letter-spacing: 4px;
+  color: #a78bfa;
+}
+.code-copy {
+  flex-shrink: 0;
+}
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

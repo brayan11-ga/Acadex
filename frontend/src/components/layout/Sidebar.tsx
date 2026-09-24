@@ -12,6 +12,7 @@ const enlaces = [
   { to: "/tareas", label: "Tareas", icono: iconoTareas },
   { to: "/calendario", label: "Calendario", icono: iconoCalendario },
   { to: "/estadisticas", label: "Estadísticas", icono: iconoEstadisticas },
+  { to: "/grupos", label: "Grupos", icono: null }, // sin ícono propio todavía
 ];
 
 interface SidebarProps {

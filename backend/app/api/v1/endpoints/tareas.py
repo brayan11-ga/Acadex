@@ -69,11 +69,20 @@ def analizar_documento(
     Recibe un archivo PDF, lo analiza en memoria usando Gemini IA y
     devuelve una propuesta de tarea sin guardarla en la base de datos.
     """
-    if archivo.content_type != "application/pdf":
+    if archivo.content_type != "application/pdf" or not archivo.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Solo se admiten documentos en formato PDF."
         )
+        
+    # Verificar magic bytes del PDF
+    header = archivo.file.read(5)
+    if header != b"%PDF-":
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="El archivo no es un PDF válido."
+        )
+    archivo.file.seek(0)
     
     # Validar tamaño aproximado (ej. 5MB) leyendo el buffer
     archivo.file.seek(0, 2) # Ir al final del archivo
