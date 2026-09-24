@@ -1,14 +1,38 @@
-/* src/styles/admin.css */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+}
+
+/* agrega esto en el mismo archivo donde pusiste el reset (después del bloque #root que ya tienes) */
+#root {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
 
 .admin-page {
+    display: flex;
     min-height: 100vh;
-    padding: 2.5rem 1.5rem;
     background: linear-gradient(180deg, var(--pixel-bg-start) 0%, var(--pixel-bg-end) 100%);
     font-family: var(--pixel-font-body);
     color: var(--pixel-ink);
-    /* Centramos el contenido para que no se deforme en pantallas gigantes */
+    /* ya no max-width/margin/padding acá — se mueve a .admin-content */
+}
+
+.admin-content {
+    flex: 1;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .admin-page h1 {
@@ -21,42 +45,94 @@
     text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
 }
 
-/* ===== Tabs (Estilo Segmented Control / Pixel) ===== */
-.tabs {
+/* ===== Sidebar (reemplaza el bloque "Tabs") ===== */
+.admin-sidebar {
+    width: 270px;/*ancho de navbar*/
+    flex-shrink: 0;
+    background: var(--pixel-panel);
+    border-right: 2px solid var(--pixel-border-strong);
+    padding: 1.5rem 0.75rem;
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    background: var(--pixel-panel-alt);
-    padding: 0.4rem;
-    border-radius: var(--pixel-radius);
-    border: 1px solid var(--pixel-border-strong);
-    width: fit-content;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.tab-btn {
+.admin-sidebar-header {
+    padding: 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+/* titulo de panel  */
+.admin-sidebar-logo {
+    font-family: var(--pixel-font-display);
+    font-size: 1.1rem;
+    color: var(--pixel-ink);
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+}
+
+/* subtitulo de navbar  */
+.admin-sidebar-subtitulo {
+    font-size: 0.75rem;
+    color: var(--pixel-ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.admin-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-family: var(--pixel-font-body);
     font-weight: 600;
-    font-size: 0.9rem;
-    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    padding: 0.65rem 0.8rem;
     background: transparent;
     color: var(--pixel-ink-soft);
-    border: none;
+    border: 1px solid transparent;
     border-radius: var(--pixel-radius-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
+    text-align: left;
+    transition: all 0.15s ease;
 }
 
-.tab-btn:hover {
+.admin-sidebar-link:hover {
     color: var(--pixel-ink);
     background: rgba(255, 255, 255, 0.05);
 }
 
-.tab-btn.activo {
-    background: var(--pixel-panel);
+.admin-sidebar-link.activo {
+    background: var(--pixel-panel-alt);
     color: var(--pixel-accent);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     border: 1px solid var(--pixel-border);
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .admin-page {
+        flex-direction: column;
+    }
+    .admin-sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--pixel-border-strong);
+    }
+    .admin-sidebar-nav {
+        flex-direction: row;
+    }
+    .admin-content {
+        padding: 1.5rem 1rem;
+    }
 }
 
 /* ===== Toolbar ===== */

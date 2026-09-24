@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
 import Registrarse from "../pages/Register";
-
 import AppLayout from "../layouts/AppLayout";
 import Tareas from "../pages/Tareas";
 import Perfil from "../pages/Perfil";

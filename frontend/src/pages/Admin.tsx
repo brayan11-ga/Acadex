@@ -1,9 +1,9 @@
-// src/pages/AdminPage.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { FormularioModal } from '../components/admin/FormularioModal';
 import { Resumen } from '../components/admin/Resumen';
+import { Sidebar} from '../components/admin/Sidebar';
 import { TABS_ADMIN } from '../services/entidadesConfig';
 import '../styles/admin.css';
 
@@ -90,69 +90,59 @@ const restablecerPassword = async (fila: any) => {
 };
 
     return (
-    <div className="admin-page">
-        <h1>Panel de Administración — Acadex</h1>
+        <div className="admin-page">
+        <Sidebar
+            tabs={TODAS_LAS_TABS}
+            tabActivo={tabActivo}
+            onCambiarTab={setTabActivo}
+        />
 
-        <div className="tabs">
-        {TODAS_LAS_TABS.map((tab) => (
-            <button
-            key={tab.clave}
-            className={`tab-btn ${tab.clave === tabActivo ? 'activo' : ''}`}
-            onClick={() => setTabActivo(tab.clave)}
-            >
-            {tab.titulo}
-            </button>
-        ))}
+        <main className="admin-content">
+            <h1>Panel de Administración — Acadex</h1>
+
+            {error && <p className="error-msg">{error}</p>}
+
+            {esTabResumen ? (
+            <Resumen />
+            ) : (
+            <>
+                {!configActual!.soloLectura && (
+                <div className="admin-toolbar">
+                    <button className="btn btn-primary" onClick={abrirCrear}>
+                    + Nuevo
+                    </button>
+                </div>
+                )}
+
+                <GenericTable
+                columnas={configActual!.columnas}
+                filas={filas}
+                cargando={cargando}
+                soloLectura={configActual!.soloLectura}
+                onEditar={abrirEditar}
+                onEliminar={eliminar}
+                accionesExtra={
+                    configActual!.clave === 'usuarios'
+                    ? [{ etiqueta: 'Restablecer contraseña', onClick: restablecerPassword, claseCss: 'btn btn-secundario' }]
+                    : []
+                }
+                />
+
+                {!configActual!.soloLectura && (
+                <FormularioModal
+                    titulo={filaEditando ? `Editar ${configActual!.titulo}` : `Nuevo ${configActual!.titulo}`}
+                    campos={filaEditando ? configActual!.campos : (configActual!.camposCrear ?? configActual!.campos)}
+                    valoresIniciales={filaEditando ?? configActual!.valoresVacios}
+                    abierto={modalAbierto}
+                    guardando={guardando}
+                    onCerrar={() => setModalAbierto(false)}
+                    onGuardar={guardar}
+                />
+                )}
+            </>
+            )}
+        </main>
         </div>
-
-        {error && <p className="error-msg">{error}</p>}
-
-        {esTabResumen ? (
-        <Resumen />
-        ) : (
-        <>
-            {!configActual!.soloLectura && (
-            <div className="admin-toolbar">
-                <button className="btn btn-primary" onClick={abrirCrear}>
-                + Nuevo
-                </button>
-            </div>
-            )}
-
-            <GenericTable
-            columnas={configActual!.columnas}
-            filas={filas}
-            cargando={cargando}
-            soloLectura={configActual!.soloLectura}
-            onEditar={abrirEditar}
-            onEliminar={eliminar}
-            accionesExtra={
-                configActual!.clave === 'usuarios'
-                ? [
-                    {
-                        etiqueta: 'Restablecer contraseña',
-                        onClick: restablecerPassword,
-                        claseCss: 'btn btn-secundario',
-                    },
-                    ]
-                : []
-            }
-            />
-
-            {!configActual!.soloLectura && (
-            <FormularioModal
-                titulo={filaEditando ? `Editar ${configActual!.titulo}` : `Nuevo ${configActual!.titulo}`}
-                campos={configActual!.campos}
-                valoresIniciales={filaEditando ?? configActual!.valoresVacios}
-                abierto={modalAbierto}
-                guardando={guardando}
-                onCerrar={() => setModalAbierto(false)}
-                onGuardar={guardar}
-            />
-            )}
-        </>
-        )}
-    </div>
     );
 };
 

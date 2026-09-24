@@ -1,47 +1,79 @@
-// src/components/estadisticas/EstadisticasAdmin.tsx
-import React from 'react';
-import { LayoutDashboard } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
 
 export interface ItemResumen {
-  label: string;
-  valor: number;
+    label: string;
+    valor: number;
+    color?: string;
 }
 
-interface Props {
-  titulo: string;
-  items: ItemResumen[];
-  cargando: boolean;
+interface EstadisticasProps {
+    titulo: string;
+    items: ItemResumen[];
+    cargando?: boolean;
 }
 
-export const EstadisticasAdmin: React.FC<Props> = ({ titulo, items, cargando }) => {
-  if (cargando) {
+const PALETA_DEFECTO = [
+    { bg: 'rgba(124, 92, 255, 0.6)', border: 'rgba(124, 92, 255, 1)' },
+    { bg: 'rgba(69, 224, 168, 0.6)', border: 'rgba(69, 224, 168, 1)' },
+    { bg: 'rgba(255, 111, 165, 0.6)', border: 'rgba(255, 111, 165, 1)' },
+    { bg: 'rgba(62, 203, 240, 0.6)', border: 'rgba(62, 203, 240, 1)' },
+    { bg: 'rgba(242, 163, 62, 0.6)', border: 'rgba(242, 163, 62, 1)' },
+];
+
+export const Estadisticas = ({ titulo, items, cargando = false }: EstadisticasProps) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const chartRef = useRef<Chart | null>(null);
+
+    useEffect(() => {
+    if (cargando || !canvasRef.current || items.length === 0) return;
+
+    if (chartRef.current) {
+        chartRef.current.destroy();
+    }
+
+    chartRef.current = new Chart(canvasRef.current, {
+        type: 'bar',
+        data: {labels: items.map((i) => i.label),
+        datasets: [
+            {label: titulo,data: items.map((i) => i.valor),backgroundColor: items.map((i, idx) => i.color ?? PALETA_DEFECTO[idx % PALETA_DEFECTO.length].bg),borderColor: items.map((i, idx) => i.color ?? PALETA_DEFECTO[idx % PALETA_DEFECTO.length].border),borderWidth: 1,},
+            ],
+        },
+        options: {responsive: true,maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#b9aee0' } },
+            x: { ticks: { color: '#b9aee0' } },
+            },
+            plugins: {
+            legend: { display: false },
+            title: { display: true, text: titulo, color: '#f1eaff', font: { size: 16 } },
+            },
+        },
+    });
+
+    return () => {
+        chartRef.current?.destroy();
+    };
+    }, [items, titulo, cargando]);
+
+    if (cargando) return <p>Cargando resumen...</p>;
+
     return (
-      <div className="stat-card">
-        <p className="chart-subtitle">Cargando resumen de administración...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="stat-card chart-container">
-      <div className="stat-card-header">
-        <div className="chart-header-info">
-          <h3 className="stat-card-title">{titulo}</h3>
-          <p className="chart-subtitle">Resumen general</p>
-        </div>
-        <div className="stat-card-icon">
-          <LayoutDashboard size={18} />
-        </div>
-      </div>
-
-      <div className="resumen-grid">
-        {items.map((item, index) => (
-          <div key={index} className="resumen-item">
-            <span className="resumen-label">{item.label}</span>
-            <p className="resumen-valor">{item.valor}</p>
-          </div>
+    <div className="resumen-estadisticas">
+        <div className="indicator-row">
+        {items.map((item) => (
+            <div className="indicator-card" key={item.label}>
+            <p className="indicator-title">{item.label}</p>
+            <p className="indicator-value">{item.valor}</p>
+            </div>
         ))}
-      </div>
+        </div>
+
+        <div className="chart-container">
+        <canvas ref={canvasRef}></canvas>
+        </div>
     </div>
-  );
+    );
 };
+
+export default Estadisticas;
