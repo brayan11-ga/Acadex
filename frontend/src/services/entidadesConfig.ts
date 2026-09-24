@@ -4,7 +4,7 @@ export interface Usuarios{
     id_usuario:number;
     correo_electronico:string;
     fecha_registro:string;
-    es_admin:boolean; 
+    es_admin:boolean;
 }
 
 export interface Categoria{
@@ -42,18 +42,21 @@ export interface Integrante {
     id_grupo: number;
 }
 
-export interface EntidadConfig<T> {
+export interface EntidadConfig<T extends object=Record<string,unknown>> {
     clave: string;
     titulo: string;
+    idField:keyof T & string;
     columnas: ColumnConfig<T>[];
     campos: FieldConfig[];
-    valoresVacios: Record<string, unknown>;
+    camposCrear?: FieldConfig[];
+    valoresVacios: Record<string,unknown>;
     soloLectura?: boolean;
 }
 
 export const usuariosConfig: EntidadConfig<Usuarios> = {
     clave: 'usuarios',
     titulo:'Usuarios',
+    idField:'id_usuario',
     columnas:[
         {key:'id_usuario', label:'ID'},
         {key:'correo_electronico',label:'Correo'},
@@ -71,17 +74,18 @@ export const usuariosConfig: EntidadConfig<Usuarios> = {
 export const categoriasConfig: EntidadConfig<Categoria> = {
     clave: 'categorias',
     titulo: 'Categorías',
+    idField:'id_categoria',
     columnas: [{ key: 'nombre_categoria', label: 'Nombre' }],
     campos: [
     { name: 'nombre_categoria', label: 'Nombre de la categoría', type: 'text', required: true },
     ],
-
     valoresVacios: { nombre_categoria: '' },
 };
 
 export const gruposConfig: EntidadConfig<Grupo> = {
     clave: 'grupos',
     titulo: 'Grupos',
+    idField:'id_grupo',
     columnas: [
     { key: 'nombre_grupo', label: 'Nombre' },
     { key: 'codigo_acceso', label: 'Código de acceso' },
@@ -100,6 +104,7 @@ export const gruposConfig: EntidadConfig<Grupo> = {
 export const tareasConfig: EntidadConfig<Tarea> = {
     clave: 'tareas',
     titulo: 'Tareas',
+    idField:'id_tarea',
     columnas: [
     { key: 'nombre', label: 'Nombre' },
     { key: 'estado', label: 'Estado' },
@@ -115,41 +120,37 @@ export const tareasConfig: EntidadConfig<Tarea> = {
     {name: 'dificultad_estimada',label: 'Dificultad estimada (1-5)',type: 'number',min: 1,max: 5,required: true,},
     { name: 'tiempo_estimado', label: 'Tiempo estimado (min)', type: 'number', min: 1, required: true },
     { name: 'prioridad', label: 'Prioridad', type: 'number', min: 1, required: false },
-    {name: 'id_categoria',label: 'Categoría',type: 'select',optionsSource: 'categorias',optionValueKey: 'id_categoria',optionLabelKey: 'nombre_categoria',required: true,},
+    {name: 'id_categoria',label: 'Categoría',type: 'select',optionsSource: 'categorias',optionValueKey: 'id_categoria',optionLabelKey: 'nombre_categoria',required: true},
     ],
-
-    valoresVacios: {
-    nombre: '',
-    descripcion: '',
-    fecha_entrega: '',
-    estado: 'pendiente',
-    dificultad_estimada: 1,
-    tiempo_estimado: 30,
-    prioridad: null,
-    id_categoria: '',
+    valoresVacios:{
+        nombre:'',descripcion:'',fecha_entrega:'',estado:'pendiente',dificultad_estimada:1,tiempo_estimado:30,prioridad:null,id_categoria:0,
     },
 };
 
 export const integrantesConfig: EntidadConfig<Integrante> = {
     clave: 'integrantes',
     titulo: 'Integrantes',
+    idField:'id_integrante',
     columnas: [
     { key: 'rol', label: 'Rol' },
     { key: 'fecha_ingreso', label: 'Fecha ingreso' },
     { key: 'id_usuario', label: 'ID Usuario' },
     { key: 'id_grupo', label: 'ID Grupo' },
     ],
-
     campos: [
-    {name:'rol',label: 'Rol',type: 'select',options: ['lider', 'miembro'],required: true,},
-    {name:'id_usuario',label: 'Usuario',type: 'select',optionsSource: 'usuarios',optionValueKey: 'id_usuario',optionLabelKey: 'correo_electronico',required: true,},
-    {name:'id_grupo',label: 'Grupo',type: 'select',optionsSource: 'grupos',optionValueKey: 'id_grupo',optionLabelKey: 'nombre_grupo',required: true,},
+    {name:'rol',label: 'Rol',type: 'select',options: ['lider', 'miembro'],required: true},
+    {name:'id_usuario',label: 'Usuario',type: 'select',optionsSource: 'usuarios',optionValueKey: 'id_usuario',optionLabelKey: 'correo_electronico',required: true},
+    {name:'id_grupo',label: 'Grupo',type: 'select',optionsSource: 'grupos',optionValueKey: 'id_grupo',optionLabelKey: 'nombre_grupo',required: true},
     ],
-    valoresVacios: { rol: 'miembro', id_usuario: '', id_grupo: '' },
+    valoresVacios: { rol:'miembro', id_usuario:0, id_grupo:0},
 };
 
+// Tablas de los paneles
 export const TABS_ADMIN: EntidadConfig<any>[] = [
     usuariosConfig,
+    gruposConfig,
+    categoriasConfig,
+    integrantesConfig,
 ];
 
 export const TABS_LIDER: EntidadConfig<any>[] = [
