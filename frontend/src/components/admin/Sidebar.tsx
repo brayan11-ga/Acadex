@@ -1,5 +1,7 @@
+// Sidebar-admin
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, UsersRound, Tag, UserCog } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { LayoutDashboard, Users, UsersRound, Tag, UserCog, } from 'lucide-react';
 
 export interface TabAdmin {
   clave: string;
@@ -29,6 +31,10 @@ export const Sidebar = ({ tabs, tabActivo, onCambiarTab }: Props) => {
       </div>
 
       <nav className="admin-sidebar-nav">
+        <Link to="/panel" className="admin-sidebar-link">
+        <LayoutDashboard size={18} />
+        <span>Inicio</span>
+        </Link>
         {tabs.map((tab) => {
           const Icono = ICONOS[tab.clave] ?? LayoutDashboard;
           const activo = tab.clave === tabActivo;

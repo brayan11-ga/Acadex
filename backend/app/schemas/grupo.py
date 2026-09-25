@@ -1,4 +1,3 @@
-# backend/app/schemas/grupo.py
 from datetime import date
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
