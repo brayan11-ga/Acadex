@@ -8,7 +8,7 @@ Sistema inteligente para la gestión de tareas académicas y colaborativas.
 
 Acadex es una plataforma web diseñada para facilitar la organización, planificación y seguimiento de tareas académicas y actividades colaborativas.
 
-El sistema permitirá a los usuarios gestionar tareas, crear grupos de trabajo, administrar integrantes, registrar el tiempo invertido en actividades, compartir recursos y visualizar el progreso de los proyectos mediante herramientas de seguimiento y priorización inteligente.
+El sistema permitirá a los usuarios gestionar tareas, crear grupos de trabajo, administrar integrantes, registrar el tiempo invertido en actividades, compartir recursos y visualizar el progreso de los proyectos mediante herramientas de seguimiento y priorización inteligente. Además, incorpora funcionalidades potenciadas por Inteligencia Artificial para el análisis y organización de contenidos.
 
 ---
 
@@ -22,37 +22,27 @@ Desarrollar una aplicación web que permita gestionar de forma eficiente tareas 
 
 ### Gestión de Usuarios
 
-- Registro de usuarios.
-- Inicio de sesión.
+- Registro e inicio de sesión seguro (JWT).
 - Recuperación de contraseña.
-- Gestión de perfil.
+- Gestión de perfil de usuario.
 
-### Gestión de Tareas
+### Gestión de Tareas y Productividad
 
-- Crear tareas.
-- Editar tareas.
-- Eliminar tareas.
-- Cambiar estado de tareas.
-- Buscar tareas.
-- Filtrar tareas.
-- Adjuntar archivos.
+- Creación, edición y eliminación de tareas.
+- Cambio de estado y priorización de tareas.
+- Cronómetro y registro de tiempo invertido.
+- Estadísticas de avance y rendimiento.
 
 ### Gestión de Grupos
 
-- Crear grupos de trabajo.
-- Generar códigos de acceso.
-- Unirse a grupos mediante código.
-- Gestionar integrantes.
-- Expulsar integrantes.
-- Abandonar grupos.
+- Creación de grupos de trabajo.
+- Códigos de acceso para unirse a grupos.
+- Administración de integrantes (expulsar, abandonar).
 
-### Seguimiento y Productividad
+### Integración de Inteligencia Artificial
 
-- Registro de tiempo invertido.
-- Seguimiento de progreso.
-- Priorización inteligente de tareas.
-- Sistema de notificaciones.
-- Estadísticas de avance.
+- Procesamiento de documentos (PDF).
+- Asistencia inteligente con Google Gemini.
 
 ---
 
@@ -60,29 +50,31 @@ Desarrollar una aplicación web que permita gestionar de forma eficiente tareas 
 
 ### Frontend
 
-- HTML5
-- CSS3
-- JavaScript
+- React 19
+- TypeScript
+- Vite
+- Redux Toolkit (Gestión de estado global)
+- React Router DOM
+- Bootstrap 5 y CSS3
+- Chart.js (Gráficos)
 
 ### Backend
 
 - Python
 - FastAPI
+- SQLAlchemy (ORM)
+- Pydantic
+- JWT (Autenticación)
+- Google Generative AI (Gemini)
 
 ### Base de Datos
 
-- MySQL
+- PostgreSQL
 
-### Control de Versiones
+### Control de Versiones y Gestión
 
-- Git
-- GitHub
-
-### Gestión del Proyecto
-
-- GitHub Projects
-- GitHub Issues
-- Pull Requests
+- Git y GitHub
+- GitHub Projects y Issues
 
 ---
 
@@ -91,144 +83,71 @@ Desarrollar una aplicación web que permita gestionar de forma eficiente tareas 
 ```text
 Acadex/
 │
-├── .github/
-├── docs/
-├── src/
-│   ├── controllers/
-│   ├── database/
-│   ├── frontend/
-│   │   ├── assets/
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── index.html
-│   │
-│   ├── models/
-│   ├── routes/
-│   ├── schemas/
-│   ├── services/
-│   ├── utils/
-│   └── main.py
+├── backend/                  # API RESTful y lógica de negocio
+│   ├── app/                  # Código principal (controladores, modelos, servicios)
+│   ├── requirements.txt      # Dependencias de Python
+│   └── .env.example          # Variables de entorno de ejemplo
 │
-├── tests/
-├── README.md
-├── requirements.txt
-├── .gitignore
-└── LICENSE
+├── frontend/                 # Interfaz de usuario (SPA)
+│   ├── src/                  # Código fuente (componentes, vistas, servicios)
+│   ├── package.json          # Dependencias de Node.js
+│   └── vite.config.mts       # Configuración de Vite
+│
+├── database/                 # Scripts y recursos de base de datos
+├── docs/                     # Documentación técnica
+├── STRUCTURE.md              # Detalle profundo de la arquitectura
+└── README.md                 # Información general del proyecto
 ```
 
----
-
-## 📌 Descripción de Carpetas
-
-### `.github/`
-
-Contiene configuraciones relacionadas con GitHub, automatizaciones y flujos de trabajo.
-
-### `docs/`
-
-Documentación técnica y funcional del proyecto.
-
-### `src/`
-
-Contiene todo el código fuente de la aplicación.
-
-### `src/frontend/`
-
-Contiene la interfaz de usuario desarrollada con HTML, CSS y JavaScript.
-
-### `src/controllers/`
-
-Controladores encargados de gestionar las solicitudes realizadas por el usuario.
-
-### `src/routes/`
-
-Definición de rutas y endpoints de la API REST.
-
-### `src/models/`
-
-Modelos que representan las entidades del sistema.
-
-### `src/schemas/`
-
-Esquemas de validación de datos mediante Pydantic.
-
-### `src/services/`
-
-Contiene la lógica de negocio del sistema.
-
-### `src/database/`
-
-Configuración de conexión y acceso a la base de datos.
-
-### `src/utils/`
-
-Funciones auxiliares reutilizables.
-
-### `tests/`
-
-Pruebas unitarias e integración.
+Para más detalles sobre la arquitectura interna de cada directorio, consulta el archivo [`STRUCTURE.md`](./STRUCTURE.md).
 
 ---
 
-## ⚙️ Instalación del Proyecto
+## ⚙️ Instalación y Ejecución
 
 ### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/brayan11-ga/Acadex.git
-```
-
-### 2. Ingresar al proyecto
-
-```bash
 cd Acadex
 ```
 
-### 3. Crear entorno virtual
+### 2. Configuración del Backend
 
-```bash
-python -m venv venv
-```
+1. Ingresar al directorio del backend:
+   ```bash
+   cd backend
+   ```
+2. Crear y activar un entorno virtual:
+   - **Windows:** `python -m venv .venv` y luego `.venv\Scripts\activate`
+   - **Linux/Mac:** `python -m venv .venv` y luego `source .venv/bin/activate`
+3. Instalar las dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Configurar las variables de entorno:
+   Copiar `.env.example` a `.env` y ajustar los valores (base de datos, clave secreta JWT, API Key de Gemini).
+5. Ejecutar el servidor de desarrollo:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   *La API estará disponible en `http://127.0.0.1:8000`. Puedes acceder a la documentación interactiva en `http://127.0.0.1:8000/docs`.*
 
-### 4. Activar entorno virtual
+### 3. Configuración del Frontend
 
-#### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-#### Linux / Mac
-
-```bash
-source venv/bin/activate
-```
-
-### 5. Instalar dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
-### 6. Ejecutar el servidor
-
-```bash
-uvicorn src.main:app --reload
-```
-
-### 7. Acceder a la documentación de la API
-
-Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Redoc:
-
-```text
-http://127.0.0.1:8000/redoc
-```
+1. Ingresar al directorio del frontend:
+   ```bash
+   cd ../frontend
+   ```
+2. Instalar las dependencias:
+   ```bash
+   npm install
+   ```
+3. Ejecutar el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+   *La aplicación estará disponible en la URL que indique la consola (usualmente `http://localhost:5173`).*
 
 ---
 
@@ -250,22 +169,16 @@ git checkout -b feature/nombre-funcionalidad
 Ejemplos:
 
 ```bash
-git checkout -b feature/base-datos
-git checkout -b feature/login
-git checkout -b feature/crud-tareas
+git checkout -b feature/integracion-gemini
+git checkout -b feature/dashboard-estadisticas
 ```
 
-### Guardar cambios
+### Guardar y subir cambios
 
 ```bash
 git add .
 git commit -m "feat: descripción del cambio"
-```
-
-### Subir cambios
-
-```bash
-git push origin nombre-rama
+git push origin feature/nombre-funcionalidad
 ```
 
 ### Crear Pull Request
@@ -278,79 +191,25 @@ Todos los cambios deben integrarse mediante Pull Request antes de fusionarse con
 
 | Prefijo | Descripción |
 |----------|----------|
-| feat: | Nueva funcionalidad |
-| fix: | Corrección de errores |
-| docs: | Documentación |
-| refactor: | Refactorización |
-| test: | Pruebas |
-| chore: | Mantenimiento |
-
-### Ejemplos
-
-```bash
-git commit -m "feat: crear módulo de autenticación"
-git commit -m "fix: corregir validación de usuarios"
-git commit -m "docs: actualizar README"
-```
+| `feat:` | Nueva funcionalidad |
+| `fix:` | Corrección de errores |
+| `docs:` | Documentación |
+| `refactor:` | Refactorización de código existente |
+| `test:` | Creación o actualización de pruebas |
+| `chore:` | Mantenimiento, actualizaciones de dependencias |
 
 ---
 
 ## 🚫 Archivos que No Deben Subirse
 
-Estos archivos están excluidos mediante `.gitignore`:
+Asegúrate de no versionar archivos sensibles o generados localmente:
 
-```text
-venv/
-__pycache__/
-.env
-.vscode/
-*.pyc
-```
+- Carpetas de dependencias: `node_modules/`, `.venv/`, `__pycache__/`
+- Archivos de entorno: `.env`
+- Configuraciones locales de IDEs: `.vscode/`, `.idea/`
+- Archivos compilados: `dist/`, `*.pyc`
 
-Nunca subir:
-
-- Contraseñas.
-- Tokens.
-- Claves API.
-- Variables de entorno.
-
----
-
-## 📊 Gestión del Proyecto
-
-El seguimiento del desarrollo se realiza mediante GitHub Projects.
-
-### Flujo de trabajo
-
-```text
-Product Backlog
-        ↓
-Sprint Backlog / Todo
-        ↓
-In Progress
-        ↓
-In Review / QA
-        ↓
-Done
-```
-
-Cada tarea debe estar asociada a un Issue y desarrollarse en una rama independiente.
-
----
-
-## 📅 Estado Actual del Proyecto
-
-### Fase Actual
-
-Diseño y construcción de la base de datos.
-
-### Actividades en Desarrollo
-
-- Definición de cardinalidades.
-- Normalización del modelo entidad-relación.
-- Construcción del modelo relacional.
-- Elaboración del diccionario de datos.
-- Creación del primer script SQL.
+Nunca subir: Contraseñas, tokens, claves de API, ni variables de entorno productivas.
 
 ---
 
