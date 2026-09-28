@@ -213,12 +213,12 @@ p {
 }
 
 .logo img { 
-    height: 48px; 
+    height: 60px; 
     width: auto;
     object-fit: contain;
 }
 
-.logo img[src*="logo_acadex-preview.png"] {
+.logo img[src*="logo_acadex.png"] {
     transform: scale(1.50);
     transform-origin: left center;
 }

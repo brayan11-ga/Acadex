@@ -1,3 +1,4 @@
+// adminApi
 const API_BASE = import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api/v1';
 
 export function headersConToken(extra: Record<string, string> = {}): Record<string, string> {
@@ -15,10 +16,11 @@ export async function fetchJSON<T>(path: string, options: RequestInit = {}): Pro
     if (respuesta.status === 204) return null;
     return (await respuesta.json()) as T;
     } catch (error) {
-    console.error('Error al conectar con la API:', error);
+    console.error(`Error al conectar con la API (${options.method ?? 'GET'} ${path}):`, error);
     return null;
     }
 }
+
 
 // ---------- Helpers genéricos por entidad ----------
 export const adminApi = {

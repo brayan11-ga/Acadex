@@ -1,7 +1,7 @@
 // src/router/RutaLider.tsx
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { adminApi } from '../services/adminapi';
+import { adminApi } from '../services/adminApi';
 
 interface IntegranteConRol {
   id_grupo: number;

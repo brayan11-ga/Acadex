@@ -1,12 +1,12 @@
 // Sidebar-panel
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { NavLink } from "react-router-dom";
-import { adminApi } from "../../services/adminapi";
 import moonIcon from "../../assets/backgrounds/moon-icon.png";
 import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
 import iconoCalendario from "../../assets/icons/sidebar/calendario_sidebar.png";
 import iconoEstadisticas from "../../assets/icons/sidebar/estadisticas_sidebar.png";
-import logoAcadex from "../../assets/logos/logo_acadex.png";
+import logoAcadex from "../../assets/logos/1.png";
+import { useAppSelector } from "../../hooks/hooks";
 
 interface SidebarProps {
   onCrearRapido: () => void;
@@ -14,17 +14,7 @@ interface SidebarProps {
 
 function Sidebar({ onCrearRapido }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [esAdmin, setEsAdmin]=useState(false);
-
-  useEffect(()=>{
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
-
-  adminApi
-  .obtenerMe<{ es_admin:Boolean}>()
-  .then((usuario)=>setEsAdmin(!!usuario?.es_admin))
-  .catch(()=> setEsAdmin(false));
-},[]);
+  const esAdmin=useAppSelector((state)=>state.auth.usuario?.es_admin);
 
 const enlaces=[
 { to:"/panel", label:"panel", icono:null},  
