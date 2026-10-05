@@ -37,6 +37,7 @@ export interface Tarea {
 export interface Integrante {
     id_integrante: number;
     rol: string;
+    correo_electronico?:string;
     fecha_ingreso: string;
     id_usuario: number;
     id_grupo: number;
@@ -132,6 +133,7 @@ export const integrantesConfig: EntidadConfig<Integrante> = {
     titulo: 'Integrantes',
     idField:'id_integrante',
     columnas: [
+    { key: 'correo_electronico', label:'correo'},
     { key: 'rol', label: 'Rol' },
     { key: 'fecha_ingreso', label: 'Fecha ingreso' },
     { key: 'id_usuario', label: 'ID Usuario' },
@@ -148,9 +150,9 @@ export const integrantesConfig: EntidadConfig<Integrante> = {
 // Tablas de los paneles
 export const TABS_ADMIN: EntidadConfig<any>[] = [
     usuariosConfig,
-    gruposConfig,
+    { ...gruposConfig, soloLectura: true },
     categoriasConfig,
-    integrantesConfig,
+    { ...integrantesConfig, soloLectura: true },
 ];
 
 export const TABS_LIDER: EntidadConfig<any>[] = [

@@ -34,3 +34,11 @@ class IntegranteResponse(BaseModel):
     fecha_ingreso: date
 
     model_config = ConfigDict(from_attributes=True)
+
+class IntegranteAdminResponse(BaseModel):
+    id_integrante:int
+    id_usuario:int
+    id_grupo:int
+    correo_electronico:str
+    rol:str
+    fecha_ingreso:date

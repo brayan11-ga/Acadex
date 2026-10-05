@@ -2,9 +2,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-
+from app.models.grupo import Grupo
 from app.dependencies.db import get_db
-from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo
+from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo, requerir_admin
 from app.models.usuario import Usuario
 from app.schemas.grupo import (
     GrupoCreate,
@@ -50,6 +50,12 @@ def unirse_a_grupo(
         "fecha_ingreso": integrante.fecha_ingreso,
     }
 
+@router.get("/",response_model=List[GrupoResponse])
+def listar_todos_los_grupos(
+    db: Session=Depends(get_db),
+    admin:Usuario=Depends(requerir_admin),
+):
+    return db.query(Grupo).order_by(Grupo.id_grupo).all()
 
 @router.get("/{id_grupo}/integrantes", response_model=List[IntegranteResponse])
 def listar_integrantes(

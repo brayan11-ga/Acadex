@@ -11,8 +11,8 @@ import {
   obtenerIntegrantes,
   salirDeGrupo,
   expulsarIntegrante,
-  eliminarGrupo,
-} from "../services/grupos";
+} 
+from "../services/grupos";
 import type { GrupoConRol, Grupo, Integrante } from "../types/grupo";
 import { obtenerIdUsuarioActual } from "../utils/jwt";
 
@@ -91,17 +91,6 @@ function Grupos() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!idGrupoAbierto) return;
-    if (!window.confirm("¿Eliminar este grupo? Esta acción no se puede deshacer.")) return;
-    try {
-      await eliminarGrupo(idGrupoAbierto);
-      handleBack();
-      await cargarGrupos();
-    } catch {
-      setError("No se pudo eliminar el grupo.");
-    }
-  };
 
   const handleLeave = async () => {
     if (!idGrupoAbierto) return;
@@ -130,7 +119,6 @@ function Grupos() {
             currentUserId={idUsuarioActual}
             onBack={handleBack}
             onKickMember={handleKick}
-            onDeleteGroup={handleDelete}
             onLeaveGroup={handleLeave}
           />
         )

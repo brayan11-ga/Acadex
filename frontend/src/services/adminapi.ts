@@ -52,5 +52,6 @@ export const adminApi = {
     }),
 
     obtenerMe: <T>() => fetchJSON<T>('/usuarios/me', { headers: headersConToken() }),
+    resumen: <T>() => fetchJSON<T>('/admin/resumen', { headers: headersConToken() }),
 };
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '../hooks/hooks'; // usa la ruta donde realmente esté tu hooks.ts
+import { useAppSelector, useAppDispatch } from '../hooks/hooks';
 import { fetchUsuarioActual } from '../store/authSlice';
 
 export const RutaAdmin = () => {

@@ -1,38 +1,35 @@
 import { useEffect, useState } from 'react';
-import { adminApi } from '../../services/adminapi';
+import { adminApi } from '../../services/adminApi';
 import { EstadisticasAdmin } from '../estadisticas/RankingCard';
 import type { ItemResumen } from '../estadisticas/RankingCard';
+
+interface ResumenAdminData{
+  usuarios:number;
+  categorias:number;
+  grupos:number;
+  tareas:number;
+  integrantes:number;
+}
 
 export const Resumen = () => {
     const [items, setItems] = useState<ItemResumen[]>([]);
     const [cargando, setCargando] = useState(true);
 
 // src/components/panel/Resumen.tsx (o donde esté)
-useEffect(() => {
-  const cargar = async () => {
-    setCargando(true);
-    try {
-      const [usuarios, categorias, grupos, tareas, integrantes] = await Promise.all([
-        adminApi.listar<any>('usuarios'),
-        adminApi.listar<any>('categorias'),
-        adminApi.listar<any>('grupos'),
-        adminApi.listar<any>('tareas'),
-        adminApi.listar<any>('integrantes'),
-      ]);
-
+      useEffect(() => {
+        const cargar = async () => {
+          setCargando(true);
+          const datos=await adminApi.resumen<ResumenAdminData>()
+          if(datos){
       setItems([
-        { label: 'Usuarios', valor: usuarios?.length ?? 0 },
-        { label: 'Categorías', valor: categorias?.length ?? 0 },
-        { label: 'Grupos', valor: grupos?.length ?? 0 },
-        { label: 'Tareas', valor: tareas?.length ?? 0 },
-        { label: 'Integrantes', valor: integrantes?.length ?? 0 },
+        { label: 'Usuarios', valor: datos.usuarios},
+        { label: 'Categorías', valor: datos.categorias},
+        { label: 'Grupos', valor: datos.grupos},
+        { label: 'Tareas', valor: datos.tareas},
+        { label: 'Integrantes', valor: datos.integrantes},
       ]);
-    } catch (error) {
-      console.error('Error cargando resumen admin:', error);
-      // opcional: setError(true) si luego quieres mostrar un mensaje
-    } finally {
-      setCargando(false);
     }
+      setCargando(false);
   };
   cargar();
 }, []);

@@ -43,8 +43,9 @@ def actualizar_usuario(
 
 @router.get("/", response_model=List[UsuarioOut])
 def listar_usuarios(
-    skip: int = 0, limit: int = 100, 
-    db: Session = Depends(requerir_admin),
+    skip: int = 0,
+    limit: int = 100, 
+    db: Session = Depends(get_db),
     admin:Usuario=Depends(requerir_admin),
     ):
     return service.listar_usuarios(db, skip, limit)
