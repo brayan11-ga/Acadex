@@ -471,3 +471,32 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
+
+/* archivo donde están .bars-wrapper, .stat-card-body-main, etc. */
+.admin-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.admin-resumen-titulo {
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+
+.admin-resumen-label {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.admin-resumen-valor {
+  font-family: var(--font-body);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 0.25rem;
+}

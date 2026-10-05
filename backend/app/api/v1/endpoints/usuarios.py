@@ -42,7 +42,12 @@ def actualizar_usuario(
     return service.actualizar_usuario(db, id_usuario, usuario)
 
 @router.get("/", response_model=List[UsuarioOut])
-def listar_usuarios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def listar_usuarios(
+    skip: int = 0,
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    admin:Usuario=Depends(requerir_admin),
+    ):
     return service.listar_usuarios(db, skip, limit)
 
 @router.delete("/{id_usuario}", status_code=status.HTTP_204_NO_CONTENT)

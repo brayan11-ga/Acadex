@@ -1,19 +1,12 @@
-// src/components/layout/Sidebar.tsx
-import { useState } from "react";
+// Sidebar-panel
+import { useState} from "react";
 import { NavLink } from "react-router-dom";
 import moonIcon from "../../assets/backgrounds/moon-icon.png";
 import iconoTareas from "../../assets/icons/sidebar/tareas_sidebar.png";
 import iconoCalendario from "../../assets/icons/sidebar/calendario_sidebar.png";
 import iconoEstadisticas from "../../assets/icons/sidebar/estadisticas_sidebar.png";
-import logoAcadex from "../../assets/logos/logo_acadex.png";
-
-const enlaces = [
-  { to: "/panel", label: "Panel", icono: null },
-  { to: "/tareas", label: "Tareas", icono: iconoTareas },
-  { to: "/calendario", label: "Calendario", icono: iconoCalendario },
-  { to: "/estadisticas", label: "Estadísticas", icono: iconoEstadisticas },
-  { to: "/grupos", label: "Grupos", icono: null }, // sin ícono propio todavía
-];
+import logoAcadex from "../../assets/logos/1.png";
+import { useAppSelector } from "../../hooks/hooks";
 
 interface SidebarProps {
   onCrearRapido: () => void;
@@ -21,6 +14,16 @@ interface SidebarProps {
 
 function Sidebar({ onCrearRapido }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const esAdmin=useAppSelector((state)=>state.auth.usuario?.es_admin);
+
+const enlaces=[
+{ to:"/panel", label:"panel", icono:null},  
+{ to:"/tareas", label:"tareas", icono:iconoTareas},
+{ to:"/calendario", label:"calendario", icono:iconoCalendario},
+{ to:"/estadisticas", label:"estadisticas", icono:iconoEstadisticas},
+{ to:"/grupos", label:"grupos", icono:null},
+...(esAdmin?[{to:"/admin",label:"admin",icono:null}]:[]),
+];
 
   return (
     <aside className={`pixel-sidebar ${isCollapsed ? "collapsed" : ""}`}>

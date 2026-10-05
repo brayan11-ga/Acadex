@@ -1,8 +1,10 @@
+// Formulario login
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { iniciarSesion } from '../../services/authService';
-import { adminApi } from '../../services/adminapi';
+import { fetchUsuarioActual } from '../../store/authSlice';
+import { useAppDispatch } from '../../hooks/hooks';
 
 export const FormularioLogin = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +13,7 @@ export const FormularioLogin = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -21,9 +24,9 @@ export const FormularioLogin = () => {
       const data = await iniciarSesion(email, password);
       localStorage.setItem('access_token', data.access_token);
 
-      const usuario = await adminApi.obtenerMe<{ es_admin: boolean }>();
+      const resultado = await dispatch(fetchUsuarioActual()).unwrap();
 
-      if (usuario?.es_admin) {
+      if (resultado?.es_admin) {
         navigate('/admin');
       } else {
         navigate('/panel');

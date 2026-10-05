@@ -1,35 +1,38 @@
 import { useEffect, useState } from 'react';
-import { adminApi } from '../../services/adminapi';
-import { EstadisticasAdmin } from '../estadisticas/EstadisticasAdmin';
-import type { ItemResumen } from '../estadisticas/EstadisticasAdmin';
+import { adminApi } from '../../services/adminApi';
+import { EstadisticasAdmin } from '../estadisticas/RankingCard';
+import type { ItemResumen } from '../estadisticas/RankingCard';
+
+interface ResumenAdminData{
+  usuarios:number;
+  categorias:number;
+  grupos:number;
+  tareas:number;
+  integrantes:number;
+}
 
 export const Resumen = () => {
     const [items, setItems] = useState<ItemResumen[]>([]);
     const [cargando, setCargando] = useState(true);
 
-    useEffect(() => {
-    const cargar = async () => {
-        setCargando(true);
-        const [usuarios, categorias, grupos, tareas, integrantes] = await Promise.all([
-        adminApi.listar<any>('usuarios'),
-        adminApi.listar<any>('categorias'),
-        adminApi.listar<any>('grupos'),
-        adminApi.listar<any>('tareas'),
-        adminApi.listar<any>('integrantes'),
-        ]);
-
-        setItems([
-        { label: 'Usuarios', valor: usuarios?.length ?? 0 },
-        { label: 'Categorías', valor: categorias?.length ?? 0 },
-        { label: 'Grupos', valor: grupos?.length ?? 0 },
-        { label: 'Tareas', valor: tareas?.length ?? 0 },
-        { label: 'Integrantes', valor: integrantes?.length ?? 0 },
-        ]);
-        setCargando(false);
-    };
-    cargar();
-    }, []);
-
+// src/components/panel/Resumen.tsx (o donde esté)
+      useEffect(() => {
+        const cargar = async () => {
+          setCargando(true);
+          const datos=await adminApi.resumen<ResumenAdminData>()
+          if(datos){
+      setItems([
+        { label: 'Usuarios', valor: datos.usuarios},
+        { label: 'Categorías', valor: datos.categorias},
+        { label: 'Grupos', valor: datos.grupos},
+        { label: 'Tareas', valor: datos.tareas},
+        { label: 'Integrantes', valor: datos.integrantes},
+      ]);
+    }
+      setCargando(false);
+  };
+  cargar();
+}, []);
     return <EstadisticasAdmin titulo="Resumen general de Acadex" items={items} cargando={cargando} />;
 };
 

@@ -1,36 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { adminApi } from '../services/adminapi';
-
-interface UsuarioMe {
-    id_usuario: number;
-    correo_electronico: string;
-    es_admin: boolean;
-}
+import { useAppSelector, useAppDispatch } from '../hooks/hooks';
+import { fetchUsuarioActual } from '../store/authSlice';
 
 export const RutaAdmin = () => {
-    const [estado, setEstado] = useState<'cargando' | 'permitido' | 'denegado'>('cargando');
+  const dispatch = useAppDispatch();
+  const { usuario, error } = useAppSelector((state) => state.auth);
+  const token = localStorage.getItem('access_token');
 
-    useEffect(() => {
-    const verificar = async () => {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-        setEstado('denegado');
-        return;
-        }
-        const usuario = await adminApi.obtenerMe<UsuarioMe>();
-        if (usuario?.es_admin) {
-        setEstado('permitido');
-        } else {
-        setEstado('denegado');
-        }
-    };
-    verificar();
-    }, []);
+  useEffect(() => {
+    if (token && !usuario) dispatch(fetchUsuarioActual());
+  }, [token, usuario, dispatch]);
 
-    if (estado === 'cargando') return <p>Verificando acceso...</p>;
-    if (estado === 'denegado') return <Navigate to="/iniciarSesion" replace />;
-    return <Outlet />;
+  if (!token) return <Navigate to="/iniciarSesion" replace />;
+  if (!usuario && !error) return <p>Verificando acceso...</p>;
+  if (!usuario?.es_admin) return <Navigate to="/iniciarSesion" replace />;
+  return <Outlet />;
 };
 
 export default RutaAdmin;

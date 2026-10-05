@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import logoAcadex from '../../assets/logos/logo_acadex-preview.png';
-import logoAcadexLight from '../../assets/logos/logo_acadex_light.png';
+import logoParaFondoOscuro from '../../assets/logos/logo_acadex_dark.png';
+import logoParaFondoClaro from '../../assets/logos/logo_acadex_light.png';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -22,7 +22,7 @@ export const Header = () => {
           <a href="/#inicio" aria-label="Ir al inicio">
             {/* Logo dinámico: usa el oscuro si isDarkMode es true, de lo contrario usa el claro */}
             <img 
-              src={isDarkMode ? logoAcadex : logoAcadexLight} 
+              src={isDarkMode ? logoParaFondoOscuro : logoParaFondoClaro} 
               alt="Acadex Logo" 
             />
           </a>

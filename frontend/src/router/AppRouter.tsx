@@ -3,20 +3,18 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
 import Registrarse from "../pages/Register";
-
 import AppLayout from "../layouts/AppLayout";
 import Tareas from "../pages/Tareas";
 import Perfil from "../pages/Perfil";
 import { Panel } from "../pages/Panel";
 import { Admin } from "../pages/Admin";
-import { Lider } from "../pages/Lider";
+import Lider from "../pages/Lider";
 import { Estadisticas } from "../pages/Estadisticas";
 import { Calendario } from "../pages/Calendario";
 import Grupos from "../pages/Grupos";
-
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
-import { RutaLider } from "./RutaLider";
+
 
 function AppRouter() {
   return (
@@ -35,12 +33,8 @@ function AppRouter() {
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/estadisticas" element={<Estadisticas />} />
           <Route path="/grupos" element={<Grupos />} />
+          <Route path="/grupos/:idGrupo/lider" element={<Lider />} />
         </Route>
-      </Route>
-
-      {/* Ruta protegida exclusiva de líder */}
-      <Route element={<RutaLider />}>
-        <Route path="/lider" element={<Lider />} />
       </Route>
 
       {/* Ruta protegida exclusiva para administradores */}

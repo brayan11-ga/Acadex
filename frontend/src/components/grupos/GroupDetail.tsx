@@ -1,6 +1,7 @@
 // frontend/src/components/grupos/GroupDetail.tsx
 import type { GrupoConRol, Integrante } from "../../types/grupo";
 import "../../styles/group-detail.css";
+import { useNavigate } from "react-router-dom";
 
 interface GroupDetailProps {
   group: GrupoConRol;
@@ -8,20 +9,20 @@ interface GroupDetailProps {
   currentUserId: number | null;
   onBack: () => void;
   onKickMember: (idUsuario: number) => void;
-  onDeleteGroup: () => void;
   onLeaveGroup: () => void;
 }
 
 export function GroupDetail({
-  group,
-  members,
-  currentUserId,
-  onBack,
-  onKickMember,
-  onDeleteGroup,
-  onLeaveGroup,
-}: GroupDetailProps) {
-  const isLeader = group.rol === "lider";
+    group,
+    members,
+    currentUserId,
+    onBack,
+    onKickMember,
+    onLeaveGroup,
+  }: GroupDetailProps) {
+    const isLeader = group.rol === "lider";
+    const navigate = useNavigate();
+
 
   return (
     <section className="detail-view">
@@ -33,10 +34,13 @@ export function GroupDetail({
           <h1 className="detail-title">{group.nombre_grupo}</h1>
           <p className="detail-desc">{group.descripcion?.trim() || "Sin descripción."}</p>
         </div>
+
         {isLeader && (
-          <button className="detail-btn detail-btn-danger" onClick={onDeleteGroup}>
-            Eliminar grupo
+          <div className="detail-header-actiion">
+          <button className="detail-btn" onClick={()=>navigate(`/grupos/${group.id_grupo}/lider`)}>
+            Panel de Lider
           </button>
+          </div>
         )}
       </header>
       <div className="detail-members-block">

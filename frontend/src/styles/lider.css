@@ -1,4 +1,4 @@
-.admin-page {
+.lider-page {
     min-height: 100vh;
     padding: 2.5rem 3rem;
     background: linear-gradient(180deg, var(--pixel-bg-start) 0%, var(--pixel-bg-end) 100%);
@@ -6,7 +6,7 @@
     color: var(--pixel-ink);
 }
 
-.admin-page h1 {
+.lider-page h1 {
     font-family: var(--pixel-font-display);
     font-size: 1.4rem;
     line-height: 1.6;

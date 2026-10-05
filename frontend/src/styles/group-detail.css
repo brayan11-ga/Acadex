@@ -31,6 +31,12 @@
   margin-bottom: 1.5rem;
   border-bottom: 1px solid rgba(139, 92, 246, 0.14);
 }
+
+.detail-header-actions{
+  display: flex;
+  gap: 0.5rem;
+}
+
 .detail-header-info {
   min-width: 0;
 }
