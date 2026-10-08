@@ -46,3 +46,6 @@ def obtener_tareas_por_rango(
     if id_grupo is not None:
         query = query.filter(Tarea.id_grupo == id_grupo)
     return query.order_by(Tarea.fecha_entrega).all()
+
+def obtener_tareas_por_grupo(db: Session, id_grupo: int) -> List[Tarea]:
+    return db.query(Tarea).filter(Tarea.id_grupo == id_grupo).all()

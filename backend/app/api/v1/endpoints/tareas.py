@@ -1,6 +1,10 @@
 # backend/app/api/v1/endpoints/tareas.py
 from datetime import date
 from typing import List, Optional
+from fastapi import File, UploadFile
+from app.schemas.archivo import ArchivoResponse
+from app.services import archivo_service
+from app.schemas.tarea import IntegranteAsignadoResponse
 
 from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
@@ -11,6 +15,8 @@ from app.models.usuario import Usuario
 from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse, TareaPropuestaIA
 from app.services import tarea_service
 from app.services import ia_service
+from app.schemas.tarea import TareaGrupalCreate
+from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
@@ -27,6 +33,15 @@ def crear_tarea(
         datos.id_usuario = usuario_actual.id_usuario
     return tarea_service.crear_tarea(db, datos)
 
+@router.post("/grupos/{id_grupo}", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
+def crear_tarea_grupal(
+    id_grupo: int,
+    datos: TareaGrupalCreate,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(requerir_lider_de_grupo),
+):
+    return tarea_service.crear_tarea_grupal(db, id_grupo, datos)
+
 
 @router.get("/", response_model=List[TareaResponse])
 def listar_tareas(db: Session = Depends(get_db)):
@@ -42,6 +57,14 @@ def listar_tareas_calendario(
     db: Session = Depends(get_db),
 ):
     return tarea_service.listar_tareas_calendario(db, desde, hasta, id_usuario, id_grupo)
+
+
+@router.get("/asignadas/mias", response_model=List[TareaResponse])
+def listar_tareas_asignadas(
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_tareas_asignadas(db, usuario_actual.id_usuario)
 
 
 @router.get("/{id_tarea}", response_model=TareaResponse)
@@ -98,3 +121,30 @@ def analizar_documento(
     return ia_service.analizar_documento_con_ia(db, archivo)
 
 # ... @router.post("/") def crear_tarea(...) ...
+
+#estas son rutas para los archivos del modulo de grupos vale
+@router.post("/{id_tarea}/archivos", response_model=ArchivoResponse, status_code=status.HTTP_201_CREATED)
+def subir_archivo(
+    id_tarea: int,
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return archivo_service.subir_archivo_tarea(db, id_tarea, archivo, usuario_actual.id_usuario)
+
+
+@router.get("/{id_tarea}/archivos", response_model=List[ArchivoResponse])
+def listar_archivos(id_tarea: int, db: Session = Depends(get_db)):
+    return archivo_service.listar_archivos_de_tarea(db, id_tarea)
+
+@router.get("/grupos/{id_grupo}", response_model=List[TareaResponse])
+def listar_tareas_de_grupo(
+    id_grupo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_tareas_de_grupo(db, id_grupo)
+
+@router.get("/{id_tarea}/asignados", response_model=List[IntegranteAsignadoResponse])
+def listar_asignados(id_tarea: int, db: Session = Depends(get_db)):
+    return tarea_service.listar_asignados_de_tarea(db, id_tarea)

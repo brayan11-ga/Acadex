@@ -69,3 +69,10 @@ def obtener_integrantes_de_grupo(db: Session, id_grupo: int) -> List[Tuple[Integ
         .filter(Integrante.id_grupo == id_grupo)
         .all()
     )
+
+def obtener_lider_de_grupo(db: Session, id_grupo: int) -> Optional[Integrante]:
+    return (
+        db.query(Integrante)
+        .filter(Integrante.id_grupo == id_grupo, Integrante.rol == "lider")
+        .first()
+    )

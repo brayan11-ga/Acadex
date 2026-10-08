@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, model_validator, Field
+from typing import List
 
 class TareaBase(BaseModel):
     nombre: str
@@ -57,5 +58,20 @@ class TareaResponse(TareaBase):
     cronometro_activo: bool
     id_usuario: Optional[int] = None
     id_grupo: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class TareaGrupalCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    fecha_entrega: datetime
+    dificultad_estimada: int
+    tiempo_estimado: int
+    id_categoria: int
+    ids_usuarios: List[int] = Field(default_factory=list)
+
+class IntegranteAsignadoResponse(BaseModel):
+    id_usuario: int
+    correo_electronico: str
 
     model_config = ConfigDict(from_attributes=True)

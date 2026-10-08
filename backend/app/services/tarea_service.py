@@ -6,6 +6,11 @@ from app.models.tarea import Tarea
 from app.models.historial_tarea import HistorialTarea
 from app.repositories import tarea_repository
 from app.schemas.tarea import TareaCreate, TareaUpdate
+from app.repositories import asignacion_tarea_repository, grupo_repository
+from app.schemas.tarea import TareaGrupalCreate
+from app.repositories import asignacion_tarea_repository
+from app.models.usuario import Usuario
+
 
 def crear_tarea(db: Session, datos: TareaCreate) -> Tarea:
     return tarea_repository.crear_tarea(db, datos)
@@ -82,3 +87,37 @@ def listar_tareas_calendario(
     id_grupo: Optional[int] = None,
 ) -> List[Tarea]:
     return tarea_repository.obtener_tareas_por_rango(db, desde, hasta, id_usuario, id_grupo)
+
+def crear_tarea_grupal(db: Session, id_grupo: int, datos: TareaGrupalCreate) -> Tarea:
+    tarea_datos = TareaCreate(
+        nombre=datos.nombre,
+        descripcion=datos.descripcion,
+        fecha_entrega=datos.fecha_entrega,
+        dificultad_estimada=datos.dificultad_estimada,
+        tiempo_estimado=datos.tiempo_estimado,
+        id_categoria=datos.id_categoria,
+        id_usuario=None,
+        id_grupo=id_grupo,
+    )
+    tarea = tarea_repository.crear_tarea(db, tarea_datos)
+
+    for id_usuario in datos.ids_usuarios:
+        integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)
+        if not integrante:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El usuario {id_usuario} no pertenece a este grupo",
+            )
+        asignacion_tarea_repository.crear_asignacion(db, tarea.id_tarea, integrante.id_integrante)
+
+    return tarea
+
+def listar_tareas_asignadas(db: Session, id_usuario: int) -> List[Tarea]:
+    return asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
+
+def listar_tareas_de_grupo(db: Session, id_grupo: int) -> List[Tarea]:
+    return tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
+
+def listar_asignados_de_tarea(db: Session, id_tarea: int) -> List[Usuario]:
+    tarea = obtener_tarea(db, id_tarea)  # reutiliza la validación de que la tarea exista (lanza 404 si no)
+    return asignacion_tarea_repository.obtener_usuarios_asignados(db, tarea.id_tarea)
