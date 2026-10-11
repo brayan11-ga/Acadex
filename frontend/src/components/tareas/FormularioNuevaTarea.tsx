@@ -10,6 +10,7 @@ import iconoCalendario from "../../assets/icons/ui/calendario.png";
 import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
 import { crearTarea, actualizarTarea, analizarDocumentoIA, type TareaBackend } from "../../services/tareas";
+import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -138,7 +139,9 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
     <form className="pixel-panel" onSubmit={manejarEnvio}>
       <div className="pixel-panel-header">
         <div>
-          <h2 className="pixel-panel-title">{tareaAEditar ? "Editar tarea" : "Nueva tarea"}</h2>
+          <h2 id="formulario-tarea-titulo" className="pixel-panel-title">
+            {tareaAEditar ? "Editar tarea" : "Nueva tarea"}
+          </h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
         <button type="button" className="pixel-link-descartar" onClick={onDescartar}>
@@ -176,6 +179,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         <input
           type="text"
           className="pixel-input"
+          autoFocus
           placeholder="¿Qué hay que hacer?"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
@@ -267,6 +271,14 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           onChange={(e) => setDescripcion(e.target.value)}
         />
       </label>
+
+      {tareaAEditar && (
+        <SeccionAdjuntosTarea
+          key={tareaAEditar.id_tarea}
+          idTarea={tareaAEditar.id_tarea}
+          modo="edicion"
+        />
+      )}
 
       <div className="pixel-panel-footer">
         <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>

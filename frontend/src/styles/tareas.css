@@ -6,13 +6,37 @@
   height: 100%;
 }
 
-/* Capa oscura que desenfoca el fondo */
+/* Estilos existentes del modal de detalles de tarea. */
 .pixel-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
+  background-color: rgba(7, 12, 23, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.pixel-modal-content {
+  width: 100%;
+  max-width: 700px;
+  animation: modalFadeIn 0.3s ease-out;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+/* Modal de creación/edición: el contenedor permite alcanzar todo el formulario en ventanas bajas. */
+.pixel-tarea-form-overlay {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 0;
   background-color: rgba(7, 12, 23, 0.85); /* Tono muy oscuro del tema Pixel */
   backdrop-filter: blur(4px);
   display: flex;
@@ -21,14 +45,52 @@
   z-index: 1000;
 }
 
-/* Contenedor que limita el ancho del formulario (Cambiado a 700px para PC) */
-.pixel-modal-content {
+/* Contenedor con altura máxima para que el formulario se desplace dentro del viewport. */
+.pixel-tarea-form-modal {
   width: 100%;
-  max-width: 700px; 
+  max-width: 700px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: modalFadeIn 0.3s ease-out;
-  /* Margen interno para que en móvil no pegue a los bordes de la pantalla */
-  padding: 0 16px; 
+  padding: 0 16px;
   box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .pixel-tarea-form-overlay {
+    padding: 12px 0;
+  }
+
+  .pixel-tarea-form-modal {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 0 12px;
+  }
+
+  .pixel-tarea-form-modal .pixel-panel {
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .pixel-tarea-form-modal .pixel-panel-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pixel-tarea-form-modal .pixel-field-row .pixel-field {
+    min-width: 100%;
+  }
+
+  .pixel-tarea-form-modal .pixel-dificultad-group {
+    gap: 6px;
+  }
+
+  .pixel-tarea-form-modal .pixel-dificultad-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Animación de entrada suave */
