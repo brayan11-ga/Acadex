@@ -11,6 +11,11 @@ class Archivo(Base):
     fecha_adjuncion = Column(DateTime, nullable=False, server_default=func.now())
     ruta = Column(String(255), nullable=False)
     id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
+    id_usuario_subida = Column(
+        Integer,
+        ForeignKey("usuarios.id_usuario", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     __table_args__ = (
         CheckConstraint("tamano is null or tamano >= 0", name="chk_tamano_archivo"),

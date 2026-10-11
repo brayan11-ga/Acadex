@@ -10,6 +10,7 @@ from app.repositories import asignacion_tarea_repository, grupo_repository
 from app.schemas.tarea import TareaGrupalCreate
 from app.repositories import asignacion_tarea_repository
 from app.models.usuario import Usuario
+from app.services import archivo_service
 
 
 def crear_tarea(db: Session, datos: TareaCreate) -> Tarea:
@@ -75,9 +76,23 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate) -> Tarea:
 
     return tarea_actualizada
 
-def eliminar_tarea(db: Session, id_tarea: int) -> None:
+def eliminar_tarea(db: Session, id_tarea: int, id_usuario: int) -> None:
     tarea = obtener_tarea(db, id_tarea)
-    tarea_repository.eliminar_tarea(db, tarea)
+    if tarea.id_usuario is not None:
+        autorizado = tarea.id_usuario == id_usuario
+    else:
+        integrante = grupo_repository.obtener_integrante(db, id_usuario, tarea.id_grupo)
+        autorizado = integrante is not None and integrante.rol == "lider"
+
+    if not autorizado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para eliminar esta tarea.",
+        )
+
+    # Mantiene los binarios recuperables si falla el commit que elimina la tarea y sus metadatos.
+    with archivo_service.preparar_eliminacion_archivos_tarea(db, id_tarea):
+        tarea_repository.eliminar_tarea(db, tarea)
 
 def listar_tareas_calendario(
     db: Session,

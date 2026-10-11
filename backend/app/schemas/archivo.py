@@ -9,7 +9,7 @@ class ArchivoResponse(BaseModel):
     tamano: Optional[int] = None
     tipo: str
     fecha_adjuncion: datetime
-    ruta: str
     id_tarea: int
+    puede_eliminar: bool = False
 
     model_config = ConfigDict(from_attributes=True)

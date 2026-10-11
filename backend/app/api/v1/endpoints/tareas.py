@@ -7,6 +7,7 @@ from app.services import archivo_service
 from app.schemas.tarea import IntegranteAsignadoResponse
 
 from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.dependencies.db import get_db
@@ -78,8 +79,12 @@ def actualizar_tarea(id_tarea: int, datos: TareaUpdate, db: Session = Depends(ge
 
 
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_tarea(id_tarea: int, db: Session = Depends(get_db)):
-    tarea_service.eliminar_tarea(db, id_tarea)
+def eliminar_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    tarea_service.eliminar_tarea(db, id_tarea, usuario_actual.id_usuario)
     
 
 @router.post("/analizar-documento", response_model=TareaPropuestaIA)
@@ -134,8 +139,46 @@ def subir_archivo(
 
 
 @router.get("/{id_tarea}/archivos", response_model=List[ArchivoResponse])
-def listar_archivos(id_tarea: int, db: Session = Depends(get_db)):
-    return archivo_service.listar_archivos_de_tarea(db, id_tarea)
+def listar_archivos(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return archivo_service.listar_archivos_de_tarea(db, id_tarea, usuario_actual.id_usuario)
+
+
+@router.get("/{id_tarea}/archivos/{id_archivo}", response_class=FileResponse)
+def descargar_archivo(
+    id_tarea: int,
+    id_archivo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    archivo, ruta = archivo_service.obtener_archivo_para_descarga(
+        db, id_tarea, id_archivo, usuario_actual.id_usuario
+    )
+    return FileResponse(
+        path=ruta,
+        media_type=archivo_service.TIPOS_MIME[archivo.tipo],
+        filename=archivo.nombre,
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.delete(
+    "/{id_tarea}/archivos/{id_archivo}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def eliminar_archivo(
+    id_tarea: int,
+    id_archivo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    archivo_service.eliminar_archivo_tarea(db, id_tarea, id_archivo, usuario_actual.id_usuario)
 
 @router.get("/grupos/{id_grupo}", response_model=List[TareaResponse])
 def listar_tareas_de_grupo(
