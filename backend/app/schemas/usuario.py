@@ -7,6 +7,9 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str
+    acepta_tratamiento_datos: bool
+    confirma_aviso_almacenamiento: bool
+    sitio_web: str = ""
 
 class UsuarioUpdate(BaseModel):
     correo_electronico:Optional[EmailStr]=None

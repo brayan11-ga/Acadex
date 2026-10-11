@@ -1,4 +1,4 @@
-# Migraciones de adjuntos
+# Migraciones manuales de Acadex
 
 Acadex aún no tiene un ejecutor de migraciones versionadas. La migración SQL de esta carpeta es aditiva y debe aplicarse una vez, en el despliegue controlado, después de respaldar PostgreSQL:
 
@@ -19,3 +19,15 @@ Antes de cambiar de almacenamiento, copie los binarios existentes preservando la
 ## Reversión
 
 `20261011_add_archivo_uploader.rollback.sql` solo procede si no se ha registrado ninguna autoría nueva. Contiene una comprobación que aborta antes de quitar la columna si detecta valores no nulos. Si ya existen autores, respalde/exporte esa información y prepare una reversión explícita antes de retirar el esquema.
+
+## Consentimientos de registro
+
+Antes de desplegar la versión que exige aceptación en el registro, aplique la migración aditiva de evidencias:
+
+```powershell
+psql -v ON_ERROR_STOP=1 -f .\migrations\20261011_add_registration_consents.sql
+```
+
+La tabla `consentimientos_usuario` guarda el tipo de aceptación, la versión del aviso y la fecha de registro. Las cuentas que ya existían quedan sin registros históricos inventados. El alta de una cuenta, su perfil y ambas evidencias se confirma en una sola transacción.
+
+La reversión `20261011_add_registration_consents.rollback.sql` aborta si existe evidencia; expórtela y revise esos datos antes de planear la retirada. El límite antiabuso se mantiene en memoria por proceso, por lo que en producción debe configurarse también en el proxy o en una capa compartida si se ejecutan varias instancias. Si el backend está detrás de un proxy, confíe las cabeceras de cliente solo desde proxies conocidos.

@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual, requerir_admin
@@ -8,12 +8,26 @@ from app.schemas.auth import LoginRequest, Token
 from app.models.usuario import Usuario
 from app.services import usuario_service as service
 from app.schemas.token_temporal import TokenResetOut
+from app.core.registration_guard import registrar_intento
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
-def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
-    return service.registrar_usuario(db, usuario.correo_electronico, usuario.contrasena)
+def crear_usuario(
+    usuario: UsuarioCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    registrar_intento(request.client.host if request.client else "desconocido")
+    if usuario.sitio_web.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se pudo procesar el registro.")
+    return service.registrar_usuario(
+        db,
+        usuario.correo_electronico,
+        usuario.contrasena,
+        usuario.acepta_tratamiento_datos,
+        usuario.confirma_aviso_almacenamiento,
+    )
 
 @router.post("/login", response_model=Token)
 def login(credenciales: LoginRequest, db: Session = Depends(get_db)):

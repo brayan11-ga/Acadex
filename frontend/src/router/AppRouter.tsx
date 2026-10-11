@@ -13,6 +13,7 @@ import { Calendario } from "../pages/Calendario";
 import Grupos from "../pages/Grupos";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
+import LegalInformation from "../pages/LegalInformation";
 
 
 function AppRouter() {
@@ -22,6 +23,8 @@ function AppRouter() {
       <Route path="/" element={<Inicio />} />
       <Route path="/iniciarSesion" element={<IniciarSesion />} />
       <Route path="/registrarse" element={<Registrarse />} />
+      <Route path="/politica-privacidad" element={<LegalInformation type="privacy" />} />
+      <Route path="/politica-cookies" element={<LegalInformation type="cookies" />} />
 
       {/* Rutas protegidas generales */}
       <Route element={<ProtectedRoute />}>

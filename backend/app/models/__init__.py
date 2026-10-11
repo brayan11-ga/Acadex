@@ -12,3 +12,4 @@ from app.models.archivo import Archivo
 from app.models.notificacion import Notificacion
 from app.models.estadistica_categoria import EstadisticaCategoria
 from app.models.estadistica_categoria_grupo import EstadisticaCategoriaGrupo
+from app.models.consentimiento_usuario import ConsentimientoUsuario

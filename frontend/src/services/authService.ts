@@ -1,10 +1,30 @@
 import { API_BASE_URL } from './api';
 
 interface ApiError {
-    detail: string;
+    detail?: string | Array<{ msg?: string }>;
 }
 
-export async function registrarUsuario(email: string, username: string, password: string) {
+async function obtenerMensajeError(res: Response, predeterminado: string): Promise<string> {
+    try {
+        const error = await res.json() as ApiError;
+        if (typeof error.detail === 'string') return error.detail;
+        if (Array.isArray(error.detail)) {
+            return error.detail.map((item) => item.msg).filter(Boolean).join('. ') || predeterminado;
+        }
+    } catch {
+        return predeterminado;
+    }
+    return predeterminado;
+}
+
+export async function registrarUsuario(
+    email: string,
+    username: string,
+    password: string,
+    aceptaTratamientoDatos: boolean,
+    confirmaAvisoAlmacenamiento: boolean,
+    honeypot: string,
+) {
     const res = await fetch(`${API_BASE_URL}/usuarios/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,12 +32,14 @@ export async function registrarUsuario(email: string, username: string, password
         correo_electronico: email,
         nombre_usuario: username,
         contrasena: password,
+        acepta_tratamiento_datos: aceptaTratamientoDatos,
+        confirma_aviso_almacenamiento: confirmaAvisoAlmacenamiento,
+        sitio_web: honeypot,
     }),
 });
 
     if (!res.ok) {
-    const error: ApiError = await res.json();
-    throw new Error(error.detail || 'Error al registrar el usuario');
+    throw new Error(await obtenerMensajeError(res, 'Error al registrar el usuario'));
     }
     return res.json();
 }
@@ -33,8 +55,7 @@ export async function iniciarSesion(email: string, password: string) {
 });
 
     if (!res.ok) {
-    const error: ApiError = await res.json();
-    throw new Error(error.detail || 'Correo o contraseña incorrectos');
+    throw new Error(await obtenerMensajeError(res, 'Correo o contraseña incorrectos'));
     }
 
   return res.json(); // { access_token, token_type }
