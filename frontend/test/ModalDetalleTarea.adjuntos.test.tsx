@@ -83,6 +83,28 @@ function renderFormularioEdicion() {
   );
 }
 
+function renderFormularioCreacion(onTareaCreada = vi.fn()) {
+  render(
+    <FormularioNuevaTarea
+      onDescartar={() => undefined}
+      onTareaCreada={onTareaCreada}
+    />,
+  );
+  return onTareaCreada;
+}
+
+async function completarDatosDeTarea() {
+  await screen.findByRole("option", { name: "Lectura" });
+  fireEvent.change(screen.getByPlaceholderText("¿Qué hay que hacer?"), {
+    target: { value: "Entrega del capítulo" },
+  });
+  fireEvent.change(screen.getByLabelText(/Categoría/), { target: { value: "4" } });
+  fireEvent.change(screen.getByLabelText(/Fecha de entrega/), {
+    target: { value: "2026-10-20T12:00" },
+  });
+  fireEvent.change(screen.getByPlaceholderText("120"), { target: { value: "60" } });
+}
+
 describe("adjuntos de tareas", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,11 +115,109 @@ describe("adjuntos de tareas", () => {
     servicios.listarCategorias.mockResolvedValue([
       { id_categoria: 4, nombre_categoria: "Lectura" },
     ]);
+    servicios.crear.mockResolvedValue(tarea);
+    servicios.analizar.mockResolvedValue({
+      titulo: "Entrega sugerida",
+      descripcion: "Resolver ejercicios del capítulo.",
+      dificultad_estimada: 3,
+      tiempo_estimado: 60,
+      id_categoria: 4,
+    });
     docxRenderer.render.mockImplementation(async (_blob: Blob, contenedor: HTMLElement) => {
       const texto = document.createElement("p");
       texto.textContent = "Contenido de Word";
       contenedor.appendChild(texto);
     });
+  });
+
+  it("usa un solo selector de adjuntos y muestra la IA como opcional", async () => {
+    renderFormularioCreacion();
+
+    expect(await screen.findByText("OPCIONAL")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Archivos adjuntos" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Seleccionar archivos adjuntos de la tarea")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Autocompletar con IA/ })).toHaveLength(1);
+    expect(screen.getByText("Solo puedes autocompletar con IA al adjuntar un PDF.")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Seleccionar.*archivos?/)).toHaveLength(1);
+  });
+
+  it("adjunta DOCX desde el selector único y avisa que la IA requiere PDF", async () => {
+    const onTareaCreada = renderFormularioCreacion();
+    const docx = new File(["documento"], "guia.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+
+    fireEvent.change(screen.getByLabelText("Seleccionar archivos adjuntos de la tarea"), {
+      target: { files: [docx] },
+    });
+    const botonAnalisis = screen.getByRole("button", { name: /Autocompletar con IA/ });
+    expect(botonAnalisis).toHaveAttribute("aria-disabled", "true");
+    expect(botonAnalisis).not.toBeDisabled();
+    expect(await screen.findByRole("list", { name: "Archivos que se adjuntarán al crear la tarea" })).toHaveTextContent("guia.docx");
+
+    fireEvent.click(botonAnalisis);
+    expect(await screen.findByText(
+      "Para autocompletar con IA, elige un PDF. Pronto habrá más formatos.",
+    )).toBeInTheDocument();
+    expect(servicios.analizar).not.toHaveBeenCalled();
+
+    await completarDatosDeTarea();
+    fireEvent.click(screen.getByRole("button", { name: "Crear →" }));
+
+    await waitFor(() => expect(servicios.subir).toHaveBeenCalledWith(tarea.id_tarea, docx));
+    expect(servicios.crear).toHaveBeenCalledTimes(1);
+    expect(onTareaCreada).toHaveBeenCalledTimes(1);
+  });
+
+  it("permite autocompletar con el PDF seleccionado y lo adjunta al crear la tarea", async () => {
+    const onTareaCreada = renderFormularioCreacion();
+    const pdf = new File(["%PDF-1.7"], "guia.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Seleccionar archivos adjuntos de la tarea"), {
+      target: { files: [pdf] },
+    });
+
+    const botonAnalisis = screen.getByRole("button", { name: /Autocompletar con IA/ });
+    expect(botonAnalisis).toHaveAttribute("aria-disabled", "false");
+    expect(await screen.findByText("PDF listo: puedes autocompletar la tarea con IA.")).toBeInTheDocument();
+    expect(await screen.findByText(/Autocompletar \+ adjunto/)).toBeInTheDocument();
+    fireEvent.click(botonAnalisis);
+
+    expect(await screen.findByText("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.")).toBeInTheDocument();
+    expect(servicios.analizar).toHaveBeenCalledWith(pdf);
+    expect(servicios.subir).not.toHaveBeenCalled();
+
+    await completarDatosDeTarea();
+    fireEvent.click(screen.getByRole("button", { name: "Crear →" }));
+
+    await waitFor(() => expect(servicios.subir).toHaveBeenCalledWith(tarea.id_tarea, pdf));
+    expect(onTareaCreada).toHaveBeenCalledTimes(1);
+  });
+
+  it("permite reintentar adjuntos fallidos sin volver a crear la tarea", async () => {
+    const onTareaCreada = renderFormularioCreacion();
+    const archivo = new File(["imagen"], "apunte.png", { type: "image/png" });
+    servicios.subir
+      .mockRejectedValueOnce(new Error("El almacenamiento no está disponible"))
+      .mockResolvedValueOnce(adjunto);
+
+    fireEvent.change(screen.getByLabelText("Seleccionar archivos adjuntos de la tarea"), {
+      target: { files: [archivo] },
+    });
+    await completarDatosDeTarea();
+    fireEvent.click(screen.getByRole("button", { name: "Crear →" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "La tarea se guardó, pero no se pudieron subir 1 archivo",
+    );
+    expect(servicios.crear).toHaveBeenCalledTimes(1);
+    expect(onTareaCreada).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar adjuntos →" }));
+
+    await waitFor(() => expect(servicios.subir).toHaveBeenCalledTimes(2));
+    expect(servicios.subir).toHaveBeenLastCalledWith(tarea.id_tarea, archivo);
+    expect(servicios.crear).toHaveBeenCalledTimes(1);
+    expect(onTareaCreada).toHaveBeenCalledTimes(1);
   });
 
   it("muestra adjuntos en la edición y permite cargarlos desde ese formulario", async () => {
