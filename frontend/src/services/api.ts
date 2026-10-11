@@ -1,5 +1,25 @@
 // src/services/api.ts
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`;
+// VITE_API_URL is the API origin (for example, http://localhost:8000).
+const API_ORIGIN = import.meta.env.VITE_API_URL?.trim();
+
+if (!API_ORIGIN) {
+  throw new Error("Falta configurar VITE_API_URL en el entorno del frontend.");
+}
+
+export const API_BASE_URL = `${API_ORIGIN.replace(/\/+$/, "")}/api/v1`;
+
+async function mensajeDeRespuestaError(respuesta: Response): Promise<string> {
+  const detalle = await respuesta.text();
+  try {
+    const parsed = JSON.parse(detalle);
+    if (parsed.detail) {
+      return typeof parsed.detail === "string" ? parsed.detail : JSON.stringify(parsed.detail);
+    }
+  } catch {
+    // Si no es JSON, conserva el texto del servidor.
+  }
+  return detalle;
+}
 
 export async function apiFetch<T>(
   ruta: string,
@@ -20,25 +40,13 @@ export async function apiFetch<T>(
     ...opciones.headers,
   };
 
-  const respuesta = await fetch(`${BASE_URL}${ruta}`, {
+  const respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
     ...opciones,
     headers, // <-- Pasamos los headers con el token integrado
   });
 
   if (!respuesta.ok) {
-    const detalle = await respuesta.text();
-    let mensajeAmigable = detalle;
-    try {
-      const parsed = JSON.parse(detalle);
-      if (parsed.detail) {
-        mensajeAmigable = typeof parsed.detail === 'string' 
-          ? parsed.detail 
-          : JSON.stringify(parsed.detail);
-      }
-    } catch (e) {
-      // Si no es JSON, dejamos el texto crudo
-    }
-    throw new Error(mensajeAmigable);
+    throw new Error(await mensajeDeRespuestaError(respuesta));
   }
 
   if (respuesta.status === 204) {
@@ -46,4 +54,24 @@ export async function apiFetch<T>(
   }
 
   return respuesta.json();
+}
+
+export async function apiFetchBlob(
+  ruta: string,
+  opciones: RequestInit = {}
+): Promise<Blob> {
+  const token = localStorage.getItem('access_token');
+  const respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
+    ...opciones,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...opciones.headers,
+    },
+  });
+
+  if (!respuesta.ok) {
+    throw new Error(await mensajeDeRespuestaError(respuesta));
+  }
+
+  return respuesta.blob();
 }

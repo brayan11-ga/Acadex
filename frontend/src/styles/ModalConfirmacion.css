@@ -1,78 +1,108 @@
-/* src/styles/ModalConfirmacion.css */
-.modal-overlay {
+/* Confirmaciones pixel art; los nombres propios evitan afectar otros modales globales. */
+.confirmacion-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
+  inset: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  background-color: rgba(7, 12, 23, 0.82);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1200;
 }
 
-.modal-content {
-  background-color: var(--panel, #151b28);
-  border: 2px solid var(--line-strong, #2a3548);
-  border-radius: 8px;
+.confirmacion-content {
+  box-sizing: border-box;
+  width: min(400px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: var(--pixel-panel, #151b28);
+  border: 2px solid var(--pixel-border-strong, #2a3548);
+  border-radius: 0;
   padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
+  box-shadow: 6px 6px 0 var(--pixel-accent-strong, #5b3df0);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  outline: none;
 }
 
-.modal-title {
-  font-size: 1.2rem;
+.confirmacion-title {
+  font-family: var(--pixel-font-display, monospace);
+  font-size: 0.82rem;
   font-weight: bold;
-  color: var(--text-main, #ffffff);
+  line-height: 1.6;
+  color: var(--pixel-ink, #ffffff);
   margin: 0;
 }
 
-.modal-message {
+.confirmacion-message {
+  font-family: var(--pixel-font-body, sans-serif);
   font-size: 0.9rem;
-  color: var(--text-muted, #94a3b8);
+  color: var(--pixel-ink-soft, #b9aee0);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
-.modal-actions {
+.confirmacion-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
-.pixel-btn-danger {
-  background-color: #ff4d4d;
-  color: white;
-  border: 2px solid #cc0000;
-  padding: 8px 16px;
-  border-radius: 4px;
+.confirmacion-button {
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  border-radius: 0;
+  font-family: var(--pixel-font-display, monospace);
+  font-size: 0.62rem;
   font-weight: bold;
   cursor: pointer;
-  font-family: inherit;
+  transition: transform 0.12s ease, filter 0.12s ease;
 }
 
-.pixel-btn-danger:hover {
+.confirmacion-button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.confirmacion-button:focus-visible {
+  outline: 3px solid var(--pixel-accent-soft, #a68bff);
+  outline-offset: 3px;
+}
+
+.confirmacion-button-confirm {
+  background-color: #ff4d4d;
+  color: white;
+  border-color: #cc0000;
+}
+
+.confirmacion-button-confirm:hover {
   background-color: #ff3333;
 }
 
-.pixel-btn-outline {
-  background-color: transparent;
-  color: var(--text-muted, #94a3b8);
-  border: 2px solid var(--line-strong, #2a3548);
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
+.confirmacion-button-cancel {
+  background-color: var(--pixel-panel-alt, #1f2e52);
+  color: var(--pixel-ink, #ffffff);
+  border-color: var(--pixel-border-strong, #2a3548);
 }
 
-.pixel-btn-outline:hover {
-  border-color: var(--text-main, #ffffff);
-  color: var(--text-main, #ffffff);
+@media (max-width: 420px) {
+  .confirmacion-content {
+    padding: 20px;
+  }
+
+  .confirmacion-actions {
+    flex-direction: column-reverse;
+  }
+
+  .confirmacion-button {
+    width: 100%;
+  }
 }

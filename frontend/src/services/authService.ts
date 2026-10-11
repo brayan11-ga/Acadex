@@ -1,11 +1,11 @@
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1`;
+import { API_BASE_URL } from './api';
 
 interface ApiError {
     detail: string;
 }
 
 export async function registrarUsuario(email: string, username: string, password: string) {
-    const res = await fetch(`${API_URL}/usuarios/`, {
+    const res = await fetch(`${API_BASE_URL}/usuarios/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -23,7 +23,7 @@ export async function registrarUsuario(email: string, username: string, password
 }
 
 export async function iniciarSesion(email: string, password: string) {
-    const res = await fetch(`${API_URL}/usuarios/login`, {
+    const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

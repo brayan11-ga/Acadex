@@ -123,8 +123,13 @@ function AppLayout() {
       </div>
 
       {isModalOpen && (
-        <div className="pixel-modal-overlay">
-          <div className="pixel-modal-content">
+        <div className="pixel-tarea-form-overlay">
+          <div
+            className="pixel-tarea-form-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="formulario-tarea-titulo"
+          >
             <FormularioNuevaTarea
               onDescartar={cerrarModal}
               onTareaCreada={manejarTareaGuardada}

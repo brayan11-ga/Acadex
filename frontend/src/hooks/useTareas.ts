@@ -73,8 +73,8 @@ const confirmarEliminar = async () => {
     await eliminarTarea(tareaAEliminar);
     setTareas((actuales) => actuales.filter((t) => t.id_tarea !== tareaAEliminar));
     setTareaAEliminar(null); // Cierra el modal tras el éxito
-  } catch {
-    setError("No se pudo eliminar la tarea");
+  } catch (error) {
+    setError(error instanceof Error ? error.message : "No se pudo eliminar la tarea");
     setTareaAEliminar(null); // Cierra el modal aunque falle
   }
 };
