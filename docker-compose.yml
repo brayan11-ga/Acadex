@@ -55,5 +55,16 @@ services:
       retries: 6
       start_period: 15s
 
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
