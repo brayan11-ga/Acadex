@@ -1,6 +1,8 @@
 # usuario_service
+import base64
+import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -28,6 +30,7 @@ def registrar_usuario(
     contrasena: str,
     acepta_tratamiento_datos: bool,
     confirma_aviso_almacenamiento: bool,
+    nombre_usuario: str | None = None,
 ) -> Usuario:
     if not acepta_tratamiento_datos or not confirma_aviso_almacenamiento:
         raise HTTPException(
@@ -42,10 +45,10 @@ def registrar_usuario(
     hashed = hash_password(contrasena)
     try:
         usuario = repo.create_usuario(db, correo_electronico, hashed, commit=False)
-        nombre_por_defecto = correo_electronico.split("@")[0]
+        nombre_perfil = nombre_usuario or correo_electronico.split("@")[0]
         perfil_repo.create_perfil(db, {
             "id_usuario": usuario.id_usuario,
-            "nombre_usuario": nombre_por_defecto,
+            "nombre_usuario": nombre_perfil,
         }, commit=False)
         db.add_all([
             ConsentimientoUsuario(
@@ -113,7 +116,12 @@ def eliminar_usuario(db: Session, id_usuario: int) -> None:
         )
     repo.delete_usuario(db, usuario)
 
-def generar_token_reset_password(db: Session, id_usuario: int) -> TokenTemporal:
+def _hash_token_reset(valor: str) -> str:
+    digest = hashlib.sha256(valor.encode("utf-8")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
+def generar_token_reset_password(db: Session, id_usuario: int) -> tuple[TokenTemporal, str]:
     usuario = repo.get_usuario_by_id(db, id_usuario)
     if not usuario:
         raise HTTPException(
@@ -121,52 +129,97 @@ def generar_token_reset_password(db: Session, id_usuario: int) -> TokenTemporal:
             detail="Usuario no encontrado",
         )
 
-    valor = secrets.token_urlsafe(24)
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+    try:
+        db.query(TokenTemporal).filter(
+            TokenTemporal.id_usuario == id_usuario,
+            TokenTemporal.tipo_token == "reset_password",
+            TokenTemporal.usado.is_(False),
+        ).update({"usado": True}, synchronize_session=False)
 
-    nuevo_token = TokenTemporal(
-        tipo_token="reset_password",
-        valor_token=valor,
-        # Tiempo de expiracion del token
-        fecha_expiracion=datetime.utcnow() + timedelta(minutes=15),
-        usado=False,
-        id_usuario=id_usuario,
-        id_grupo=None,
-    )
+        valor_token = secrets.token_urlsafe(24)
+        nuevo_token = TokenTemporal(
+            tipo_token="reset_password",
+            # Persist only a one-way digest. The raw secret is returned once to
+            # the caller for delivery and is never stored in PostgreSQL.
+            valor_token=_hash_token_reset(valor_token),
+            fecha_expiracion=ahora + timedelta(minutes=15),
+            usado=False,
+            id_usuario=id_usuario,
+            id_grupo=None,
+        )
+        db.add(nuevo_token)
+        db.commit()
+        db.refresh(nuevo_token)
+    except Exception:
+        db.rollback()
+        raise
 
-    db.add(nuevo_token)
-    db.commit()
-    db.refresh(nuevo_token)
+    return nuevo_token, valor_token
 
-    return nuevo_token
 
-# invalida los tokens de reset que nunaca fueron usados
-def solicitar_reset_por_correo(db:Session,correo:str)->TokenTemporal | None:
-    Usuario=repo.get_usuario_by_correo(db,correo)
-    if not Usuario:
+def solicitar_reset_por_correo(db: Session, correo: str) -> tuple[TokenTemporal, str] | None:
+    usuario = repo.get_usuario_by_correo(db, correo)
+    if not usuario:
         return None
 
-    db.query(TokenTemporal).filter(
-        TokenTemporal.id_usuario==Usuario.id_usuario,
-        TokenTemporal.tipo_token=="reset_password",
-        TokenTemporal.usado.id_(False),
-    ).update({"usado":True})
-    return generar_token_reset_password(db. usuario.id_usuario)
+    return generar_token_reset_password(db, usuario.id_usuario)
 
-def restablecer_password_con_token(db:str,token:str,nueva:str)-> None:
-    invalido=HTTPException(
+
+def invalidar_token_reset(db: Session, token: TokenTemporal) -> None:
+    token.usado = True
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
+def restablecer_password_con_token(db: Session, token: str, nueva: str) -> None:
+    invalido = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Token invalido o expirado"
+        detail="Token inválido o expirado",
     )
-    t=db.query(TokenTemporal).filter(
-        TokenTemporal.valor_token==token,
-        TokenTemporal.tipo_token=="reset_password",
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+    token_temporal = db.query(TokenTemporal).filter(
+        TokenTemporal.valor_token == _hash_token_reset(token),
+        TokenTemporal.tipo_token == "reset_password",
         TokenTemporal.usado.is_(False),
+        TokenTemporal.fecha_expiracion > ahora,
     ).first()
-    if not t or t.id_usuario is None or t.fecha_expiracion<datetime.utcnow():
+    if (
+        not token_temporal
+        or token_temporal.usado
+        or token_temporal.id_usuario is None
+        or token_temporal.fecha_expiracion <= ahora
+    ):
         raise invalido
-    Usuario=repo.get_usuario_by_id(db,t.usuario)
-    if not Usuario:
+
+    usuario = repo.get_usuario_by_id(db, token_temporal.id_usuario)
+    if not usuario:
         raise invalido
-    Usuario.contrasena=hash_password(nueva)
-    t.usadi=True
-    db.commit
+
+    try:
+        # Claim the token with a conditional UPDATE so concurrent requests cannot
+        # both use the same reset link.
+        reclamado = db.query(TokenTemporal).filter(
+            TokenTemporal.id_token == token_temporal.id_token,
+            TokenTemporal.usado.is_(False),
+            TokenTemporal.fecha_expiracion > ahora,
+        ).update({"usado": True}, synchronize_session=False)
+        if reclamado != 1:
+            db.rollback()
+            raise invalido
+
+        usuario.contrasena = hash_password(nueva)
+        db.query(TokenTemporal).filter(
+            TokenTemporal.id_usuario == usuario.id_usuario,
+            TokenTemporal.tipo_token == "reset_password",
+            TokenTemporal.usado.is_(False),
+        ).update({"usado": True}, synchronize_session=False)
+        db.commit()
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise

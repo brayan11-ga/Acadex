@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Identity,
     Integer,
     String,
     UniqueConstraint,
@@ -15,7 +16,7 @@ from app.db.base import Base
 class ConsentimientoUsuario(Base):
     __tablename__ = "consentimientos_usuario"
 
-    id_consentimiento = Column(Integer, primary_key=True)
+    id_consentimiento = Column(Integer, Identity(always=False), primary_key=True)
     id_usuario = Column(
         Integer,
         ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),
