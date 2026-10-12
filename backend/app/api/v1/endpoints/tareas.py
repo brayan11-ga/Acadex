@@ -17,7 +17,6 @@ from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse, TareaProp
 from app.services import tarea_service
 from app.services import ia_service
 from app.schemas.tarea import TareaGrupalCreate
-from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
@@ -28,25 +27,24 @@ def crear_tarea(
     db: Session = Depends(get_db),
     usuario_actual: Usuario = Depends(get_usuario_actual)
 ):
-    # Si la tarea no viene asociada a un grupo, es una tarea personal:
-    # asignamos el id_usuario real del token (nunca el que mande el frontend)
-    if datos.id_grupo is None:
-        datos.id_usuario = usuario_actual.id_usuario
-    return tarea_service.crear_tarea(db, datos)
+    return tarea_service.crear_tarea(db, datos, usuario_actual)
 
 @router.post("/grupos/{id_grupo}", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
 def crear_tarea_grupal(
     id_grupo: int,
     datos: TareaGrupalCreate,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(requerir_lider_de_grupo),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
-    return tarea_service.crear_tarea_grupal(db, id_grupo, datos)
+    return tarea_service.crear_tarea_grupal(db, id_grupo, datos, usuario_actual)
 
 
 @router.get("/", response_model=List[TareaResponse])
-def listar_tareas(db: Session = Depends(get_db)):
-    return tarea_service.listar_tareas(db)
+def listar_tareas(
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_tareas(db, usuario_actual.id_usuario)
 
 
 @router.get("/calendario", response_model=List[TareaResponse])
@@ -56,8 +54,11 @@ def listar_tareas_calendario(
     id_usuario: Optional[int] = None,
     id_grupo: Optional[int] = None,
     db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
-    return tarea_service.listar_tareas_calendario(db, desde, hasta, id_usuario, id_grupo)
+    return tarea_service.listar_tareas_calendario(
+        db, desde, hasta, usuario_actual.id_usuario, id_usuario, id_grupo
+    )
 
 
 @router.get("/asignadas/mias", response_model=List[TareaResponse])
@@ -69,13 +70,22 @@ def listar_tareas_asignadas(
 
 
 @router.get("/{id_tarea}", response_model=TareaResponse)
-def obtener_tarea(id_tarea: int, db: Session = Depends(get_db)):
-    return tarea_service.obtener_tarea(db, id_tarea)
+def obtener_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.obtener_tarea(db, id_tarea, usuario_actual.id_usuario)
 
 
 @router.put("/{id_tarea}", response_model=TareaResponse)
-def actualizar_tarea(id_tarea: int, datos: TareaUpdate, db: Session = Depends(get_db)):
-    return tarea_service.actualizar_tarea(db, id_tarea, datos)
+def actualizar_tarea(
+    id_tarea: int,
+    datos: TareaUpdate,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.actualizar_tarea(db, id_tarea, datos, usuario_actual.id_usuario)
 
 
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)
@@ -186,8 +196,12 @@ def listar_tareas_de_grupo(
     db: Session = Depends(get_db),
     usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
-    return tarea_service.listar_tareas_de_grupo(db, id_grupo)
+    return tarea_service.listar_tareas_de_grupo(db, id_grupo, usuario_actual.id_usuario)
 
 @router.get("/{id_tarea}/asignados", response_model=List[IntegranteAsignadoResponse])
-def listar_asignados(id_tarea: int, db: Session = Depends(get_db)):
-    return tarea_service.listar_asignados_de_tarea(db, id_tarea)
+def listar_asignados(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_asignados_de_tarea(db, id_tarea, usuario_actual.id_usuario)

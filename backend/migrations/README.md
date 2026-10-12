@@ -1,33 +1,22 @@
-# Migraciones manuales de Acadex
+# Migraciones SQL de ACADEX
 
-Acadex aún no tiene un ejecutor de migraciones versionadas. La migración SQL de esta carpeta es aditiva y debe aplicarse una vez, en el despliegue controlado, después de respaldar PostgreSQL:
+Las migraciones son SQL versionado, explícito y aditivo. No se agregó un ejecutor de migraciones ni se aplican cambios de esquema al iniciar FastAPI.
 
-```powershell
-psql -v ON_ERROR_STOP=1 -f .\migrations\20261011_add_archivo_uploader.sql
-```
+## Secuencia vigente
 
-La columna nueva es nullable para conservar los adjuntos históricos sin atribuirlos a un usuario ficticio. No se requiere índice nuevo: las operaciones consultan por `id_tarea`, que ya cuenta con índice en el esquema actual.
+1. `20261011_add_archivo_uploader.sql`: agrega `archivos.id_usuario_subida` como nullable y una FK a `usuarios.id_usuario` con `ON DELETE SET NULL`. Las filas históricas quedan sin autor conocido.
+2. `20261011_add_registration_consents.sql`: crea `consentimientos_usuario`, su FK con `ON DELETE CASCADE`, el `CHECK` de los dos tipos vigentes y la restricción `UNIQUE` por usuario, tipo y versión.
 
-En tareas personales, el propietario puede eliminar sus adjuntos. En tareas grupales, la API solo permite borrar el adjunto a quien lo subió; los adjuntos históricos sin autor siguen disponibles para los asignados, pero no se pueden borrar individualmente porque no se puede verificar su autor. El líder del grupo puede eliminar la tarea completa; esa operación elimina también sus adjuntos y solo retira los binarios después de que PostgreSQL confirma el borrado.
+Para una base limpia, Compose monta el esquema base y ejecuta las migraciones en este orden en `/docker-entrypoint-initdb.d`. Para una base existente, la inicialización de Docker no vuelve a ejecutarse: aplica cada archivo de forma explícita después de crear y verificar un respaldo, usando el bloque **Actualizar una base existente** de [database/README.md](../../database/README.md). El mismo procedimiento se aplica a entornos desplegados con coordinación manual; el arranque de la aplicación no ejecuta DDL.
 
-## Almacenamiento
+Las migraciones usan `IF NOT EXISTS` y la migración de la FK busca el nombre de constraint antes de crearla. Esto permite repetirlas sobre el esquema compatible. No valida ni repara objetos preexistentes que tengan el mismo nombre con una definición distinta; revisa el esquema y detente si el estado es parcial o incompatible. No apliques `database/init.sql` sobre datos existentes.
 
-Los binarios nuevos se guardan con una clave interna aleatoria bajo el directorio indicado por `ACADEX_UPLOADS_DIR`. Si no se configura, el backend usa `backend/uploads/tareas`, adecuado para desarrollo local. En producción, la ruta debe ser privada, persistente y compartida por todas las instancias de FastAPI; no debe exponerse como contenido estático. El servicio conserva lectura de las rutas históricas `uploads/tareas/<tarea>/<archivo>`.
+## Archivos adjuntos
 
-Antes de cambiar de almacenamiento, copie los binarios existentes preservando la estructura por tarea y verifique checksums y referencias. La API no ejecuta esa migración de contenido ni borra el origen. Configure también en el proxy de entrada un límite de cuerpo multipart ligeramente superior a 5 MiB para permitir los encabezados del formulario; el backend mantiene el límite de 5 MiB por archivo.
+Los binarios nuevos se guardan con una clave interna aleatoria bajo `ACADEX_UPLOADS_DIR`; en desarrollo local se monta `backend/uploads` dentro del contenedor. La API conserva lectura de rutas históricas `uploads/tareas/<tarea>/<archivo>`. Los servicios mantienen las reglas de autorización actuales: para tareas grupales, la persona asignada puede consultar los adjuntos; solo quien subió el archivo puede borrarlo individualmente. Los registros históricos sin autor siguen disponibles, pero no se borran de forma individual porque no puede verificarse quién los subió.
 
-## Reversión
+En un entorno desplegado, configura una ruta privada y persistente, compartida por todas las instancias FastAPI; no expongas el directorio como contenido estático. Antes de cambiar la ubicación de archivos, copia los binarios preservando la estructura por tarea y verifica checksums y referencias. La API no migra ni borra el origen. Configura también en el proxy un límite de cuerpo multipart ligeramente superior a 5 MiB; el backend mantiene el límite de 5 MiB por archivo.
 
-`20261011_add_archivo_uploader.rollback.sql` solo procede si no se ha registrado ninguna autoría nueva. Contiene una comprobación que aborta antes de quitar la columna si detecta valores no nulos. Si ya existen autores, respalde/exporte esa información y prepare una reversión explícita antes de retirar el esquema.
+## Reversiones
 
-## Consentimientos de registro
-
-Antes de desplegar la versión que exige aceptación en el registro, aplique la migración aditiva de evidencias:
-
-```powershell
-psql -v ON_ERROR_STOP=1 -f .\migrations\20261011_add_registration_consents.sql
-```
-
-La tabla `consentimientos_usuario` guarda el tipo de aceptación, la versión del aviso y la fecha de registro. Las cuentas que ya existían quedan sin registros históricos inventados. El alta de una cuenta, su perfil y ambas evidencias se confirma en una sola transacción.
-
-La reversión `20261011_add_registration_consents.rollback.sql` aborta si existe evidencia; expórtela y revise esos datos antes de planear la retirada. El límite antiabuso se mantiene en memoria por proceso, por lo que en producción debe configurarse también en el proxy o en una capa compartida si se ejecutan varias instancias. Si el backend está detrás de un proxy, confíe las cabeceras de cliente solo desde proxies conocidos.
+Los archivos `*.rollback.sql` no son parte de la actualización normal. La reversión del autor aborta si ya hay autorías no nulas; la de consentimientos aborta si ya existe evidencia. Antes de plantear cualquiera, exporta y revisa los datos afectados y define una reversión que los preserve.

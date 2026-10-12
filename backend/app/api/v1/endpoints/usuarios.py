@@ -29,6 +29,7 @@ def crear_usuario(
         usuario.contrasena,
         usuario.acepta_tratamiento_datos,
         usuario.confirma_aviso_almacenamiento,
+        nombre_usuario=usuario.nombre_usuario,
     )
 
 @router.post("/login", response_model=Token)

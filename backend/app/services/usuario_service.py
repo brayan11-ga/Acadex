@@ -28,6 +28,7 @@ def registrar_usuario(
     contrasena: str,
     acepta_tratamiento_datos: bool,
     confirma_aviso_almacenamiento: bool,
+    nombre_usuario: str | None = None,
 ) -> Usuario:
     if not acepta_tratamiento_datos or not confirma_aviso_almacenamiento:
         raise HTTPException(
@@ -42,10 +43,10 @@ def registrar_usuario(
     hashed = hash_password(contrasena)
     try:
         usuario = repo.create_usuario(db, correo_electronico, hashed, commit=False)
-        nombre_por_defecto = correo_electronico.split("@")[0]
+        nombre_perfil = nombre_usuario or correo_electronico.split("@")[0]
         perfil_repo.create_perfil(db, {
             "id_usuario": usuario.id_usuario,
-            "nombre_usuario": nombre_por_defecto,
+            "nombre_usuario": nombre_perfil,
         }, commit=False)
         db.add_all([
             ConsentimientoUsuario(

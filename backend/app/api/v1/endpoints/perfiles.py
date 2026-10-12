@@ -11,8 +11,12 @@ from app.services import perfil_service as service
 router = APIRouter(prefix="/perfiles", tags=["perfiles"])
 
 @router.post("/", response_model=PerfilOut, status_code=201)
-def crear_perfil(perfil: PerfilCreate, db: Session = Depends(get_db)):
-    return service.crear_perfil(db, perfil.model_dump())
+def crear_perfil(
+    perfil: PerfilCreate,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return service.crear_perfil(db, perfil.model_dump(), usuario_actual.id_usuario)
 
 # --- Rutas nuevas: integrando tu lógica de respaldo y la estructura de tu compañero ---
 
@@ -22,7 +26,9 @@ def leer_mi_perfil(
     db: Session = Depends(get_db),
 ):
     # Usamos lanzar_error=False para que no explote si no existe el perfil en la BD
-    perfil = service.obtener_perfil_por_usuario(db, usuario_actual.id_usuario, lanzar_error=False)
+    perfil = service.obtener_perfil_por_usuario(
+        db, usuario_actual.id_usuario, usuario_actual.id_usuario, lanzar_error=False
+    )
     
     if not perfil:
         # Objeto de respaldo seguro para que Pydantic no dé error de validación
@@ -43,14 +49,27 @@ def actualizar_mi_perfil(
     usuario_actual: Usuario = Depends(get_usuario_actual),
     db: Session = Depends(get_db),
 ):
-    return service.actualizar_perfil(db, usuario_actual.id_usuario, cambios.model_dump())
+    return service.actualizar_perfil(
+        db, usuario_actual.id_usuario, cambios.model_dump(), usuario_actual.id_usuario
+    )
 
 # --- Rutas antiguas: se conservan tal cual las dejó tu equipo ---
 
 @router.get("/usuario/{id_usuario}", response_model=PerfilOut)
-def leer_perfil_por_usuario(id_usuario: int, db: Session = Depends(get_db)):
-    return service.obtener_perfil_por_usuario(db, id_usuario)
+def leer_perfil_por_usuario(
+    id_usuario: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return service.obtener_perfil_por_usuario(db, id_usuario, usuario_actual.id_usuario)
 
 @router.patch("/usuario/{id_usuario}", response_model=PerfilOut)
-def actualizar_perfil(id_usuario: int, cambios: PerfilUpdate, db: Session = Depends(get_db)):
-    return service.actualizar_perfil(db, id_usuario, cambios.model_dump())
+def actualizar_perfil(
+    id_usuario: int,
+    cambios: PerfilUpdate,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return service.actualizar_perfil(
+        db, id_usuario, cambios.model_dump(), usuario_actual.id_usuario
+    )
