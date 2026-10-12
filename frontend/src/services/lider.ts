@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from './api';
 
 export function headersConToken(extra: Record<string, string> = {}): Record<string, string> {
     const token = localStorage.getItem('access_token');
@@ -10,7 +10,7 @@ export function headersConToken(extra: Record<string, string> = {}): Record<stri
 
 export async function fetchJSON<T>(path: string, options: RequestInit = {}): Promise<T | null> {
     try {
-    const respuesta = await fetch(`${API_BASE}${path}`, options);
+    const respuesta = await fetch(`${API_BASE_URL}${path}`, options);
     if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
     if (respuesta.status === 204) return null;
     return (await respuesta.json()) as T;

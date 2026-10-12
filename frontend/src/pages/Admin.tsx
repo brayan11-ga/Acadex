@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApi } from '../services/adminApi';
+import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { FormularioModal } from '../components/admin/FormularioModal';
 import { Resumen } from '../components/admin/Resumen';

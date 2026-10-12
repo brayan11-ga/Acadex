@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerTareasCalendario, type TareaBackend } from '../services/tareas';
+import { listarCategorias, type Categoria } from '../services/categorias';
+import { ModalDetalleTarea } from '../components/tareas/ModalDetalleTarea';
 import '../styles/calendario.css';
 
 export const Calendario: React.FC = () => {
   const [fechaActual, setFechaActual] = useState(new Date());
   const [tareas, setTareas] = useState<TareaBackend[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [tareaDetalle, setTareaDetalle] = useState<TareaBackend | null>(null);
   const [cargando, setCargando] = useState(false);
 
   const año = fechaActual.getFullYear();
@@ -48,11 +52,28 @@ export const Calendario: React.FC = () => {
     cargarTareas();
   }, [año, mes, totalDiasMes]);
 
+  useEffect(() => {
+    listarCategorias()
+      .then(setCategorias)
+      .catch(() => setCategorias([]));
+  }, []);
+
   const mesAnterior = () => setFechaActual(new Date(año, mes - 1, 1));
   const mesSiguiente = () => setFechaActual(new Date(año, mes + 1, 1));
   const añoAnterior = () => setFechaActual(new Date(año - 1, mes, 1));
   const añoSiguiente = () => setFechaActual(new Date(año + 1, mes, 1));
   const irHoy = () => setFechaActual(new Date());
+
+  const nombreCategoria = (id: number) =>
+    categorias.find((categoria) => categoria.id_categoria === id)?.nombre_categoria ?? 'Sin categoría';
+
+  const formatearFecha = (iso: string) =>
+    new Date(iso).toLocaleString('es-CO', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   // Función auxiliar para normalizar y comparar fechas sin problemas de horas o UTC
   const coincideFecha = (fechaEntregaStr: string, fechaFiltro: string) => {
@@ -88,13 +109,16 @@ export const Calendario: React.FC = () => {
             {tareasDelDia.map((t) => {
               const estadoLimpio = (t.estado || 'pendiente').toLowerCase();
               return (
-                <div
+                <button
+                  type="button"
                   key={t.id_tarea}
                   className={`evento-badge estado-${estadoLimpio}`}
+                  aria-label={`Ver detalles de ${t.nombre}`}
                   title={`${t.nombre} (${estadoLimpio.replace('_', ' ')})`}
+                  onClick={() => setTareaDetalle(t)}
                 >
                   {t.nombre}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -127,6 +151,15 @@ export const Calendario: React.FC = () => {
         ))}
         {renderDias()}
       </div>
+
+      {tareaDetalle && (
+        <ModalDetalleTarea
+          tarea={tareaDetalle}
+          nombreCategoria={nombreCategoria}
+          formatearFecha={formatearFecha}
+          onCerrar={() => setTareaDetalle(null)}
+        />
+      )}
     </div>
   );
 };

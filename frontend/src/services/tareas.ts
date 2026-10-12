@@ -1,5 +1,5 @@
 // src/services/tareas.ts
-import { apiFetch } from "./api";
+import { apiFetch, apiFetchBlob } from "./api";
 
 export interface TareaBackend {
   id_tarea: number;
@@ -95,5 +95,38 @@ export async function analizarDocumentoIA(archivo: File): Promise<TareaPropuesta
   return apiFetch<TareaPropuestaIA>("/tareas/analizar-documento", {
     method: "POST",
     body: formData,
+  });
+}
+
+export interface ArchivoTarea {
+  id_archivo: number;
+  nombre: string;
+  tamano: number | null;
+  tipo: "PDF" | "DOCX" | "JPG" | "PNG";
+  fecha_adjuncion: string;
+  id_tarea: number;
+  puede_eliminar: boolean;
+}
+
+export function listarArchivosTarea(idTarea: number): Promise<ArchivoTarea[]> {
+  return apiFetch<ArchivoTarea[]>(`/tareas/${idTarea}/archivos`);
+}
+
+export function subirArchivoTarea(idTarea: number, archivo: File): Promise<ArchivoTarea> {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+  return apiFetch<ArchivoTarea>(`/tareas/${idTarea}/archivos`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export function descargarArchivoTarea(idTarea: number, idArchivo: number): Promise<Blob> {
+  return apiFetchBlob(`/tareas/${idTarea}/archivos/${idArchivo}`);
+}
+
+export function eliminarArchivoTarea(idTarea: number, idArchivo: number): Promise<void> {
+  return apiFetch<void>(`/tareas/${idTarea}/archivos/${idArchivo}`, {
+    method: "DELETE",
   });
 }

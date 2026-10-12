@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminApi } from '../../services/adminApi';
+import { adminApi } from '../../services/adminapi';
 import { EstadisticasAdmin } from '../estadisticas/RankingCard';
 import type { ItemResumen } from '../estadisticas/RankingCard';
 

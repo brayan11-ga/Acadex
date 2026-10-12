@@ -1,6 +1,6 @@
 // authSlice
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { adminApi } from "../services/adminApi";
+import { adminApi } from "../services/adminapi";
 
 export interface UsuarioAuth {
     id_ususario: number;

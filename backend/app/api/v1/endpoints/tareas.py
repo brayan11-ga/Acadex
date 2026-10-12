@@ -1,8 +1,13 @@
 # backend/app/api/v1/endpoints/tareas.py
 from datetime import date
 from typing import List, Optional
+from fastapi import File, UploadFile
+from app.schemas.archivo import ArchivoResponse
+from app.services import archivo_service
+from app.schemas.tarea import IntegranteAsignadoResponse
 
 from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.dependencies.db import get_db
@@ -11,6 +16,8 @@ from app.models.usuario import Usuario
 from app.schemas.tarea import TareaCreate, TareaUpdate, TareaResponse, TareaPropuestaIA
 from app.services import tarea_service
 from app.services import ia_service
+from app.schemas.tarea import TareaGrupalCreate
+from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
@@ -26,6 +33,15 @@ def crear_tarea(
     if datos.id_grupo is None:
         datos.id_usuario = usuario_actual.id_usuario
     return tarea_service.crear_tarea(db, datos)
+
+@router.post("/grupos/{id_grupo}", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
+def crear_tarea_grupal(
+    id_grupo: int,
+    datos: TareaGrupalCreate,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(requerir_lider_de_grupo),
+):
+    return tarea_service.crear_tarea_grupal(db, id_grupo, datos)
 
 
 @router.get("/", response_model=List[TareaResponse])
@@ -44,6 +60,14 @@ def listar_tareas_calendario(
     return tarea_service.listar_tareas_calendario(db, desde, hasta, id_usuario, id_grupo)
 
 
+@router.get("/asignadas/mias", response_model=List[TareaResponse])
+def listar_tareas_asignadas(
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_tareas_asignadas(db, usuario_actual.id_usuario)
+
+
 @router.get("/{id_tarea}", response_model=TareaResponse)
 def obtener_tarea(id_tarea: int, db: Session = Depends(get_db)):
     return tarea_service.obtener_tarea(db, id_tarea)
@@ -55,8 +79,12 @@ def actualizar_tarea(id_tarea: int, datos: TareaUpdate, db: Session = Depends(ge
 
 
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_tarea(id_tarea: int, db: Session = Depends(get_db)):
-    tarea_service.eliminar_tarea(db, id_tarea)
+def eliminar_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    tarea_service.eliminar_tarea(db, id_tarea, usuario_actual.id_usuario)
     
 
 @router.post("/analizar-documento", response_model=TareaPropuestaIA)
@@ -98,3 +126,68 @@ def analizar_documento(
     return ia_service.analizar_documento_con_ia(db, archivo)
 
 # ... @router.post("/") def crear_tarea(...) ...
+
+#estas son rutas para los archivos del modulo de grupos vale
+@router.post("/{id_tarea}/archivos", response_model=ArchivoResponse, status_code=status.HTTP_201_CREATED)
+def subir_archivo(
+    id_tarea: int,
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return archivo_service.subir_archivo_tarea(db, id_tarea, archivo, usuario_actual.id_usuario)
+
+
+@router.get("/{id_tarea}/archivos", response_model=List[ArchivoResponse])
+def listar_archivos(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return archivo_service.listar_archivos_de_tarea(db, id_tarea, usuario_actual.id_usuario)
+
+
+@router.get("/{id_tarea}/archivos/{id_archivo}", response_class=FileResponse)
+def descargar_archivo(
+    id_tarea: int,
+    id_archivo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    archivo, ruta = archivo_service.obtener_archivo_para_descarga(
+        db, id_tarea, id_archivo, usuario_actual.id_usuario
+    )
+    return FileResponse(
+        path=ruta,
+        media_type=archivo_service.TIPOS_MIME[archivo.tipo],
+        filename=archivo.nombre,
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.delete(
+    "/{id_tarea}/archivos/{id_archivo}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def eliminar_archivo(
+    id_tarea: int,
+    id_archivo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    archivo_service.eliminar_archivo_tarea(db, id_tarea, id_archivo, usuario_actual.id_usuario)
+
+@router.get("/grupos/{id_grupo}", response_model=List[TareaResponse])
+def listar_tareas_de_grupo(
+    id_grupo: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.listar_tareas_de_grupo(db, id_grupo)
+
+@router.get("/{id_tarea}/asignados", response_model=List[IntegranteAsignadoResponse])
+def listar_asignados(id_tarea: int, db: Session = Depends(get_db)):
+    return tarea_service.listar_asignados_de_tarea(db, id_tarea)

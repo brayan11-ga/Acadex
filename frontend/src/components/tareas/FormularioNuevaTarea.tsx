@@ -1,5 +1,5 @@
 // src/components/tareas/FormularioNuevaTarea.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import caraNivel1 from "../../assets/icons/dificultad/1.png";
 import caraNivel2 from "../../assets/icons/dificultad/2.png";
 import caraNivel3 from "../../assets/icons/dificultad/3.png";
@@ -9,7 +9,19 @@ import iconoCategorias from "../../assets/icons/ui/categorias.png";
 import iconoCalendario from "../../assets/icons/ui/calendario.png";
 import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
-import { crearTarea, actualizarTarea, analizarDocumentoIA, type TareaBackend } from "../../services/tareas";
+import {
+  crearTarea,
+  actualizarTarea,
+  analizarDocumentoIA,
+  subirArchivoTarea,
+  type TareaBackend,
+} from "../../services/tareas";
+import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
+import { SelectorArchivosPendientes } from "./SelectorArchivosPendientes";
+import {
+  claveArchivo,
+  TAMANO_MAXIMO_ADJUNTO,
+} from "./validacionArchivosTarea";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -35,13 +47,80 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
   const [descripcion, setDescripcion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorSubidaAdjuntos, setErrorSubidaAdjuntos] = useState<string | null>(null);
+  const [progresoAdjuntos, setProgresoAdjuntos] = useState<string | null>(null);
+  const [archivosAdjuntosPendientes, setArchivosAdjuntosPendientes] = useState<File[]>([]);
+  const [idTareaCreada, setIdTareaCreada] = useState<number | null>(null);
 
   // Estados y referencias para la IA
   const [archivoIA, setArchivoIA] = useState<File | null>(null);
   const [analizando, setAnalizando] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avisoIA, setAvisoIA] = useState<string | null>(null);
+  const [errorIA, setErrorIA] = useState<string | null>(null);
 
+  const archivoEsPdf = Boolean(
+    archivoIA
+      && archivoIA.name.toLowerCase().endsWith(".pdf")
+      && archivoIA.type === "application/pdf",
+  );
+  const archivoPdfAnalizable = Boolean(
+    archivoIA
+      && archivoEsPdf
+      && archivoIA.size > 0
+      && archivoIA.size <= TAMANO_MAXIMO_ADJUNTO,
+  );
   const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
+
+  const agregarArchivosPendientes = (nuevos: File[]) => {
+    if (idTareaCreada !== null) setErrorSubidaAdjuntos(null);
+    setAvisoIA(null);
+    setErrorIA(null);
+    setArchivosAdjuntosPendientes((actuales) => {
+      const claves = new Set(actuales.map(claveArchivo));
+      return [...actuales, ...nuevos.filter((archivo) => {
+        const clave = claveArchivo(archivo);
+        if (claves.has(clave)) return false;
+        claves.add(clave);
+        return true;
+      })];
+    });
+  };
+
+  const quitarArchivoPendiente = (archivo: File) => {
+    const clave = claveArchivo(archivo);
+    if (archivoIA && claveArchivo(archivoIA) === clave) {
+      const restantes = archivosAdjuntosPendientes.filter((actual) => claveArchivo(actual) !== clave);
+      setArchivoIA(restantes[restantes.length - 1] ?? null);
+      setAvisoIA(null);
+      setErrorIA(null);
+    }
+    setArchivosAdjuntosPendientes((actuales) => actuales.filter((actual) => claveArchivo(actual) !== clave));
+    if (idTareaCreada !== null) setErrorSubidaAdjuntos(null);
+  };
+
+  const subirAdjuntosPendientes = async (idTarea: number, archivos: File[]): Promise<boolean> => {
+    const fallidos: File[] = [];
+    for (const [indice, archivo] of archivos.entries()) {
+      setProgresoAdjuntos(`Subiendo archivo ${indice + 1} de ${archivos.length}: ${archivo.name}`);
+      try {
+        await subirArchivoTarea(idTarea, archivo);
+      } catch {
+        fallidos.push(archivo);
+      }
+    }
+
+    setProgresoAdjuntos(null);
+    setArchivosAdjuntosPendientes(fallidos);
+    if (fallidos.length > 0) {
+      setErrorSubidaAdjuntos(
+        `La tarea se guardó, pero no se pudieron subir ${fallidos.length} archivo${fallidos.length === 1 ? "" : "s"}. Puedes reintentar sin crear otra tarea.`,
+      );
+      return false;
+    }
+
+    setErrorSubidaAdjuntos(null);
+    return true;
+  };
 
   useEffect(() => {
     listarCategorias()
@@ -65,34 +144,80 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
     }
   }, [tareaAEditar]);
 
-  const manejarAnalisisIA = async () => {
-    if (!archivoIA) return;
-    
+  const manejarAutocompletadoIA = async () => {
+    if (!archivoIA || !archivoIA.name.toLowerCase().endsWith(".pdf")) {
+      setErrorIA(null);
+      setAvisoIA("Para autocompletar con IA, elige un PDF. Pronto habrá más formatos.");
+      return;
+    }
+    if (!archivoEsPdf) {
+      setAvisoIA(null);
+      setErrorIA("No pudimos validar el PDF. Elige otro archivo.");
+      return;
+    }
+    if (archivoIA.size === 0) {
+      setAvisoIA(null);
+      setErrorIA("El PDF está vacío. Elige otro archivo.");
+      return;
+    }
+    if (archivoIA.size > TAMANO_MAXIMO_ADJUNTO) {
+      setAvisoIA(null);
+      setErrorIA("El PDF supera 5 MB. Elige uno más pequeño.");
+      return;
+    }
+
     setAnalizando(true);
     setError(null);
-    
+    setErrorIA(null);
+    setAvisoIA("Autocompletando con IA…");
+
     try {
       const propuesta = await analizarDocumentoIA(archivoIA);
-      
+
       setTitulo(propuesta.titulo);
       setDescripcion(propuesta.descripcion);
       setDificultad(propuesta.dificultad_estimada);
       setTiempoEstimado(String(propuesta.tiempo_estimado));
-      
+
       if (propuesta.id_categoria && categorias.some(c => c.id_categoria === propuesta.id_categoria)) {
         setIdCategoria(propuesta.id_categoria);
       }
-      
+
+      setAvisoIA("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al analizar el documento con IA");
+      setAvisoIA(null);
+      setErrorIA(err instanceof Error ? err.message : "No se pudo analizar el PDF.");
     } finally {
       setAnalizando(false);
     }
   };
 
+  const manejarCierreFormulario = () => {
+    if (idTareaCreada !== null) {
+      onTareaCreada();
+      return;
+    }
+    onDescartar();
+  };
+
   const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault();
     setError(null);
+
+    if (idTareaCreada !== null) {
+      if (archivosAdjuntosPendientes.length === 0) {
+        onTareaCreada();
+        return;
+      }
+      setEnviando(true);
+      try {
+        const subidasCorrectas = await subirAdjuntosPendientes(idTareaCreada, archivosAdjuntosPendientes);
+        if (subidasCorrectas) onTareaCreada();
+      } finally {
+        setEnviando(false);
+      }
+      return;
+    }
 
     if (!titulo.trim() || !fecha || idCategoria === null) {
       setError("Completa título, fecha y categoría");
@@ -116,8 +241,9 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
         });
+        onTareaCreada();
       } else {
-        await crearTarea({
+        const nuevaTarea = await crearTarea({
           nombre: titulo,
           descripcion,
           fecha_entrega: fecha,
@@ -125,8 +251,14 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
         });
+        setIdTareaCreada(nuevaTarea.id_tarea);
+        const subidasCorrectas = await subirAdjuntosPendientes(
+          nuevaTarea.id_tarea,
+          archivosAdjuntosPendientes,
+        );
+        if (!subidasCorrectas) return;
+        onTareaCreada();
       }
-      onTareaCreada();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar la tarea");
     } finally {
@@ -138,36 +270,15 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
     <form className="pixel-panel" onSubmit={manejarEnvio}>
       <div className="pixel-panel-header">
         <div>
-          <h2 className="pixel-panel-title">{tareaAEditar ? "Editar tarea" : "Nueva tarea"}</h2>
+          <h2 id="formulario-tarea-titulo" className="pixel-panel-title">
+            {tareaAEditar ? "Editar tarea" : "Nueva tarea"}
+          </h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
-        <button type="button" className="pixel-link-descartar" onClick={onDescartar}>
-          × Descartar
+        <button type="button" className="pixel-link-descartar" onClick={manejarCierreFormulario}>
+          {idTareaCreada !== null ? "× Cerrar" : "× Descartar"}
         </button>
       </div>
-
-      {!tareaAEditar && (
-        <div className="pixel-ia-section">
-          <p className="pixel-ia-title">✨ Autocompletar con IA</p>
-          <div className="pixel-ia-controls">
-            <input 
-              type="file" 
-              accept=".pdf"
-              ref={fileInputRef}
-              onChange={(e) => setArchivoIA(e.target.files?.[0] || null)}
-              className="pixel-input-file"
-            />
-            <button 
-              type="button" 
-              onClick={manejarAnalisisIA}
-              disabled={!archivoIA || analizando}
-              className="pixel-btn-ia"
-            >
-              {analizando ? "Analizando PDF..." : "Extraer datos"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {error && <p className="pixel-error">{error}</p>}
 
@@ -176,6 +287,8 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         <input
           type="text"
           className="pixel-input"
+          autoFocus
+          disabled={idTareaCreada !== null}
           placeholder="¿Qué hay que hacer?"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
@@ -191,6 +304,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           <select
             className="pixel-input"
             value={idCategoria ?? ""}
+            disabled={idTareaCreada !== null}
             onChange={(e) => setIdCategoria(Number(e.target.value))}
           >
             {categorias.map((cat) => (
@@ -210,6 +324,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
             type="datetime-local"
             className="pixel-input"
             value={fecha}
+            disabled={idTareaCreada !== null}
             onChange={(e) => setFecha(e.target.value)}
           />
         </label>
@@ -225,6 +340,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
                   key={nivel}
                   type="button"
                   aria-label={`Dificultad ${nivel}`}
+                  disabled={idTareaCreada !== null}
                   className={
                     dificultad === nivel
                       ? `pixel-dificultad-btn nivel-${nivel} active`
@@ -253,6 +369,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
             className="pixel-input"
             placeholder="120"
             value={tiempoEstimado}
+            disabled={idTareaCreada !== null}
             onChange={(e) => setTiempoEstimado(e.target.value)}
           />
         </label>
@@ -264,13 +381,60 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           className="pixel-input pixel-textarea"
           placeholder="Detalla los objetivos y restricciones..."
           value={descripcion}
+          disabled={idTareaCreada !== null}
           onChange={(e) => setDescripcion(e.target.value)}
         />
       </label>
 
+      {!tareaAEditar && (
+        <SelectorArchivosPendientes
+          archivos={archivosAdjuntosPendientes}
+          archivoAnalisisIA={archivoPdfAnalizable ? archivoIA : null}
+          analisisDisponible={archivoPdfAnalizable && idTareaCreada === null}
+          analizando={analizando}
+          avisoIA={avisoIA}
+          errorIA={errorIA}
+          disabled={enviando}
+          disabledIA={idTareaCreada !== null}
+          onAgregar={agregarArchivosPendientes}
+          onQuitar={quitarArchivoPendiente}
+          onSeleccionarArchivo={(archivo) => {
+            const yaAdjuntado = archivo
+              ? archivosAdjuntosPendientes.find((actual) => claveArchivo(actual) === claveArchivo(archivo))
+              : null;
+            setArchivoIA(yaAdjuntado ?? archivo);
+            setAvisoIA(null);
+            setErrorIA(null);
+          }}
+          onAnalizar={() => void manejarAutocompletadoIA()}
+        />
+      )}
+
+      {tareaAEditar && (
+        <SeccionAdjuntosTarea
+          key={tareaAEditar.id_tarea}
+          idTarea={tareaAEditar.id_tarea}
+          modo="edicion"
+        />
+      )}
+
+      {progresoAdjuntos && <p className="pixel-form-progreso" role="status">{progresoAdjuntos}</p>}
+      {errorSubidaAdjuntos && <p className="pixel-error" role="alert">{errorSubidaAdjuntos}</p>}
+      {idTareaCreada !== null && (
+        <p className="pixel-form-tarea-guardada" role="status">
+          La tarea ya está guardada. Si cierras, podrás volver a añadir estos archivos desde Editar.
+        </p>
+      )}
+
       <div className="pixel-panel-footer">
         <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>
-          {enviando ? "Guardando..." : tareaAEditar ? "Guardar →" : "Crear →"}
+          {enviando
+            ? idTareaCreada !== null ? "Subiendo adjuntos…" : "Guardando…"
+            : tareaAEditar
+              ? "Guardar →"
+              : idTareaCreada !== null
+                ? archivosAdjuntosPendientes.length > 0 ? "Reintentar adjuntos →" : "Finalizar →"
+                : "Crear →"}
         </button>
       </div>
     </form>
