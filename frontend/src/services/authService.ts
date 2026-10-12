@@ -60,3 +60,29 @@ export async function iniciarSesion(email: string, password: string) {
 
   return res.json(); // { access_token, token_type }
 }
+
+export async function solicitarRestablecimiento(email: string) {
+    const res = await fetch(`${API_BASE_URL}/usuarios/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo_electronico: email }),
+    });
+
+    if (!res.ok) {
+        throw new Error(await obtenerMensajeError(res, 'No se pudo enviar la solicitud'));
+    }
+    return res.json();
+}
+
+export async function restablecerContrasena(token: string, nuevaContrasena: string) {
+    const res = await fetch(`${API_BASE_URL}/usuarios/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, nueva_contrasena: nuevaContrasena }),
+    });
+
+    if (!res.ok) {
+        throw new Error(await obtenerMensajeError(res, 'No se pudo restablecer la contraseña'));
+    }
+    return res.json();
+}

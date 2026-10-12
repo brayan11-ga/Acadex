@@ -1,13 +1,18 @@
+# endpointsUsuario
+import logging
 from typing import List
+
 from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual, requerir_admin
 from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate
-from app.schemas.auth import LoginRequest, Token
+from app.schemas.auth import LoginRequest, Token, ForgotPasswordIn, ResetPasswordIn
+from app.schemas.token_temporal import TokenResetOut
 from app.models.usuario import Usuario
 from app.services import usuario_service as service
-from app.schemas.token_temporal import TokenResetOut
+from app.services.email_service import enviar_reset
+from app.config.settings import settings
 from app.core.registration_guard import registrar_intento
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -27,6 +32,7 @@ def crear_usuario(
         usuario.contrasena,
         usuario.acepta_tratamiento_datos,
         usuario.confirma_aviso_almacenamiento,
+        nombre_usuario=usuario.nombre_usuario,
     )
 
 @router.post("/login", response_model=Token)
@@ -44,7 +50,12 @@ def restablecer_password(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(requerir_admin),
 ):
-    return service.generar_token_reset_password(db, id_usuario)
+    token, valor_token = service.generar_token_reset_password(db, id_usuario)
+    return TokenResetOut(
+        valor_token=valor_token,
+        fecha_expiracion=token.fecha_expiracion,
+        id_usuario=token.id_usuario,
+    )
 
 @router.put("/{id_usuario}", response_model=UsuarioOut)
 def actualizar_usuario(
@@ -72,3 +83,32 @@ def eliminar_usuario(
 ):
     service.eliminar_usuario(db, id_usuario)
     return None
+
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordIn,
+    db: Session = Depends(get_db),
+):
+    if not settings.password_reset_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La recuperación de contraseña no está configurada.",
+        )
+
+    solicitud = service.solicitar_reset_por_correo(db, data.correo_electronico)
+    if solicitud:
+        token, valor_token = solicitud
+        try:
+            enviar_reset(data.correo_electronico, valor_token)
+        except Exception:
+            logging.getLogger(__name__).exception("No se pudo enviar el correo de recuperación")
+            try:
+                service.invalidar_token_reset(db, token)
+            except Exception:
+                logging.getLogger(__name__).exception("No se pudo invalidar el token no entregado")
+    return {"mensaje": "Si el correo existe, recibirás un enlace"}
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
+    service.restablecer_password_con_token(db, data.token, data.nueva_contrasena)
+    return {"mensaje": "Contraseña actualizada"}

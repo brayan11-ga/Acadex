@@ -1,3 +1,4 @@
+// pageAdmin
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';

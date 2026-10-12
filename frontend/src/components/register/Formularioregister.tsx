@@ -79,13 +79,6 @@ export const FormularioRegistro = () => {
           </button>
         </form>
 
-        <div className="divider"><span>o</span></div>
-        <div className="social-login">
-          <button type="button" className="google-btn">
-            <img src="https://www.google.com/favicon.ico" alt="" />
-            Continuar con Google
-          </button>
-        </div>
         <div className="register-option">
           <p>¿Ya tienes una cuenta? <Link to="/iniciarSesion">Inicia sesión</Link></p>
         </div>

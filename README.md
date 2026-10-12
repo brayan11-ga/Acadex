@@ -1,24 +1,30 @@
-# 🎓 Acadex
+# ACADEX
 
-Sistema inteligente para la gestión de tareas académicas y colaborativas.
+Aplicación web académica para organizar tareas individuales y grupales, coordinar integrantes, registrar tiempo, compartir archivos y consultar estadísticas.
 
----
+## Tecnologías
 
-## 📖 Descripción del Proyecto
+- Frontend: React, TypeScript y Vite.
+- Backend: Python, FastAPI y SQLAlchemy.
+- Persistencia: PostgreSQL.
+- Desarrollo local: Docker Compose para PostgreSQL, Mailpit y FastAPI; Vite se ejecuta con Node.js en el host.
 
-Acadex es una plataforma web diseñada para facilitar la organización, planificación y seguimiento de tareas académicas y actividades colaborativas.
+## Desarrollo
 
 El sistema permitirá a los usuarios gestionar tareas, crear grupos de trabajo, administrar integrantes, registrar el tiempo invertido en actividades, compartir recursos y visualizar el progreso de los proyectos mediante herramientas de seguimiento y priorización inteligente. Además, incorpora funcionalidades potenciadas por Inteligencia Artificial para el análisis y organización de contenidos.
 
----
+El backend aplica el esquema inicial y las migraciones pendientes automáticamente solo cuando PostgreSQL inicializa un volumen vacío. Para bases existentes, aplica las migraciones explícitamente según la guía. Los datos persisten en el volumen `pgdata` y los adjuntos en `backend/uploads/`.
 
-## 🎯 Objetivo General
+No uses `docker compose down -v` para reiniciar un entorno que contenga datos: ese comando elimina los volúmenes.
 
-Desarrollar una aplicación web que permita gestionar de forma eficiente tareas académicas y actividades colaborativas, optimizando la organización del trabajo individual y en equipo.
+## Módulos principales
 
----
+- Registro, autenticación y perfiles.
+- Tareas individuales, grupos, integrantes, roles y asignaciones.
+- Cronómetro, historial, notificaciones y estadísticas.
+- Adjuntos de tareas y análisis documental.
 
-## 🚀 Funcionalidades Principales
+## Pruebas
 
 ### Gestión de Usuarios
 

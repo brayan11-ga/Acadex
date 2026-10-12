@@ -4,7 +4,10 @@ from app.config.settings import settings
 
 engine = create_engine(
     settings.database_url,
-    connect_args={"options": "-c lc_messages=C"}
+    connect_args={
+        "options": "-c lc_messages=C",
+        **settings.database_connect_args,
+    },
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

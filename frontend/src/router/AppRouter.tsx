@@ -15,7 +15,8 @@ import Grupos from "../pages/Grupos";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
 import LegalInformation from "../pages/LegalInformation";
-
+import OlvideContrasena from "../pages/OlvideContrasena";
+import RestablecerContrasena from "../pages/RestablecerContrasena";
 
 function AppRouter() {
   return (
@@ -23,6 +24,8 @@ function AppRouter() {
       {/* Rutas públicas */}
       <Route path="/" element={<Inicio />} />
       <Route path="/iniciarSesion" element={<IniciarSesion />} />
+      <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+<Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
       <Route path="/registrarse" element={<Registrarse />} />
       <Route path="/politica-privacidad" element={<LegalInformation type="privacy" />} />
       <Route path="/politica-cookies" element={<LegalInformation type="cookies" />} />
