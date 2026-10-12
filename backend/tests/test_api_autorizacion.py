@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from fastapi.dependencies import utils as fastapi_dependency_utils
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLSession
 from starlette.requests import Request
 
@@ -30,8 +31,9 @@ fastapi_dependency_utils.ensure_multipart_is_installed = lambda: None
 
 from app.core.security import create_access_token
 from app.dependencies.auth import get_usuario_actual, security_scheme
-from app.main import api
+from app.main import api, health_live, health_ready
 from app.db.base import Base
+from app.db.session import engine
 from app.models.categoria import Categoria
 from app.models.grupo import Grupo
 from app.models.integrante import Integrante
@@ -67,6 +69,25 @@ class SesionFalsa:
 
 
 class AutenticacionRutasTests(unittest.TestCase):
+    def test_health_live_no_depende_de_postgresql(self):
+        self.assertEqual(health_live(), {"status": "ok"})
+
+    def test_health_ready_consulta_postgresql_y_devuelve_error_seguro(self):
+        conexion = Mock()
+        with patch.object(engine, "connect") as conectar:
+            conectar.return_value.__enter__.return_value = conexion
+            self.assertEqual(health_ready(), {"status": "ok"})
+        conexion.execute.assert_called_once()
+
+        with (
+            patch.object(engine, "connect", side_effect=SQLAlchemyError("fallo-sintetico")),
+            self.assertLogs("app.main", level="WARNING"),
+        ):
+            with self.assertRaises(HTTPException) as error:
+                health_ready()
+        self.assertEqual(error.exception.status_code, 503)
+        self.assertEqual(error.exception.detail, "Base de datos no disponible")
+
     def test_dependencia_bearer_rechaza_credenciales_ausentes(self):
         solicitud = Request(
             {"type": "http", "method": "GET", "path": "/", "headers": []}

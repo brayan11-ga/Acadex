@@ -34,7 +34,7 @@ export const FormularioOlvidoContrasena = () => {
         {enviado ? (
           <p role="status">
             Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña.
-            El enlace vence en 1 hora.
+            El enlace vence en 15 minutos y solo se puede usar una vez.
           </p>
         ) : (
           <form onSubmit={handleSubmit}>
