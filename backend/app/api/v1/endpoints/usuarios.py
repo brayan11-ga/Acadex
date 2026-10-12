@@ -1,13 +1,15 @@
+# endpointsUsuario
 from typing import List
-from fastapi import APIRouter, Depends, Request, status, HTTPException
+from fastapi import APIRouter, Depends, Request, status, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual, requerir_admin
 from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate
-from app.schemas.auth import LoginRequest, Token
+from app.schemas.auth import LoginRequest, Token, ForgotPasswordIn, ResetPasswordIn
+from app.schemas.token_temporal import TokenResetOut
 from app.models.usuario import Usuario
 from app.services import usuario_service as service
-from app.schemas.token_temporal import TokenResetOut
+from app.services.email_service import EmailMessage,enviar_reset
 from app.core.registration_guard import registrar_intento
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -72,3 +74,19 @@ def eliminar_usuario(
 ):
     service.eliminar_usuario(db, id_usuario)
     return None
+
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordIn,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    token = service.solicitar_reset_por_correo(db, data.correo_electronico)
+    if token:
+        background.add_task(enviar_reset, data.correo_electronico, token.valor_token)
+    return {"mensaje": "Si el correo existe, recibirás un enlace"}
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
+    service.restablecer_password_con_token(db, data.token, data.nueva_contrasena)
+    return {"mensaje": "Contraseña actualizada"}

@@ -126,7 +126,8 @@ def generar_token_reset_password(db: Session, id_usuario: int) -> TokenTemporal:
     nuevo_token = TokenTemporal(
         tipo_token="reset_password",
         valor_token=valor,
-        fecha_expiracion=datetime.utcnow() + timedelta(hours=1),
+        # Tiempo de expiracion del token
+        fecha_expiracion=datetime.utcnow() + timedelta(minutes=15),
         usado=False,
         id_usuario=id_usuario,
         id_grupo=None,
@@ -137,3 +138,35 @@ def generar_token_reset_password(db: Session, id_usuario: int) -> TokenTemporal:
     db.refresh(nuevo_token)
 
     return nuevo_token
+
+# invalida los tokens de reset que nunaca fueron usados
+def solicitar_reset_por_correo(db:Session,correo:str)->TokenTemporal | None:
+    Usuario=repo.get_usuario_by_correo(db,correo)
+    if not Usuario:
+        return None
+
+    db.query(TokenTemporal).filter(
+        TokenTemporal.id_usuario==Usuario.id_usuario,
+        TokenTemporal.tipo_token=="reset_password",
+        TokenTemporal.usado.id_(False),
+    ).update({"usado":True})
+    return generar_token_reset_password(db. usuario.id_usuario)
+
+def restablecer_password_con_token(db:str,token:str,nueva:str)-> None:
+    invalido=HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Token invalido o expirado"
+    )
+    t=db.query(TokenTemporal).filter(
+        TokenTemporal.valor_token==token,
+        TokenTemporal.tipo_token=="reset_password",
+        TokenTemporal.usado.is_(False),
+    ).first()
+    if not t or t.id_usuario is None or t.fecha_expiracion<datetime.utcnow():
+        raise invalido
+    Usuario=repo.get_usuario_by_id(db,t.usuario)
+    if not Usuario:
+        raise invalido
+    Usuario.contrasena=hash_password(nueva)
+    t.usadi=True
+    db.commit

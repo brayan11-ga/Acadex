@@ -69,7 +69,7 @@ export const FormularioLogin = () => {
           </div>
 
           <div className="password-option">
-            <a href="#">¿Olvidaste tu contraseña?</a>
+            <Link to="/olvide-contrasena">¿Olvidaste tu contraseña?</Link>
           </div>
 
           {error && <p className="form-error" role="alert">{error}</p>}
@@ -81,13 +81,6 @@ export const FormularioLogin = () => {
 
         <div className="divider">
           <span>o</span>
-        </div>
-
-        <div className="social-login">
-          <button type="button" className="google-btn">
-            <img src="https://www.google.com/favicon.ico" alt="Google" />
-            Continuar con Google
-          </button>
         </div>
 
         <div className="register-option">
