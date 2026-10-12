@@ -1,4 +1,4 @@
-// AppRouter
+// frontend/src/router/AppRouter.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
