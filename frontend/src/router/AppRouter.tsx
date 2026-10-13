@@ -1,4 +1,4 @@
-// frontend/src/router/AppRouter.tsx
+// Ruta: frontend/src/router/AppRouter.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Inicio from "../pages/LandingPage";
 import IniciarSesion from "../pages/Login";
@@ -12,6 +12,8 @@ import Lider from "../pages/Lider";
 import { Estadisticas } from "../pages/Estadisticas";
 import { Calendario } from "../pages/Calendario";
 import Grupos from "../pages/Grupos";
+import TareasGrupoPage from "../pages/TareasGrupoPage";
+import GrupoIntegrantesPage from "../pages/GrupoIntegrantesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
 import LegalInformation from "../pages/LegalInformation";
@@ -25,7 +27,7 @@ function AppRouter() {
       <Route path="/" element={<Inicio />} />
       <Route path="/iniciarSesion" element={<IniciarSesion />} />
       <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
-<Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
+      <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
       <Route path="/registrarse" element={<Registrarse />} />
       <Route path="/politica-privacidad" element={<LegalInformation type="privacy" />} />
       <Route path="/politica-cookies" element={<LegalInformation type="cookies" />} />
@@ -39,6 +41,8 @@ function AppRouter() {
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/estadisticas" element={<Estadisticas />} />
           <Route path="/grupos" element={<Grupos />} />
+          <Route path="/grupos/:idGrupo/tareas" element={<TareasGrupoPage />} />
+          <Route path="/grupos/:idGrupo" element={<GrupoIntegrantesPage />} />
           <Route path="/grupos/:idGrupo/lider" element={<Lider />} />
         </Route>
       </Route>
