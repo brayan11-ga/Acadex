@@ -45,6 +45,13 @@ html, body {
     text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
 }
 
+.admin-welcome {
+    margin: -1.25rem 0 2rem;
+    color: var(--pixel-ink-soft);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
 /* ===== Sidebar (reemplaza el bloque "Tabs") ===== */
 .admin-sidebar {
     width: 270px;/*ancho de navbar*/

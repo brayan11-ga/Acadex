@@ -1,5 +1,6 @@
 import type { ColumnConfig } from './Types';
 import { AdminTableLoadingSkeleton } from '../skeletons/LoadingSkeletons';
+import { EmptyState } from '../ui/EmptyState';
 
 interface AccionExtra<T> {
     etiqueta: string;
@@ -12,6 +13,7 @@ interface GenericTableProps<T> {
     filas: T[];
     cargando?: boolean;
     soloLectura?: boolean;
+    emptyState?: { title: string; description: string };
     onEditar?: (fila: T) => void;
     onEliminar?: (fila: T) => void;
     accionesExtra?: AccionExtra<T>[]; // <-- nuevo
@@ -22,6 +24,7 @@ export function GenericTable<T extends Record<string, any>>({
     filas,
     cargando = false,
     soloLectura = false,
+    emptyState,
     onEditar,
     onEliminar,
     accionesExtra = [],
@@ -34,7 +37,15 @@ export function GenericTable<T extends Record<string, any>>({
             />
         );
     }
-    if (filas.length === 0) return <p>No hay registros.</p>;
+    if (filas.length === 0) {
+        return (
+            <EmptyState
+                className="empty-state--compact"
+                title={emptyState?.title ?? 'Aún no hay registros'}
+                description={emptyState?.description ?? 'Cuando haya datos, aparecerán aquí.'}
+            />
+        );
+    }
 
     return (
     <table className="tabla-admin">

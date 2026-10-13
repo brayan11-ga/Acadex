@@ -1,6 +1,7 @@
 // frontend/src/components/grupos/MyGroups.tsx
 import type { GrupoConRol } from "../../types/grupo";
 import "../../styles/my-groups.css";
+import { EmptyState } from "../ui/EmptyState";
 
 interface MyGroupsProps {
   groups: GrupoConRol[];
@@ -17,7 +18,7 @@ export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: My
           <h1 className="groups-title">Mis Grupos</h1>
           <p className="groups-subtitle">
             {groups.length === 0
-              ? "Aún no perteneces a ningún grupo. Crea uno o únete con un código."
+              ? "Organiza tus actividades y estudia en equipo."
               : `Perteneces a ${groups.length} ${groups.length === 1 ? "grupo" : "grupos"} de estudio.`}
           </p>
         </div>
@@ -31,10 +32,11 @@ export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: My
         </div>
       </header>
       {groups.length === 0 ? (
-        <div className="groups-empty">
-          <div className="groups-empty-icon" aria-hidden="true">⊹</div>
-          <p className="groups-empty-text">Tus grupos aparecerán aquí.</p>
-        </div>
+        <EmptyState
+          className="empty-state--groups"
+          title="Aún no tienes grupos de estudio"
+          description="Crea un grupo o únete con un código para empezar a colaborar."
+        />
       ) : (
         <ul className="groups-grid">
           {groups.map((grupo) => (

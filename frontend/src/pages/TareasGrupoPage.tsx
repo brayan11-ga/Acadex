@@ -314,8 +314,8 @@ function TareasGrupoPage() {
             </h2>
             <p className="tareas-grupo-estado-texto">
               {esLider
-                ? "Crea la primera con el botón Nueva tarea."
-                : "El líder aún no ha creado tareas."}
+                ? "Crea la primera tarea para que tu equipo pueda empezar a trabajar."
+                : "Cuando el líder cree una tarea, aparecerá aquí para que puedas verla."}
             </p>
           </section>
         )}

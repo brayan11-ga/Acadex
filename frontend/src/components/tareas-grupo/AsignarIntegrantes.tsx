@@ -84,7 +84,9 @@ export default function AsignarIntegrantes({
       </div>
 
       {total === 0 ? (
-        <p className="tareas-grupo-asignar-vacio">Este grupo aún no tiene integrantes.</p>
+        <p className="tareas-grupo-asignar-vacio">
+          Aún no hay integrantes disponibles para asignar. Invita a otras personas al grupo para colaborar.
+        </p>
       ) : (
         <>
           <label className="tareas-grupo-asignar-todos">

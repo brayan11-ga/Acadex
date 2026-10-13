@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registrarUsuario } from '../../services/authService';
+import { obtenerMensajeErrorRegistro } from '../../utils/mensajesAuth';
 import '../../styles/register.css';
 import '../../styles/register-form.css';
 import ConsentimientoRegistro from './ConsentimientoRegistro';
@@ -34,9 +35,11 @@ export const FormularioRegistro = () => {
     setLoading(true);
     try {
       await registrarUsuario(email, username, password, aceptaTratamiento, confirmaAviso, website);
-      navigate('/iniciarSesion');
+      navigate('/iniciarSesion', {
+        state: { mensajeExito: '¡Tu cuenta se creó correctamente! Ya puedes iniciar sesión.' },
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(obtenerMensajeErrorRegistro(err));
     } finally {
       setLoading(false);
     }

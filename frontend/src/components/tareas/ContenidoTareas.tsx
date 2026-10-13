@@ -7,6 +7,7 @@ import { ModalDetalleTarea } from "./ModalDetalleTarea";
 import { Paginacion } from "./Paginacion";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
 import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
+import { EmptyState } from "../ui/EmptyState";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
 
 interface ContenidoTareaProps {
@@ -21,6 +22,7 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
     cargando, error, tareaDetalle, setTareaDetalle,
     filtroActivo, setFiltroActivo, modoVista, setModoVista,
     paginaActual, setPaginaActual, totalPaginas, tareasPaginadas, tareasPendientes,
+    totalTareas, totalTareasFiltradas,
     nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles, tareaAEliminar, solicitarEliminar, confirmarEliminar,cancelarEliminar
   } = useTareas(refreshKey);
 
@@ -30,7 +32,11 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         <div>
           <h1 className="pixel-tareas-title">Tus Tareas</h1>
           <p className="pixel-tareas-subtitle">
-            Tienes {tareasPendientes} tareas pendientes esta semana. Mantén el enfoque.
+            {totalTareas === 0
+              ? "Crea tu primera tarea para empezar a organizar tus actividades."
+              : tareasPendientes === 0
+                ? "¡Vas al día! No tienes tareas pendientes."
+                : `Tienes ${tareasPendientes} tareas pendientes esta semana. Mantén el enfoque.`}
           </p>
         </div>
         <button className="pixel-btn-primario" onClick={onNuevaTarea}>
@@ -65,9 +71,23 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         <>
           <section className={`pixel-tareas-lista ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}>
             {tareasPaginadas.length === 0 ? (
-              <p className="pixel-tareas-subtitle" style={{ textAlign: "center", padding: "20px" }}>
-                No hay tareas para mostrar.
-              </p>
+              totalTareas === 0 ? (
+                <EmptyState
+                  title="Aún no tienes tareas"
+                  description="Usa el botón «Crear tarea» para agregar tu primera actividad."
+                />
+              ) : totalTareasFiltradas === 0 ? (
+                <EmptyState
+                  title="No encontramos tareas con este filtro"
+                  description="Prueba con otro filtro o vuelve a ver todas tus tareas."
+                  action={{ label: "Ver todas las tareas", onClick: () => setFiltroActivo("todas") }}
+                />
+              ) : (
+                <EmptyState
+                  title="No hay tareas en esta página"
+                  description="Prueba otra página para continuar viendo tus tareas."
+                />
+              )
             ) : (
               tareasPaginadas.map((tarea) => (
                 <TarjetaTarea
