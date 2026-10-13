@@ -13,7 +13,7 @@ export const FormularioLogin = () => {
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   const estadoNavegacion = location.state as { mensajeExito?: unknown } | null;
-  const [mensajeExito, setMensajeExito] = useState<string | null>(() =>
+  const [mensajeExito] = useState<string | null>(() =>
     typeof estadoNavegacion?.mensajeExito === 'string' ? estadoNavegacion.mensajeExito : null,
   );
 
