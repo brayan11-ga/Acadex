@@ -6,6 +6,7 @@ import { FormularioModal } from '../components/admin/FormularioModal';
 import { Resumen } from '../components/admin/Resumen';
 import { Sidebar} from '../components/admin/Sidebar';
 import { TABS_ADMIN } from '../services/entidadesConfig';
+import { usePerfilActual } from '../hooks/usePerfilActual';
 import '../styles/admin.css';
 
 const TAB_RESUMEN = { clave: 'resumen', titulo: 'Resumen' };
@@ -19,16 +20,19 @@ export const Admin = () => {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [filaEditando, setFilaEditando] = useState<any | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [errorCarga, setErrorCarga] = useState<string | null>(null);
+    const { perfil } = usePerfilActual();
     const esTabResumen = tabActivo === TAB_RESUMEN.clave;
     const configActual = esTabResumen ? null : TABS_ADMIN.find((t) => t.clave === tabActivo)!;
 
     const cargarDatos = useCallback(async () => {
     if (!configActual) return;
     setCargando(true);
+    setErrorCarga(null);
     setError(null);
     const datos = await adminApi.listar<any>(configActual.clave);
     if (datos === null) {
-        setError('No se pudo cargar la información.');
+        setErrorCarga('No se pudo cargar la información.');
         setFilas([]);
     } else {
         setFilas(datos);
@@ -95,11 +99,20 @@ const restablecerPassword = async (fila: any) => {
         <Sidebar
             tabs={TODAS_LAS_TABS}
             tabActivo={tabActivo}
-            onCambiarTab={setTabActivo}
+            onCambiarTab={(clave) => {
+                setTabActivo(clave);
+                setErrorCarga(null);
+                setCargando(clave !== TAB_RESUMEN.clave);
+            }}
         />
 
         <main className="admin-content">
             <h1>Panel de Administración — Acadex</h1>
+            <p className="admin-welcome">
+                {'¡Te damos la bienvenida a Acadex' +
+                  (perfil?.nombre_usuario?.trim() ? ', ' + perfil.nombre_usuario.trim() : '') +
+                  '!'}
+            </p>
 
             {error && <p className="error-msg">{error}</p>}
 
@@ -115,19 +128,29 @@ const restablecerPassword = async (fila: any) => {
                 </div>
                 )}
 
-                <GenericTable
-                columnas={configActual!.columnas}
-                filas={filas}
-                cargando={cargando}
-                soloLectura={configActual!.soloLectura}
-                onEditar={abrirEditar}
-                onEliminar={eliminar}
-                accionesExtra={
-                    configActual!.clave === 'usuarios'
-                    ? [{ etiqueta: 'Restablecer contraseña', onClick: restablecerPassword, claseCss: 'btn btn-secundario' }]
-                    : []
-                }
-                />
+                {errorCarga ? (
+                    <div className="error-msg" role="alert">
+                        <p>{errorCarga}</p>
+                        <button type="button" className="btn btn-secundario" onClick={() => void cargarDatos()}>
+                            Reintentar
+                        </button>
+                    </div>
+                ) : (
+                    <GenericTable
+                    columnas={configActual!.columnas}
+                    filas={filas}
+                    cargando={cargando}
+                    soloLectura={configActual!.soloLectura}
+                    emptyState={configActual!.emptyState}
+                    onEditar={abrirEditar}
+                    onEliminar={eliminar}
+                    accionesExtra={
+                        configActual!.clave === 'usuarios'
+                        ? [{ etiqueta: 'Restablecer contraseña', onClick: restablecerPassword, claseCss: 'btn btn-secundario' }]
+                        : []
+                    }
+                    />
+                )}
 
                 {!configActual!.soloLectura && (
                 <FormularioModal

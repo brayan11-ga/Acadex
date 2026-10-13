@@ -2,6 +2,7 @@
 import type { GrupoConRol, Integrante } from "../../types/grupo";
 import "../../styles/group-detail.css";
 import { useNavigate } from "react-router-dom";
+import { EmptyState } from "../ui/EmptyState";
 
 interface GroupDetailProps {
   group: GrupoConRol;
@@ -48,6 +49,22 @@ export function GroupDetail({
         <h2 className="detail-section-title">
           Integrantes <span className="detail-count">{members.length}</span>
         </h2>
+        {members.length === 0 ? (
+          <EmptyState
+            className="empty-state--compact"
+            headingLevel={3}
+            title="Aún no hay integrantes en este grupo"
+            description="Invita a tus compañeros para que puedan colaborar aquí."
+            action={
+              isLeader
+                ? {
+                    label: "Ir al panel de líder",
+                    onClick: () => navigate("/grupos/" + group.id_grupo + "/lider"),
+                  }
+                : undefined
+            }
+          />
+        ) : (
         <ul className="member-list">
           {members.map((member) => {
             const isSelf = member.id_usuario === currentUserId;
@@ -76,6 +93,7 @@ export function GroupDetail({
             );
           })}
         </ul>
+        )}
       </div>
       {!isLeader && (
         <div className="detail-footer">

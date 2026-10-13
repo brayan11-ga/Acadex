@@ -1,7 +1,7 @@
 // Formulario login
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { iniciarSesion } from '../../services/authService';
 import { fetchUsuarioActual } from '../../store/authSlice';
 import { useAppDispatch } from '../../hooks/hooks';
@@ -11,9 +11,20 @@ export const FormularioLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const estadoNavegacion = location.state as { mensajeExito?: unknown } | null;
+  const [mensajeExito, setMensajeExito] = useState<string | null>(() =>
+    typeof estadoNavegacion?.mensajeExito === 'string' ? estadoNavegacion.mensajeExito : null,
+  );
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (typeof estadoNavegacion?.mensajeExito === 'string') {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,6 +83,7 @@ export const FormularioLogin = () => {
             <Link to="/olvide-contrasena">¿Olvidaste tu contraseña?</Link>
           </div>
 
+          {mensajeExito && <p className="form-success" role="status">{mensajeExito}</p>}
           {error && <p className="form-error" role="alert">{error}</p>}
 
           <button className="button-iniciar" type="submit" disabled={loading}>

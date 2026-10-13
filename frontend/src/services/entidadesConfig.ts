@@ -46,6 +46,7 @@ export interface Integrante {
 export interface EntidadConfig<T extends object=Record<string,unknown>> {
     clave: string;
     titulo: string;
+    emptyState?: { title: string; description: string };
     idField:keyof T & string;
     columnas: ColumnConfig<T>[];
     campos: FieldConfig[];
@@ -57,6 +58,10 @@ export interface EntidadConfig<T extends object=Record<string,unknown>> {
 export const usuariosConfig: EntidadConfig<Usuarios> = {
     clave: 'usuarios',
     titulo:'Usuarios',
+    emptyState: {
+        title: 'No hay usuarios para mostrar',
+        description: 'Los usuarios registrados en Acadex aparecerán aquí.',
+    },
     idField:'id_usuario',
     columnas:[
         {key:'id_usuario', label:'ID'},
@@ -75,6 +80,10 @@ export const usuariosConfig: EntidadConfig<Usuarios> = {
 export const categoriasConfig: EntidadConfig<Categoria> = {
     clave: 'categorias',
     titulo: 'Categorías',
+    emptyState: {
+        title: 'Aún no hay categorías',
+        description: 'Crea la primera categoría para organizar las tareas.',
+    },
     idField:'id_categoria',
     columnas: [{ key: 'nombre_categoria', label: 'Nombre' }],
     campos: [
@@ -86,6 +95,10 @@ export const categoriasConfig: EntidadConfig<Categoria> = {
 export const gruposConfig: EntidadConfig<Grupo> = {
     clave: 'grupos',
     titulo: 'Grupos',
+    emptyState: {
+        title: 'Aún no hay grupos creados',
+        description: 'Los grupos de estudio aparecerán aquí cuando se creen.',
+    },
     idField:'id_grupo',
     columnas: [
     { key: 'nombre_grupo', label: 'Nombre' },
@@ -131,6 +144,10 @@ export const tareasConfig: EntidadConfig<Tarea> = {
 export const integrantesConfig: EntidadConfig<Integrante> = {
     clave: 'integrantes',
     titulo: 'Integrantes',
+    emptyState: {
+        title: 'Aún no hay integrantes registrados',
+        description: 'Los integrantes aparecerán aquí cuando se unan a un grupo.',
+    },
     idField:'id_integrante',
     columnas: [
     { key: 'correo_electronico', label:'correo'},

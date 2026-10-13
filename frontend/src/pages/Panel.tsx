@@ -1,8 +1,10 @@
 // src/pages/Panel.tsx
 import { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/hooks';
 import { fetchPanelData } from '../store/panelSlice';
 import { actualizarTarea } from '../services/tareas';
+import type { AppLayoutContext } from '../types/AppLayoutContext';
 
 import { PanelHero } from '../components/panel/PanelHero';
 import { PanelTareasRecientes } from '../components/panel/PanelTareasRecientes';
@@ -12,7 +14,8 @@ import '../styles/Panel.css';
 
 export const Panel = () => {
   const dispatch = useAppDispatch();
-  const { data: datos, loading: cargando } = useAppSelector((state) => state.panel);
+  const { data: datos, error } = useAppSelector((state) => state.panel);
+  const { nombreUsuario, abrirModalGlobal } = useOutletContext<AppLayoutContext>();
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,19 +33,41 @@ export const Panel = () => {
     }
   };
 
-  if (cargando && !datos) {
+  if (!datos && !error) {
     return <PanelLoadingSkeleton />;
+  }
+
+  if (error && !datos) {
+    return (
+      <div className="panel-contenedor">
+        <section className="empty-state" role="alert">
+          <h1 className="empty-state__title">No pudimos cargar tu panel</h1>
+          <p className="empty-state__description">Revisa tu conexión e inténtalo de nuevo.</p>
+          <button
+            type="button"
+            className="empty-state__action"
+            onClick={() => void dispatch(fetchPanelData())}
+          >
+            Reintentar
+          </button>
+        </section>
+      </div>
+    );
   }
 
   const tareaPrioritaria = datos?.tareaPrioritaria;
   const progreso = datos?.progreso;
   const proximasTareas = datos?.proximasTareas;
 
+  const saludo = nombreUsuario
+    ? '¡Te damos la bienvenida a Acadex, ' + nombreUsuario + '!'
+    : '¡Te damos la bienvenida a Acadex!';
+
   return (
     <div className="panel-contenedor">
       <section className="panel-header-titulos">
-        <h1 className="pixel-title-main">Panel</h1>
-        <p className="pixel-subtitle">Concéntrate en lo que importa hoy.</p>
+        <h1 className="pixel-title-main">{saludo}</h1>
+        <p className="pixel-subtitle">Aquí tienes un resumen para organizar tu estudio.</p>
       </section>
 
       {errorAccion && <p className="pixel-error">{errorAccion}</p>}
@@ -53,7 +78,7 @@ export const Panel = () => {
         onCompletarTarea={manejarCompletarTarea} 
       />
 
-      <PanelTareasRecientes proximasTareas={proximasTareas} />
+      <PanelTareasRecientes proximasTareas={proximasTareas} onCrearTarea={abrirModalGlobal} />
     </div>
   );
 };
