@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, Eye, FileImage, FileText, Paperclip, Trash2, UploadCloud, X } from "lucide-react";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
+import { AttachmentsLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   descargarArchivoTarea,
@@ -467,7 +468,7 @@ export function SeccionAdjuntosTarea({ idTarea, modo }: SeccionAdjuntosTareaProp
         {errorAdjuntos && <p className="pixel-error" role="alert">{errorAdjuntos}</p>}
         {mensaje && <p className="pixel-adjuntos-exito" role="status">{mensaje}</p>}
         {cargandoAdjuntos ? (
-          <p className="pixel-tareas-subtitle">Cargando adjuntos…</p>
+          <AttachmentsLoadingSkeleton />
         ) : adjuntos.length === 0 ? (
           <p className="pixel-tareas-subtitle">
             {esEditable ? "Esta tarea aún no tiene adjuntos." : "Esta tarea no tiene adjuntos."}

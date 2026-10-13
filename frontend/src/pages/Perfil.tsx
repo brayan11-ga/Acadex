@@ -1,6 +1,7 @@
 // src/pages/Perfil.tsx
 import { useState, useEffect } from "react";
 import "../styles/perfil.css";
+import { ProfileLoadingSkeleton } from "../components/skeletons/LoadingSkeletons";
 import {
   obtenerMiPerfil,
   actualizarMiPerfil,
@@ -58,7 +59,7 @@ function Perfil() {
   };
 
   if (cargando) {
-    return <p className="pixel-tareas-subtitle">Cargando perfil...</p>;
+    return <ProfileLoadingSkeleton />;
   }
 
   if (!perfil) {

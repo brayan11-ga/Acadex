@@ -1,4 +1,5 @@
 import type { ColumnConfig } from './Types';
+import { AdminTableLoadingSkeleton } from '../skeletons/LoadingSkeletons';
 
 interface AccionExtra<T> {
     etiqueta: string;
@@ -25,7 +26,14 @@ export function GenericTable<T extends Record<string, any>>({
     onEliminar,
     accionesExtra = [],
 }: GenericTableProps<T>) {
-    if (cargando) return <p>Cargando...</p>;
+    if (cargando) {
+        return (
+            <AdminTableLoadingSkeleton
+                columns={columnas.map((columna) => columna.label)}
+                hasActions={!soloLectura}
+            />
+        );
+    }
     if (filas.length === 0) return <p>No hay registros.</p>;
 
     return (
