@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { ThemeProvider } from '../src/contexts/ThemeContext';
 
 import Header from '../src/components/landing/Header';
 import Features from '../src/components/landing/Features';
@@ -9,8 +10,10 @@ describe('CP-003 - Navegación hacia Funcionalidades', () => {
   test('El enlace Funcionalidades debe apuntar a la sección correspondiente', () => {
     render(
       <MemoryRouter>
-        <Header />
-        <Features />
+        <ThemeProvider>
+          <Header />
+          <Features />
+        </ThemeProvider>
       </MemoryRouter>
     );
 

@@ -23,9 +23,19 @@ def _generar_codigo_acceso(db: Session) -> str:
 
 def crear_grupo(db: Session, nombre_grupo: str, descripcion: Optional[str], id_usuario: int) -> Grupo:
     codigo_acceso = _generar_codigo_acceso(db)
-    grupo = grupo_repository.crear_grupo(db, nombre_grupo, descripcion, codigo_acceso)
-    grupo_repository.agregar_integrante(db, id_usuario, grupo.id_grupo, rol="lider")
-    return grupo
+    try:
+        grupo = grupo_repository.crear_grupo(
+            db, nombre_grupo, descripcion, codigo_acceso, commit=False
+        )
+        grupo_repository.agregar_integrante(
+            db, id_usuario, grupo.id_grupo, rol="lider", commit=False
+        )
+        db.commit()
+        db.refresh(grupo)
+        return grupo
+    except Exception:
+        db.rollback()
+        raise
 
 
 def eliminar_grupo(db: Session, id_grupo: int) -> None:

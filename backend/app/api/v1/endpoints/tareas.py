@@ -1,13 +1,12 @@
 # backend/app/api/v1/endpoints/tareas.py
 from datetime import date
 from typing import List, Optional
-from fastapi import File, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from app.schemas.archivo import ArchivoResponse
 from app.services import archivo_service
 from app.schemas.tarea import IntegranteAsignadoResponse
 
-from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from app.dependencies.db import get_db
@@ -28,6 +27,30 @@ def crear_tarea(
     usuario_actual: Usuario = Depends(get_usuario_actual)
 ):
     return tarea_service.crear_tarea(db, datos, usuario_actual)
+
+
+@router.post("/con-pdf", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
+def crear_tarea_con_pdf(
+    datos: str = Form(...),
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    """Crea una tarea personal y registra su PDF en la misma transacción."""
+    try:
+        datos_tarea = TareaCreate.model_validate_json(datos)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Los datos de la tarea no son válidos.",
+        ) from error
+
+    if not archivo.filename or not archivo.filename.lower().endswith(".pdf") or archivo.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="El archivo adjunto de esta operación debe ser un PDF.",
+        )
+    return tarea_service.crear_tarea_con_pdf(db, datos_tarea, usuario_actual, archivo)
 
 @router.post("/grupos/{id_grupo}", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
 def crear_tarea_grupal(
@@ -133,7 +156,9 @@ def analizar_documento(
             detail="El archivo supera el límite de 5MB."
         )
 
-    return ia_service.analizar_documento_con_ia(db, archivo)
+    return ia_service.analizar_documento_con_ia(
+        db, archivo, usuario_actual.id_usuario
+    )
 
 # ... @router.post("/") def crear_tarea(...) ...
 
@@ -157,7 +182,7 @@ def listar_archivos(
     return archivo_service.listar_archivos_de_tarea(db, id_tarea, usuario_actual.id_usuario)
 
 
-@router.get("/{id_tarea}/archivos/{id_archivo}", response_class=FileResponse)
+@router.get("/{id_tarea}/archivos/{id_archivo}")
 def descargar_archivo(
     id_tarea: int,
     id_archivo: int,
@@ -167,14 +192,21 @@ def descargar_archivo(
     archivo, ruta = archivo_service.obtener_archivo_para_descarga(
         db, id_tarea, id_archivo, usuario_actual.id_usuario
     )
+    encabezados = {
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store",
+    }
+    tipo_mime = archivo_service.TIPOS_MIME[archivo.tipo]
+    if isinstance(ruta, bytes):
+        from urllib.parse import quote
+
+        encabezados["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(archivo.nombre, safe='')}"
+        return Response(content=ruta, media_type=tipo_mime, headers=encabezados)
     return FileResponse(
         path=ruta,
-        media_type=archivo_service.TIPOS_MIME[archivo.tipo],
+        media_type=tipo_mime,
         filename=archivo.nombre,
-        headers={
-            "X-Content-Type-Options": "nosniff",
-            "Cache-Control": "private, no-store",
-        },
+        headers=encabezados,
     )
 
 

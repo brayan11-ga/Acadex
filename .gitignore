@@ -23,6 +23,9 @@ __pycache__/
 .env.*
 !.env.example
 
+# Datos y binarios privados creados localmente o durante el desarrollo.
+/backend/uploads/
+
 # ==============================
 # EDITORES
 # ==============================

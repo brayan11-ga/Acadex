@@ -1,22 +1,19 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, test, expect } from 'vitest';
-import { JSDOM } from 'jsdom';
-import fs from 'fs';
-import path from 'path';
+import { store } from '../src/store/store';
+import { FormularioLogin } from '../src/components/login/FormularioLogin';
 
 describe('CP-07 - Validación de correo obligatorio en Login', () => {
 
-    test('El campo de correo debe ser obligatorio', () => {
-
-        const loginPath = path.resolve('frontend/templates/login.html');
-        const html = fs.readFileSync(loginPath, 'utf-8');
-        const dom = new JSDOM(html);
-        const document = dom.window.document;
-
-        const email = document.querySelector('#email');
-
-        expect(email).not.toBeNull();
-        expect(email.type).toBe('email');
-        expect(email.required).toBe(true);
+  test('El formulario React marca el correo como obligatorio', () => {
+    render(React.createElement(Provider, { store },
+      React.createElement(MemoryRouter, null, React.createElement(FormularioLogin))));
+    const email = screen.getByLabelText(/correo electrónico/i);
+    expect(email).toHaveAttribute('type', 'email');
+    expect(email).toBeRequired();
     });
 
 });

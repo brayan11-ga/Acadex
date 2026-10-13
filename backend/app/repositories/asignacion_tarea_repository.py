@@ -6,11 +6,15 @@ from app.models.integrante import Integrante
 from app.models.tarea import Tarea
 from app.models.usuario import Usuario
 
-def crear_asignacion(db: Session, id_tarea: int, id_integrante: int) -> AsignacionTarea:
+def crear_asignacion(
+    db: Session, id_tarea: int, id_integrante: int, commit: bool = True
+) -> AsignacionTarea:
     asignacion = AsignacionTarea(id_tarea=id_tarea, id_integrante=id_integrante)
     db.add(asignacion)
-    db.commit()
-    db.refresh(asignacion)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(asignacion)
     return asignacion
 
 

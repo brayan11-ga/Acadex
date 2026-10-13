@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from app.models.sesion_cronometro import SesionCronometro
 from app.repositories import sesion_cronometro_repository as repo
@@ -13,8 +14,16 @@ def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronome
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ya hay una sesión activa para esta tarea",
         )
-    data = {"fecha_inicio": datetime.utcnow(), "id_usuario": id_usuario, "id_tarea": id_tarea}
-    return repo.create_sesion(db, data)
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+    data = {"fecha_inicio": ahora, "id_usuario": id_usuario, "id_tarea": id_tarea}
+    try:
+        return repo.create_sesion(db, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya hay una sesión activa para esta tarea",
+        ) from None
 
 def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCronometro:
     sesion = repo.get_sesion_by_id(db, id_sesion)
@@ -34,7 +43,7 @@ def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCron
             detail="La sesión ya fue finalizada",
         )
 
-    fecha_fin = datetime.utcnow()
+    fecha_fin = datetime.now(timezone.utc).replace(tzinfo=None)
     duracion = (fecha_fin - sesion.fecha_inicio).total_seconds()
     return repo.update_sesion(db, sesion, {"fecha_fin": fecha_fin, "duracion": duracion})
 

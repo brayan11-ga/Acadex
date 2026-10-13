@@ -14,6 +14,7 @@ from app.services import usuario_service as service
 from app.services.email_service import enviar_reset
 from app.config.settings import settings
 from app.core.registration_guard import registrar_intento
+from app.core.request_guard import limitar_solicitudes
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -23,7 +24,9 @@ def crear_usuario(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    registrar_intento(request.client.host if request.client else "desconocido")
+    registrar_intento(
+        request.client.host if request.client else "desconocido", db=db
+    )
     if usuario.sitio_web.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se pudo procesar el registro.")
     return service.registrar_usuario(
@@ -36,8 +39,35 @@ def crear_usuario(
     )
 
 @router.post("/login", response_model=Token)
-def login(credenciales: LoginRequest, db: Session = Depends(get_db)):
-    token = service.login(db, credenciales.correo_electronico, credenciales.contrasena)
+def login(
+    credenciales: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    ip_cliente = request.client.host if request.client else "desconocido"
+    limitar_solicitudes(
+        db,
+        "login_ip",
+        ip_cliente,
+        maximo=120,
+        ventana_segundos=60,
+        mensaje="Demasiados intentos de inicio de sesión desde esta conexión.",
+    )
+    try:
+        token = service.login(
+            db, credenciales.correo_electronico, credenciales.contrasena
+        )
+    except HTTPException as error:
+        if error.status_code == status.HTTP_401_UNAUTHORIZED:
+            limitar_solicitudes(
+                db,
+                "login_correo",
+                credenciales.correo_electronico,
+                maximo=10,
+                ventana_segundos=15 * 60,
+                mensaje="Demasiados intentos para esta cuenta. Inténtalo más tarde.",
+            )
+        raise
     return Token(access_token=token)
 
 @router.get("/me", response_model=UsuarioOut)
@@ -87,8 +117,24 @@ def eliminar_usuario(
 @router.post("/forgot-password")
 def forgot_password(
     data: ForgotPasswordIn,
+    request: Request,
     db: Session = Depends(get_db),
 ):
+    ip_cliente = request.client.host if request.client else "desconocido"
+    limitar_solicitudes(
+        db,
+        "recuperacion_ip",
+        ip_cliente,
+        maximo=30,
+        ventana_segundos=60 * 60,
+    )
+    limitar_solicitudes(
+        db,
+        "recuperacion_correo",
+        data.correo_electronico,
+        maximo=5,
+        ventana_segundos=60 * 60,
+    )
     if not settings.password_reset_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -109,6 +155,17 @@ def forgot_password(
     return {"mensaje": "Si el correo existe, recibirás un enlace"}
 
 @router.post("/reset-password")
-def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
+def reset_password(
+    data: ResetPasswordIn,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    limitar_solicitudes(
+        db,
+        "reset_password_ip",
+        request.client.host if request.client else "desconocido",
+        maximo=30,
+        ventana_segundos=60 * 60,
+    )
     service.restablecer_password_con_token(db, data.token, data.nueva_contrasena)
     return {"mensaje": "Contraseña actualizada"}

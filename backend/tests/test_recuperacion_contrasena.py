@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SQLSession
+from starlette.requests import Request
 
 from app.api.v1.endpoints import usuarios as usuarios_endpoint
 from app.db.base import Base
@@ -20,16 +21,29 @@ def ahora_utc_sin_zona():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def solicitud_sintetica():
+    return Request({
+        "type": "http",
+        "method": "POST",
+        "path": "/",
+        "headers": [],
+        "client": ("127.0.0.1", 12345),
+    })
+
+
 class RecuperacionContrasenaTests(unittest.TestCase):
     def test_endpoint_de_forgot_devuelve_no_disponible_si_no_hay_configuracion(self):
         db = Mock()
         with (
             patch.object(usuarios_endpoint, "settings", SimpleNamespace(password_reset_enabled=False)),
+            patch.object(usuarios_endpoint, "limitar_solicitudes"),
             patch.object(usuarios_endpoint.service, "solicitar_reset_por_correo") as solicitar,
         ):
             with self.assertRaises(HTTPException) as error:
                 usuarios_endpoint.forgot_password(
-                    ForgotPasswordIn(correo_electronico="persona@example.com"), db
+                    ForgotPasswordIn(correo_electronico="persona@example.com"),
+                    solicitud_sintetica(),
+                    db,
                 )
 
         self.assertEqual(error.exception.status_code, 503)
@@ -40,13 +54,16 @@ class RecuperacionContrasenaTests(unittest.TestCase):
         token = SimpleNamespace(valor_token="digest-sintetico", usado=False)
         with (
             patch.object(usuarios_endpoint, "settings", SimpleNamespace(password_reset_enabled=True)),
+            patch.object(usuarios_endpoint, "limitar_solicitudes"),
             patch.object(usuarios_endpoint.service, "solicitar_reset_por_correo", return_value=(token, "token-una-sola-vez")),
             patch.object(usuarios_endpoint, "enviar_reset", side_effect=OSError("SMTP no disponible")),
             patch.object(usuarios_endpoint.service, "invalidar_token_reset") as invalidar,
             self.assertLogs("app.api.v1.endpoints.usuarios", level="ERROR"),
         ):
             respuesta = usuarios_endpoint.forgot_password(
-                ForgotPasswordIn(correo_electronico="persona@example.com"), db
+                ForgotPasswordIn(correo_electronico="persona@example.com"),
+                solicitud_sintetica(),
+                db,
             )
 
         invalidar.assert_called_once_with(db, token)
@@ -170,6 +187,9 @@ class RecuperacionContrasenaTests(unittest.TestCase):
                     correo_electronico="persona@example.com",
                     contrasena="hash-anterior",
                     es_admin=False,
+                    intentos_fallidos=5,
+                    bloqueado=True,
+                    bloqueado_hasta=ahora_utc_sin_zona() + timedelta(minutes=15),
                 )
                 db.add(usuario)
                 db.commit()
@@ -191,6 +211,9 @@ class RecuperacionContrasenaTests(unittest.TestCase):
 
                 db.refresh(usuario)
                 self.assertEqual(usuario.contrasena, "hash-nuevo")
+                self.assertEqual(usuario.intentos_fallidos, 0)
+                self.assertFalse(usuario.bloqueado)
+                self.assertIsNone(usuario.bloqueado_hasta)
                 self.assertTrue(
                     db.query(TokenTemporal).filter_by(id_token=token_row.id_token).one().usado
                 )

@@ -11,6 +11,7 @@ import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
 import {
   crearTarea,
+  crearTareaConPdf,
   actualizarTarea,
   analizarDocumentoIA,
   subirArchivoTarea,
@@ -18,6 +19,7 @@ import {
 } from "../../services/tareas";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
 import { SelectorArchivosPendientes } from "./SelectorArchivosPendientes";
+import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   claveArchivo,
   TAMANO_MAXIMO_ADJUNTO,
@@ -183,7 +185,11 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         setIdCategoria(propuesta.id_categoria);
       }
 
-      setAvisoIA("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.");
+      setAvisoIA(
+        adjuntosHabilitados()
+          ? "Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar."
+          : "Listo. Completé los campos con sugerencias del PDF. El documento no se guardó como adjunto.",
+      );
     } catch (err) {
       setAvisoIA(null);
       setErrorIA(err instanceof Error ? err.message : "No se pudo analizar el PDF.");
@@ -194,6 +200,10 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
 
   const manejarCierreFormulario = () => {
     if (idTareaCreada !== null) {
+      if (archivosAdjuntosPendientes.length > 0) {
+        setErrorSubidaAdjuntos("El archivo aún no está guardado. Reintenta la subida antes de cerrar esta tarea.");
+        return;
+      }
       onTareaCreada();
       return;
     }
@@ -243,24 +253,33 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         });
         onTareaCreada();
       } else {
-        const nuevaTarea = await crearTarea({
+        const datosTarea = {
           nombre: titulo,
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-        });
+        };
+        const pdfParaGuardar = archivoPdfAnalizable && adjuntosHabilitados() ? archivoIA : null;
+        const nuevaTarea = pdfParaGuardar
+          ? await crearTareaConPdf(datosTarea, pdfParaGuardar)
+          : await crearTarea(datosTarea);
         setIdTareaCreada(nuevaTarea.id_tarea);
-        const subidasCorrectas = await subirAdjuntosPendientes(
-          nuevaTarea.id_tarea,
-          archivosAdjuntosPendientes,
-        );
+        const archivosRestantes = pdfParaGuardar
+          ? archivosAdjuntosPendientes.filter((archivo) => claveArchivo(archivo) !== claveArchivo(pdfParaGuardar))
+          : archivosAdjuntosPendientes;
+        const subidasCorrectas = await subirAdjuntosPendientes(nuevaTarea.id_tarea, archivosRestantes);
         if (!subidasCorrectas) return;
         onTareaCreada();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar la tarea");
+      const mensaje = err instanceof Error ? err.message : "Error al guardar la tarea";
+      setError(
+        archivoPdfAnalizable && adjuntosHabilitados()
+          ? `No se pudo confirmar el guardado conjunto de la tarea y su PDF. ${mensaje}`
+          : mensaje,
+      );
     } finally {
       setEnviando(false);
     }
@@ -275,7 +294,13 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           </h2>
           <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
         </div>
-        <button type="button" className="pixel-link-descartar" onClick={manejarCierreFormulario}>
+        <button
+          type="button"
+          className="pixel-link-descartar"
+          onClick={manejarCierreFormulario}
+          disabled={idTareaCreada !== null && archivosAdjuntosPendientes.length > 0}
+          title={archivosAdjuntosPendientes.length > 0 ? "Primero reintenta guardar los adjuntos" : undefined}
+        >
           {idTareaCreada !== null ? "× Cerrar" : "× Descartar"}
         </button>
       </div>
@@ -394,7 +419,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           analizando={analizando}
           avisoIA={avisoIA}
           errorIA={errorIA}
-          disabled={enviando}
+          disabled={enviando || idTareaCreada !== null}
           disabledIA={idTareaCreada !== null}
           onAgregar={agregarArchivosPendientes}
           onQuitar={quitarArchivoPendiente}
@@ -407,6 +432,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
             setErrorIA(null);
           }}
           onAnalizar={() => void manejarAutocompletadoIA()}
+          adjuntosHabilitados={adjuntosHabilitados()}
         />
       )}
 
@@ -422,7 +448,9 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       {errorSubidaAdjuntos && <p className="pixel-error" role="alert">{errorSubidaAdjuntos}</p>}
       {idTareaCreada !== null && (
         <p className="pixel-form-tarea-guardada" role="status">
-          La tarea ya está guardada. Si cierras, podrás volver a añadir estos archivos desde Editar.
+          {archivosAdjuntosPendientes.length > 0
+            ? "La tarea está guardada, pero el PDF/archivo todavía no. Reintenta la subida para completar el guardado; mantén esta ventana abierta mientras tanto."
+            : "La tarea y sus archivos quedaron guardados."}
         </p>
       )}
 

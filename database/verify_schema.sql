@@ -35,4 +35,21 @@ SELECT
           AND conname = 'fk_archivos_usuario_subida'
           AND contype = 'f'
           AND confdeltype = 'n'
-    ) AS autor_archivo_fk_set_null;
+    ) AS autor_archivo_fk_set_null,
+    to_regclass('public.uso_analisis_ia') IS NOT NULL AS tabla_limites_ia,
+    to_regclass('public.bloqueo_cuota_gemini') IS NOT NULL AS tabla_bloqueo_cuota_gemini,
+    to_regclass('public.limites_solicitud') IS NOT NULL AS tabla_limites_solicitud,
+    EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'usuarios'
+          AND column_name = 'bloqueado_hasta'
+          AND data_type = 'timestamp without time zone'
+    ) AS vencimiento_bloqueo_cuenta,
+    EXISTS (
+        SELECT 1
+        FROM pg_index
+        WHERE indexrelid = to_regclass('public.uq_sesiones_tarea_activa')
+          AND indisunique
+          AND pg_get_expr(indpred, indrelid) = '(fecha_fin IS NULL)'
+    ) AS unicidad_sesion_activa_por_tarea;

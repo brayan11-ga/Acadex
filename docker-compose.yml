@@ -12,6 +12,9 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/00_schema.sql:ro
       - ./backend/migrations/20261011_add_archivo_uploader.sql:/docker-entrypoint-initdb.d/10_add_archivo_uploader.sql:ro
       - ./backend/migrations/20261011_add_registration_consents.sql:/docker-entrypoint-initdb.d/20_add_registration_consents.sql:ro
+      - ./backend/migrations/20261012_add_gemini_usage_limits.sql:/docker-entrypoint-initdb.d/30_add_gemini_usage_limits.sql:ro
+      - ./backend/migrations/20261012_add_gemini_quota_lockout.sql:/docker-entrypoint-initdb.d/40_add_gemini_quota_lockout.sql:ro
+      - ./backend/migrations/20261012_add_security_guards.sql:/docker-entrypoint-initdb.d/50_add_security_guards.sql:ro
       - ./backend/migrations:/migrations:ro
       - ./database/verify_schema.sql:/database/verify_schema.sql:ro
     healthcheck:

@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import List, Optional
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from app.models.tarea import Tarea
 from app.models.historial_tarea import HistorialTarea
@@ -16,7 +16,7 @@ def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:
     integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)
     return integrante is not None and integrante.rol == "lider"
 
-def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario) -> Tarea:
+def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bool = True) -> Tarea:
     if datos.id_grupo is None:
         datos_seguridad = datos.model_copy(update={"id_usuario": usuario.id_usuario})
     else:
@@ -28,7 +28,39 @@ def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario) -> Tarea:
                 detail="No tienes permiso para crear tareas en este grupo.",
             )
         datos_seguridad = datos.model_copy(update={"id_usuario": None})
-    return tarea_repository.crear_tarea(db, datos_seguridad)
+    return tarea_repository.crear_tarea(db, datos_seguridad, commit=commit)
+
+
+def crear_tarea_con_pdf(
+    db: Session,
+    datos: TareaCreate,
+    usuario: Usuario,
+    archivo_pdf: UploadFile,
+) -> Tarea:
+    """Guarda la tarea y su PDF en una sola transacción de PostgreSQL."""
+    if datos.id_grupo is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Este guardado con PDF está disponible para tareas personales.",
+        )
+
+    try:
+        with archivo_service.compensar_subidas_adjuntos() as recursos_creados:
+            tarea = crear_tarea(db, datos, usuario, commit=False)
+            archivo_service.subir_archivo_tarea(
+                db,
+                tarea.id_tarea,
+                archivo_pdf,
+                usuario.id_usuario,
+                commit=False,
+                recursos_creados=recursos_creados,
+            )
+            db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return tarea
 
 def obtener_tarea(db: Session, id_tarea: int, id_usuario: int) -> Tarea:
     tarea = tarea_repository.obtener_tarea_por_id(db, id_tarea)
@@ -66,21 +98,22 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
     estado_anterior = tarea.estado
 
     # Actualizamos la tarea mediante el repositorio
-    tarea_actualizada = tarea_repository.actualizar_tarea(db, tarea, datos)
-    estado_nuevo = tarea_actualizada.estado
+    try:
+        tarea_actualizada = tarea_repository.actualizar_tarea(
+            db, tarea, datos, commit=False
+        )
+        estado_nuevo = tarea_actualizada.estado
 
-    # Sincronización automática con la tabla HistorialTarea para el gráfico del panel
-    id_usuario_historial = tarea_actualizada.id_usuario or id_usuario
-    if estado_nuevo and estado_anterior:
-        # Si se completó y antes no lo estaba
-        if estado_nuevo.lower() == "completada" and estado_anterior.lower() != "completada":
-            historial_existente = db.query(HistorialTarea).filter(
-                HistorialTarea.id_tarea == tarea_actualizada.id_tarea,
-                HistorialTarea.id_usuario == id_usuario_historial
-            ).first()
-
-            if not historial_existente:
-                nuevo_historial = HistorialTarea(
+        # Tarea, historial y estadística se confirman en un único commit.
+        id_usuario_historial = tarea_actualizada.id_usuario or id_usuario
+        if (
+            estado_nuevo
+            and estado_anterior
+            and estado_nuevo.lower() == "completada"
+            and estado_anterior.lower() != "completada"
+        ):
+            db.add(
+                HistorialTarea(
                     id_tarea=tarea_actualizada.id_tarea,
                     id_usuario=id_usuario_historial,
                     id_grupo=tarea_actualizada.id_grupo,
@@ -88,32 +121,29 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                     tiempo_real=tarea_actualizada.tiempo_acumulado,
                     dificultad_real=tarea_actualizada.dificultad_estimada,
                 )
-                db.add(nuevo_historial)
-                db.commit()
-
-                from app.services import estadistica_service
-                estadistica_service.recalcular_estadistica_categoria(
-                    db, id_usuario_historial, tarea_actualizada.id_categoria
-                )
-
-        # Si se reabrió (pasa de completada a pendiente/otro estado)
-        elif estado_nuevo.lower() != "completada" and estado_anterior.lower() == "completada":
-            historiales = db.query(HistorialTarea).filter(
-                HistorialTarea.id_tarea == tarea_actualizada.id_tarea
-            ).all()
-            usuarios_historial = {historial.id_usuario for historial in historiales}
-            db.query(HistorialTarea).filter(
-                HistorialTarea.id_tarea == tarea_actualizada.id_tarea
-            ).delete()
-            db.commit()
+            )
+            if db is not None:
+                db.flush()
 
             from app.services import estadistica_service
-            for id_usuario_historial in usuarios_historial:
-                estadistica_service.recalcular_estadistica_categoria(
-                    db, id_usuario_historial, tarea_actualizada.id_categoria
-                )
 
-    return tarea_actualizada
+            estadistica_service.recalcular_estadistica_categoria(
+                db,
+                id_usuario_historial,
+                tarea_actualizada.id_categoria,
+                commit=False,
+            )
+
+        # Reabrir conserva el historial como evidencia de una finalización
+        # anterior. Si vuelve a completarse se agrega un nuevo registro.
+        if db is not None:
+            db.commit()
+            db.refresh(tarea_actualizada)
+        return tarea_actualizada
+    except Exception:
+        if db is not None:
+            db.rollback()
+        raise
 
 def eliminar_tarea(db: Session, id_tarea: int, id_usuario: int) -> None:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
@@ -188,12 +218,20 @@ def crear_tarea_grupal(
         id_usuario=None,
         id_grupo=id_grupo,
     )
-    tarea = tarea_repository.crear_tarea(db, tarea_datos)
+    try:
+        tarea = tarea_repository.crear_tarea(db, tarea_datos, commit=False)
 
-    for integrante in integrantes:
-        asignacion_tarea_repository.crear_asignacion(db, tarea.id_tarea, integrante.id_integrante)
+        for integrante in integrantes:
+            asignacion_tarea_repository.crear_asignacion(
+                db, tarea.id_tarea, integrante.id_integrante, commit=False
+            )
 
-    return tarea
+        db.commit()
+        db.refresh(tarea)
+        return tarea
+    except Exception:
+        db.rollback()
+        raise
 
 def listar_tareas_asignadas(db: Session, id_usuario: int) -> List[Tarea]:
     return asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)

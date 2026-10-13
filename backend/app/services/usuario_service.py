@@ -70,6 +70,10 @@ def registrar_usuario(
 
     return usuario
 
+INTENTOS_FALLIDOS_ANTES_DE_BLOQUEO = 5
+DURACION_BLOQUEO_SEGUNDOS = 15 * 60
+
+
 def login(db: Session, correo_electronico: str, contrasena: str) -> str:
     usuario = repo.get_usuario_by_correo(db, correo_electronico)
     credenciales_incorrectas = HTTPException(
@@ -80,21 +84,48 @@ def login(db: Session, correo_electronico: str, contrasena: str) -> str:
     if not usuario:
         raise credenciales_incorrectas
 
-    if usuario.bloqueado:
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+    if usuario.bloqueado and usuario.bloqueado_hasta and usuario.bloqueado_hasta > ahora:
+        espera = max(1, int((usuario.bloqueado_hasta - ahora).total_seconds()))
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
-            detail="Cuenta bloqueada por demasiados intentos fallidos",
+            detail="Cuenta bloqueada temporalmente por demasiados intentos fallidos",
+            headers={"Retry-After": str(espera)},
         )
+
+    # Libera bloqueos vencidos y bloqueos permanentes de versiones antiguas.
+    if usuario.bloqueado or usuario.bloqueado_hasta is not None:
+        usuario.bloqueado = False
+        usuario.bloqueado_hasta = None
+        usuario.intentos_fallidos = 0
 
     if not verify_password(contrasena, usuario.contrasena):
         usuario.intentos_fallidos += 1
-        if usuario.intentos_fallidos >= 3:
+        bloqueada = usuario.intentos_fallidos >= INTENTOS_FALLIDOS_ANTES_DE_BLOQUEO
+        if bloqueada:
             usuario.bloqueado = True
-        db.commit()
+            usuario.bloqueado_hasta = ahora + timedelta(seconds=DURACION_BLOQUEO_SEGUNDOS)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        if bloqueada:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="Cuenta bloqueada temporalmente por demasiados intentos fallidos",
+                headers={"Retry-After": str(DURACION_BLOQUEO_SEGUNDOS)},
+            )
         raise credenciales_incorrectas
 
     usuario.intentos_fallidos = 0
-    db.commit()
+    usuario.bloqueado = False
+    usuario.bloqueado_hasta = None
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     return create_access_token(subject=str(usuario.id_usuario))
 
@@ -226,6 +257,9 @@ def restablecer_password_con_token(db: Session, token: str, nueva: str) -> None:
             raise invalido
 
         usuario.contrasena = hash_password(nueva)
+        usuario.intentos_fallidos = 0
+        usuario.bloqueado = False
+        usuario.bloqueado_hasta = None
         db.query(TokenTemporal).filter(
             TokenTemporal.id_usuario == usuario.id_usuario,
             TokenTemporal.tipo_token == "reset_password",

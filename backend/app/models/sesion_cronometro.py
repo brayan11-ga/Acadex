@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey, CheckConstraint, Index, text
 from app.db.base import Base
 
 class SesionCronometro(Base):
@@ -14,4 +14,11 @@ class SesionCronometro(Base):
     __table_args__ = (
         CheckConstraint("duracion is null or duracion >= 0", name="chk_duracion_sesion"),
         CheckConstraint("fecha_fin is null or fecha_fin >= fecha_inicio", name="chk_fechas_sesion"),
+        Index(
+            "uq_sesiones_tarea_activa",
+            "id_tarea",
+            unique=True,
+            postgresql_where=text("fecha_fin IS NULL"),
+            sqlite_where=text("fecha_fin IS NULL"),
+        ),
     )

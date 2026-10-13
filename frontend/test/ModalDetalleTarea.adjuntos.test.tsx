@@ -8,6 +8,7 @@ const servicios = vi.hoisted(() => ({
   eliminar: vi.fn(),
   listarCategorias: vi.fn(),
   crear: vi.fn(),
+  crearConPdf: vi.fn(),
   actualizar: vi.fn(),
   analizar: vi.fn(),
 }));
@@ -22,6 +23,7 @@ vi.mock("../src/services/tareas", () => ({
   descargarArchivoTarea: servicios.descargar,
   eliminarArchivoTarea: servicios.eliminar,
   crearTarea: servicios.crear,
+  crearTareaConPdf: servicios.crearConPdf,
   actualizarTarea: servicios.actualizar,
   analizarDocumentoIA: servicios.analizar,
 }));
@@ -108,6 +110,7 @@ async function completarDatosDeTarea() {
 describe("adjuntos de tareas", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("VITE_ATTACHMENTS_ENABLED", "true");
     servicios.listar.mockResolvedValue([adjunto]);
     servicios.subir.mockResolvedValue(adjunto);
     servicios.descargar.mockResolvedValue(new Blob(["archivo"]));
@@ -116,6 +119,7 @@ describe("adjuntos de tareas", () => {
       { id_categoria: 4, nombre_categoria: "Lectura" },
     ]);
     servicios.crear.mockResolvedValue(tarea);
+    servicios.crearConPdf.mockResolvedValue(tarea);
     servicios.analizar.mockResolvedValue({
       titulo: "Entrega sugerida",
       descripcion: "Resolver ejercicios del capítulo.",
@@ -128,6 +132,24 @@ describe("adjuntos de tareas", () => {
       texto.textContent = "Contenido de Word";
       contenedor.appendChild(texto);
     });
+  });
+
+  it("oculta adjuntos y mantiene el análisis Gemini sin conservar el PDF", async () => {
+    vi.stubEnv("VITE_ATTACHMENTS_ENABLED", "false");
+    renderModalDetalle();
+    expect(screen.queryByRole("heading", { name: /adjuntos de la tarea/i })).not.toBeInTheDocument();
+    expect(servicios.listar).not.toHaveBeenCalled();
+
+    renderFormularioCreacion();
+    const pdf = new File(["%PDF-1.7"], "guia.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Seleccionar PDF para autocompletar"), {
+      target: { files: [pdf] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Autocompletar con IA/ }));
+
+    expect(await screen.findByText(/El documento no se guardó como adjunto/)).toBeInTheDocument();
+    expect(servicios.analizar).toHaveBeenCalledWith(pdf);
+    expect(servicios.subir).not.toHaveBeenCalled();
   });
 
   it("usa un solo selector de adjuntos y muestra la IA como opcional", async () => {
@@ -189,8 +211,35 @@ describe("adjuntos de tareas", () => {
     await completarDatosDeTarea();
     fireEvent.click(screen.getByRole("button", { name: "Crear →" }));
 
-    await waitFor(() => expect(servicios.subir).toHaveBeenCalledWith(tarea.id_tarea, pdf));
+    await waitFor(() => expect(servicios.crearConPdf).toHaveBeenCalledWith(expect.objectContaining({
+      nombre: "Entrega del capítulo",
+      descripcion: "Resolver ejercicios del capítulo.",
+    }), pdf));
+    expect(servicios.crear).not.toHaveBeenCalled();
+    expect(servicios.subir).not.toHaveBeenCalled();
     expect(onTareaCreada).toHaveBeenCalledTimes(1);
+  });
+
+  it("no crea la tarea si no se pudo guardar primero el PDF analizado", async () => {
+    servicios.crearConPdf.mockRejectedValueOnce(new Error("El almacenamiento no está disponible"));
+    renderFormularioCreacion();
+    const pdf = new File(["%PDF-1.7"], "guia.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Seleccionar archivos adjuntos de la tarea"), {
+      target: { files: [pdf] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Autocompletar con IA/ }));
+    expect(await screen.findByText("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.")).toBeInTheDocument();
+
+    await completarDatosDeTarea();
+    fireEvent.click(screen.getByRole("button", { name: "Crear →" }));
+
+    expect(await screen.findByText(
+      "No se pudo confirmar el guardado conjunto de la tarea y su PDF. El almacenamiento no está disponible",
+    )).toBeInTheDocument();
+    expect(servicios.crearConPdf).toHaveBeenCalledWith(expect.any(Object), pdf);
+    expect(servicios.crear).not.toHaveBeenCalled();
+    expect(servicios.subir).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText("¿Qué hay que hacer?")).not.toBeDisabled();
   });
 
   it("permite reintentar adjuntos fallidos sin volver a crear la tarea", async () => {
@@ -209,6 +258,8 @@ describe("adjuntos de tareas", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "La tarea se guardó, pero no se pudieron subir 1 archivo",
     );
+    expect(screen.getByRole("button", { name: /Cerrar/ })).toBeDisabled();
+    expect(screen.getByText(/La tarea está guardada, pero el PDF\/archivo todavía no/)).toBeInTheDocument();
     expect(servicios.crear).toHaveBeenCalledTimes(1);
     expect(onTareaCreada).not.toHaveBeenCalled();
 
@@ -218,6 +269,7 @@ describe("adjuntos de tareas", () => {
     expect(servicios.subir).toHaveBeenLastCalledWith(tarea.id_tarea, archivo);
     expect(servicios.crear).toHaveBeenCalledTimes(1);
     expect(onTareaCreada).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("La tarea y sus archivos quedaron guardados.")).toBeInTheDocument();
   });
 
   it("muestra adjuntos en la edición y permite cargarlos desde ese formulario", async () => {

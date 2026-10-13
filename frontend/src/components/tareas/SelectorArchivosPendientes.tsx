@@ -23,6 +23,7 @@ interface SelectorArchivosPendientesProps {
   errorIA: string | null;
   disabled?: boolean;
   disabledIA?: boolean;
+  adjuntosHabilitados?: boolean;
   onAgregar: (archivos: File[]) => void;
   onQuitar: (archivo: File) => void;
   onSeleccionarArchivo: (archivo: File | null) => void;
@@ -38,6 +39,7 @@ export function SelectorArchivosPendientes({
   errorIA,
   disabled = false,
   disabledIA = false,
+  adjuntosHabilitados = false,
   onAgregar,
   onQuitar,
   onSeleccionarArchivo,
@@ -48,6 +50,31 @@ export function SelectorArchivosPendientes({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const agregarArchivos = (seleccion: FileList | File[]) => {
+    if (!adjuntosHabilitados) {
+      const candidatos = Array.from(seleccion);
+      const pdf = candidatos.at(-1);
+      if (!pdf) {
+        onSeleccionarArchivo(null);
+        return;
+      }
+      const problema = validarArchivoAdjunto(pdf);
+      if (problema) {
+        onSeleccionarArchivo(null);
+        setError(problema);
+      } else if (
+        !pdf.name.toLowerCase().endsWith(".pdf")
+        || pdf.type !== "application/pdf"
+      ) {
+        onSeleccionarArchivo(null);
+        setError("Para autocompletar con IA, elige un archivo PDF válido.");
+      } else {
+        onSeleccionarArchivo(pdf);
+        setError(candidatos.length > 1 ? "Selecciona un solo PDF para el análisis." : null);
+      }
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
     const validos: File[] = [];
     const errores: string[] = [];
     const seleccionadosValidos: File[] = [];
@@ -73,21 +100,29 @@ export function SelectorArchivosPendientes({
   };
 
   const claveAnalisisIA = archivoAnalisisIA ? claveArchivo(archivoAnalisisIA) : null;
+  const archivosMostrados = adjuntosHabilitados
+    ? archivos
+    : archivoAnalisisIA ? [archivoAnalisisIA] : [];
 
   return (
     <section className="pixel-form-adjuntos" aria-labelledby="titulo-adjuntos-pendientes">
       <div className="pixel-form-adjuntos-header">
         <div>
           <h3 id="titulo-adjuntos-pendientes">
-            <Paperclip aria-hidden="true" size={17} /> Archivos adjuntos
+            {adjuntosHabilitados ? <Paperclip aria-hidden="true" size={17} /> : <Sparkles aria-hidden="true" size={17} />}
+            {adjuntosHabilitados ? "Archivos adjuntos" : "Autocompletar tarea con IA"}
           </h3>
-          <p>Se guardarán junto con la tarea. PDF, DOCX, JPG o PNG; hasta 5 MB cada uno.</p>
+          <p>{adjuntosHabilitados
+            ? "Se guardarán junto con la tarea. PDF, DOCX, JPG o PNG; hasta 5 MB cada uno."
+            : "Selecciona un PDF de hasta 5 MB. Se analizará para sugerir datos y no se guardará como adjunto."}</p>
         </div>
         <div className="pixel-form-adjuntos-meta">
           <span className="pixel-form-adjuntos-opcional">OPCIONAL</span>
-          <span className="pixel-form-adjuntos-contador" aria-label={`${archivos.length} archivos seleccionados`}>
-            {archivos.length}
-          </span>
+          {adjuntosHabilitados && (
+            <span className="pixel-form-adjuntos-contador" aria-label={`${archivos.length} archivos seleccionados`}>
+              {archivos.length}
+            </span>
+          )}
           <div className="pixel-form-adjuntos-ia">
             <button
               type="button"
@@ -107,10 +142,12 @@ export function SelectorArchivosPendientes({
         <Sparkles aria-hidden="true" size={14} />
         {analisisDisponible
           ? "PDF listo: puedes autocompletar la tarea con IA."
-          : "Solo puedes autocompletar con IA al adjuntar un PDF."}
+          : adjuntosHabilitados
+            ? "Solo puedes autocompletar con IA al adjuntar un PDF."
+            : "Solo puedes autocompletar con IA al seleccionar un PDF."}
       </p>
 
-      <div
+      {adjuntosHabilitados ? <div
         className={`pixel-form-adjuntos-zona${arrastrando ? " activa" : ""}${disabled ? " ocupada" : ""}`}
         onDragOver={(evento) => {
           evento.preventDefault();
@@ -144,18 +181,41 @@ export function SelectorArchivosPendientes({
         >
           Seleccionar archivos
         </button>
-      </div>
+      </div> : <div className="pixel-form-adjuntos-zona">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          className="pixel-form-adjuntos-input"
+          aria-label="Seleccionar PDF para autocompletar"
+          tabIndex={-1}
+          disabled={disabled || disabledIA}
+          onChange={(evento) => agregarArchivos(evento.target.files ?? [])}
+        />
+        <FileText aria-hidden="true" size={22} />
+        <span>El PDF solo se usa para generar sugerencias.</span>
+        <button
+          type="button"
+          className="pixel-form-adjuntos-boton"
+          disabled={disabled || disabledIA}
+          onClick={() => inputRef.current?.click()}
+        >
+          Seleccionar PDF
+        </button>
+      </div>}
 
       {error && <p className="pixel-error" role="alert">{error}</p>}
 
       {errorIA && <p className="pixel-ia-mensaje error" role="alert">{errorIA}</p>}
       {avisoIA && <p className="pixel-ia-mensaje" role="status">{avisoIA}</p>}
 
-      {archivos.length === 0 ? (
+      {archivosMostrados.length === 0 ? (
         <p className="pixel-form-adjuntos-vacio">Aún no has seleccionado archivos.</p>
       ) : (
-        <ul className="pixel-form-adjuntos-lista" aria-label="Archivos que se adjuntarán al crear la tarea">
-          {archivos.map((archivo) => {
+        <ul className="pixel-form-adjuntos-lista" aria-label={adjuntosHabilitados
+          ? "Archivos que se adjuntarán al crear la tarea"
+          : "PDF seleccionado para el análisis de IA"}>
+          {archivosMostrados.map((archivo) => {
             const esAnalisisIA = claveAnalisisIA === claveArchivo(archivo);
             return (
               <li className="pixel-form-adjunto" key={claveArchivo(archivo)}>
@@ -164,13 +224,17 @@ export function SelectorArchivosPendientes({
                   <strong title={archivo.name}>{archivo.name}</strong>
                   <span>
                     {mostrarTamano(archivo.size)}
-                    {esAnalisisIA && <span className="pixel-form-adjunto-ia"> · Autocompletar + adjunto</span>}
+                    {esAnalisisIA && <span className="pixel-form-adjunto-ia">
+                      {adjuntosHabilitados ? " · Autocompletar + adjunto" : " · Solo análisis de IA"}
+                    </span>}
                   </span>
                 </span>
                 <button
                   type="button"
                   className="pixel-form-adjunto-quitar"
-                  aria-label={`Quitar ${archivo.name} de los adjuntos`}
+                  aria-label={adjuntosHabilitados
+                    ? `Quitar ${archivo.name} de los adjuntos`
+                    : `Quitar ${archivo.name} del análisis`}
                   title={`Quitar ${archivo.name}`}
                   disabled={disabled}
                   onClick={() => {

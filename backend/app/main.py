@@ -10,6 +10,7 @@ from app.api.v1.router import router
 import app.models  # noqa
 from app.config.settings import settings
 from app.db.session import engine
+from app.services import supabase_storage
 
 settings.validar_configuracion_produccion()
 
@@ -32,13 +33,43 @@ def health_live():
 def health_ready():
     try:
         with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
+            esquema_listo = connection.execute(text("""
+                SELECT
+                    to_regclass('public.limites_solicitud') IS NOT NULL
+                    AND to_regclass('public.uso_analisis_ia') IS NOT NULL
+                    AND to_regclass('public.bloqueo_cuota_gemini') IS NOT NULL
+                    AND EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'usuarios'
+                          AND column_name = 'bloqueado_hasta'
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_index
+                        WHERE indexrelid = to_regclass('public.uq_sesiones_tarea_activa')
+                          AND indisunique
+                    )
+            """)).scalar_one()
+            if not esquema_listo:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Faltan migraciones obligatorias de seguridad",
+                )
     except SQLAlchemyError as error:
         logging.getLogger(__name__).warning("La comprobación de PostgreSQL no está disponible")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Base de datos no disponible",
         ) from error
+    if settings.attachments_enabled and settings.attachments_storage_backend == "supabase":
+        try:
+            supabase_storage.validar_bucket_privado()
+        except supabase_storage.SupabaseStorageError as error:
+            logging.getLogger(__name__).warning("El bucket privado de adjuntos no está disponible")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Almacenamiento privado de adjuntos no disponible",
+            ) from error
     return {"status": "ok"}
 
 

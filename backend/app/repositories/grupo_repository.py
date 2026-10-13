@@ -24,15 +24,23 @@ def obtener_grupos_de_usuario(db: Session, id_usuario: int) -> List[Tuple[Grupo,
     )
 
 
-def crear_grupo(db: Session, nombre_grupo: str, descripcion: Optional[str], codigo_acceso: str) -> Grupo:
+def crear_grupo(
+    db: Session,
+    nombre_grupo: str,
+    descripcion: Optional[str],
+    codigo_acceso: str,
+    commit: bool = True,
+) -> Grupo:
     grupo = Grupo(
         nombre_grupo=nombre_grupo,
         descripcion=descripcion,
         codigo_acceso=codigo_acceso,
     )
     db.add(grupo)
-    db.commit()
-    db.refresh(grupo)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(grupo)
     return grupo
 
 
@@ -49,11 +57,19 @@ def obtener_integrante(db: Session, id_usuario: int, id_grupo: int) -> Optional[
     )
 
 
-def agregar_integrante(db: Session, id_usuario: int, id_grupo: int, rol: str) -> Integrante:
+def agregar_integrante(
+    db: Session,
+    id_usuario: int,
+    id_grupo: int,
+    rol: str,
+    commit: bool = True,
+) -> Integrante:
     integrante = Integrante(rol=rol, id_usuario=id_usuario, id_grupo=id_grupo)
     db.add(integrante)
-    db.commit()
-    db.refresh(integrante)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(integrante)
     return integrante
 
 

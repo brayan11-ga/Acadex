@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
 from sqlalchemy.sql import func
 from app.db.base import Base
 
@@ -11,3 +11,4 @@ class Usuario(Base):
     es_admin = Column(Boolean, nullable=False, default=False)
     intentos_fallidos = Column(Integer, nullable=False, default=0)
     bloqueado = Column(Boolean, nullable=False, default=False)
+    bloqueado_hasta = Column(DateTime, nullable=True)
