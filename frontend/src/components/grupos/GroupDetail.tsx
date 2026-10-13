@@ -1,4 +1,4 @@
-// frontend/src/components/grupos/GroupDetail.tsx
+// Ruta: frontend/src/components/grupos/GroupDetail.tsx
 import type { GrupoConRol, Integrante } from "../../types/grupo";
 import "../../styles/group-detail.css";
 import { useNavigate } from "react-router-dom";
@@ -10,24 +10,25 @@ interface GroupDetailProps {
   onBack: () => void;
   onKickMember: (idUsuario: number) => void;
   onLeaveGroup: () => void;
+  textoVolver?: string;
 }
 
 export function GroupDetail({
-    group,
-    members,
-    currentUserId,
-    onBack,
-    onKickMember,
-    onLeaveGroup,
-  }: GroupDetailProps) {
-    const isLeader = group.rol === "lider";
-    const navigate = useNavigate();
-
+  group,
+  members,
+  currentUserId,
+  onBack,
+  onKickMember,
+  onLeaveGroup,
+  textoVolver = "← Volver a Mis Grupos",
+}: GroupDetailProps) {
+  const isLeader = group.rol === "lider";
+  const navigate = useNavigate();
 
   return (
     <section className="detail-view">
       <button className="detail-back" onClick={onBack}>
-        ← Volver a Mis Grupos
+        {textoVolver}
       </button>
       <header className="detail-header">
         <div className="detail-header-info">

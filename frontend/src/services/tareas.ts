@@ -1,4 +1,4 @@
-// src/services/tareas.ts
+// Ruta: frontend/src/services/tareas.ts
 import { apiFetch, apiFetchBlob } from "./api";
 
 export interface TareaBackend {
@@ -139,4 +139,41 @@ export function eliminarArchivoTarea(idTarea: number, idArchivo: number): Promis
   return apiFetch<void>(`/tareas/${idTarea}/archivos/${idArchivo}`, {
     method: "DELETE",
   });
+}
+
+export interface TareaGrupalCreatePayload {
+  nombre: string;
+  descripcion?: string | null;
+  fecha_entrega: string;
+  dificultad_estimada: number;
+  tiempo_estimado: number;
+  id_categoria: number;
+  ids_usuarios: number[];
+}
+
+export interface IntegranteAsignadoBackend {
+  id_usuario: number;
+  correo_electronico: string;
+}
+
+export function listarTareasDeGrupo(idGrupo: number): Promise<TareaBackend[]> {
+  return apiFetch<TareaBackend[]>(`/tareas/grupos/${idGrupo}`);
+}
+
+export function crearTareaGrupal(
+  idGrupo: number,
+  datos: TareaGrupalCreatePayload,
+): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/grupos/${idGrupo}`, {
+    method: "POST",
+    body: JSON.stringify(datos),
+  });
+}
+
+export function listarAsignadosTarea(idTarea: number): Promise<IntegranteAsignadoBackend[]> {
+  return apiFetch<IntegranteAsignadoBackend[]>(`/tareas/${idTarea}/asignados`);
+}
+
+export function listarTareasAsignadasMias(): Promise<TareaBackend[]> {
+  return apiFetch<TareaBackend[]>("/tareas/asignadas/mias");
 }

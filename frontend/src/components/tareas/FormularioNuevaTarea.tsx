@@ -1,4 +1,4 @@
-// src/components/tareas/FormularioNuevaTarea.tsx
+// Ruta: frontend/src/components/tareas/FormularioNuevaTarea.tsx
 import { useState, useEffect } from "react";
 import caraNivel1 from "../../assets/icons/dificultad/1.png";
 import caraNivel2 from "../../assets/icons/dificultad/2.png";
@@ -11,19 +11,22 @@ import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
 import {
   crearTarea,
-  crearTareaConPdf,
   actualizarTarea,
   analizarDocumentoIA,
   subirArchivoTarea,
+  crearTareaGrupal,
   type TareaBackend,
 } from "../../services/tareas";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
 import { SelectorArchivosPendientes } from "./SelectorArchivosPendientes";
-import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   claveArchivo,
   TAMANO_MAXIMO_ADJUNTO,
 } from "./validacionArchivosTarea";
+import AsignarIntegrantes, {
+  validarAsignados,
+} from "../tareas-grupo/AsignarIntegrantes";
+import type { IntegranteAsignable } from "../../types/tareaGrupo";
 
 const NIVELES_DIFICULTAD = [
   { nivel: 1, icono: caraNivel1, etiqueta: "Muy fácil" },
@@ -37,9 +40,29 @@ interface FormularioProps {
   onDescartar: () => void;
   onTareaCreada: () => void;
   tareaAEditar?: TareaBackend | null;
+  modo?: "individual" | "grupal";
+  idGrupo?: number;
+  integrantes?: IntegranteAsignable[];
+  usuarioActualId?: number | null;
+  embebidoEnModal?: boolean;
+  enviandoExterno?: boolean;
+  onEstadoEnvioChange?: (enviando: boolean) => void;
+  formId?: string;
 }
 
-function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: FormularioProps) {
+function FormularioNuevaTarea({
+  onDescartar,
+  onTareaCreada,
+  tareaAEditar,
+  modo = "individual",
+  idGrupo,
+  integrantes = [],
+  usuarioActualId = null,
+  embebidoEnModal = false,
+  onEstadoEnvioChange,
+  formId,
+}: FormularioProps) {
+  const esGrupal = modo === "grupal";
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [titulo, setTitulo] = useState("");
   const [idCategoria, setIdCategoria] = useState<number | null>(null);
@@ -53,8 +76,9 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
   const [progresoAdjuntos, setProgresoAdjuntos] = useState<string | null>(null);
   const [archivosAdjuntosPendientes, setArchivosAdjuntosPendientes] = useState<File[]>([]);
   const [idTareaCreada, setIdTareaCreada] = useState<number | null>(null);
+  const [asignados, setAsignados] = useState<number[]>([]);
+  const [errorAsignados, setErrorAsignados] = useState<string | undefined>();
 
-  // Estados y referencias para la IA
   const [archivoIA, setArchivoIA] = useState<File | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const [avisoIA, setAvisoIA] = useState<string | null>(null);
@@ -72,6 +96,11 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       && archivoIA.size <= TAMANO_MAXIMO_ADJUNTO,
   );
   const nivelActual = NIVELES_DIFICULTAD.find((n) => n.nivel === dificultad)!;
+
+  const marcarEnviando = (valor: boolean) => {
+    setEnviando(valor);
+    onEstadoEnvioChange?.(valor);
+  };
 
   const agregarArchivosPendientes = (nuevos: File[]) => {
     if (idTareaCreada !== null) setErrorSubidaAdjuntos(null);
@@ -185,11 +214,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         setIdCategoria(propuesta.id_categoria);
       }
 
-      setAvisoIA(
-        adjuntosHabilitados()
-          ? "Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar."
-          : "Listo. Completé los campos con sugerencias del PDF. El documento no se guardó como adjunto.",
-      );
+      setAvisoIA("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.");
     } catch (err) {
       setAvisoIA(null);
       setErrorIA(err instanceof Error ? err.message : "No se pudo analizar el PDF.");
@@ -200,10 +225,6 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
 
   const manejarCierreFormulario = () => {
     if (idTareaCreada !== null) {
-      if (archivosAdjuntosPendientes.length > 0) {
-        setErrorSubidaAdjuntos("El archivo aún no está guardado. Reintenta la subida antes de cerrar esta tarea.");
-        return;
-      }
       onTareaCreada();
       return;
     }
@@ -213,18 +234,19 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
   const manejarEnvio = async (evento: React.FormEvent) => {
     evento.preventDefault();
     setError(null);
+    setErrorAsignados(undefined);
 
-    if (idTareaCreada !== null) {
+    if (!esGrupal && idTareaCreada !== null) {
       if (archivosAdjuntosPendientes.length === 0) {
         onTareaCreada();
         return;
       }
-      setEnviando(true);
+      marcarEnviando(true);
       try {
         const subidasCorrectas = await subirAdjuntosPendientes(idTareaCreada, archivosAdjuntosPendientes);
         if (subidasCorrectas) onTareaCreada();
       } finally {
-        setEnviando(false);
+        marcarEnviando(false);
       }
       return;
     }
@@ -240,9 +262,32 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
       return;
     }
 
-    setEnviando(true);
+    if (esGrupal) {
+      const errorAsignacion = validarAsignados(asignados);
+      if (errorAsignacion) {
+        setErrorAsignados(errorAsignacion);
+        return;
+      }
+      if (idGrupo == null) {
+        setError("Falta el grupo para crear la tarea.");
+        return;
+      }
+    }
+
+    marcarEnviando(true);
     try {
-      if (tareaAEditar) {
+      if (esGrupal && idGrupo != null) {
+        await crearTareaGrupal(idGrupo, {
+          nombre: titulo,
+          descripcion,
+          fecha_entrega: fecha,
+          dificultad_estimada: dificultad,
+          tiempo_estimado: tiempoEstimadoNum,
+          id_categoria: idCategoria,
+          ids_usuarios: asignados,
+        });
+        onTareaCreada();
+      } else if (tareaAEditar) {
         await actualizarTarea(tareaAEditar.id_tarea, {
           nombre: titulo,
           descripcion,
@@ -253,59 +298,55 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         });
         onTareaCreada();
       } else {
-        const datosTarea = {
+        const nuevaTarea = await crearTarea({
           nombre: titulo,
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-        };
-        const pdfParaGuardar = archivoPdfAnalizable && adjuntosHabilitados() ? archivoIA : null;
-        const nuevaTarea = pdfParaGuardar
-          ? await crearTareaConPdf(datosTarea, pdfParaGuardar)
-          : await crearTarea(datosTarea);
+        });
         setIdTareaCreada(nuevaTarea.id_tarea);
-        const archivosRestantes = pdfParaGuardar
-          ? archivosAdjuntosPendientes.filter((archivo) => claveArchivo(archivo) !== claveArchivo(pdfParaGuardar))
-          : archivosAdjuntosPendientes;
-        const subidasCorrectas = await subirAdjuntosPendientes(nuevaTarea.id_tarea, archivosRestantes);
+        const subidasCorrectas = await subirAdjuntosPendientes(
+          nuevaTarea.id_tarea,
+          archivosAdjuntosPendientes,
+        );
         if (!subidasCorrectas) return;
         onTareaCreada();
       }
     } catch (err) {
-      const mensaje = err instanceof Error ? err.message : "Error al guardar la tarea";
-      setError(
-        archivoPdfAnalizable && adjuntosHabilitados()
-          ? `No se pudo confirmar el guardado conjunto de la tarea y su PDF. ${mensaje}`
-          : mensaje,
-      );
+      setError(err instanceof Error ? err.message : "Error al guardar la tarea");
     } finally {
-      setEnviando(false);
+      marcarEnviando(false);
     }
   };
 
-  return (
-    <form className="pixel-panel" onSubmit={manejarEnvio}>
-      <div className="pixel-panel-header">
-        <div>
-          <h2 id="formulario-tarea-titulo" className="pixel-panel-title">
-            {tareaAEditar ? "Editar tarea" : "Nueva tarea"}
-          </h2>
-          <p className="pixel-panel-subtitle">Define el objetivo de tu próxima sesión</p>
-        </div>
-        <button
-          type="button"
-          className="pixel-link-descartar"
-          onClick={manejarCierreFormulario}
-          disabled={idTareaCreada !== null && archivosAdjuntosPendientes.length > 0}
-          title={archivosAdjuntosPendientes.length > 0 ? "Primero reintenta guardar los adjuntos" : undefined}
-        >
-          {idTareaCreada !== null ? "× Cerrar" : "× Descartar"}
-        </button>
-      </div>
+  const clasesForm = [
+    "pixel-panel",
+    embebidoEnModal ? "tareas-grupo-form-embebido" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-      {error && <p className="pixel-error">{error}</p>}
+  return (
+    <form id={formId} className={clasesForm} onSubmit={manejarEnvio} noValidate>
+      {!embebidoEnModal && (
+        <div className="pixel-panel-header">
+          <div>
+            <h2 id="formulario-tarea-titulo" className="pixel-panel-title">
+              {tareaAEditar ? "Editar tarea" : esGrupal ? "Nueva tarea grupal" : "Nueva tarea"}
+            </h2>
+            <p className="pixel-panel-subtitle">
+              {esGrupal ? "Define el objetivo y a quién le toca." : "Define el objetivo de tu próxima sesión"}
+            </p>
+          </div>
+          <button type="button" className="pixel-link-descartar" onClick={manejarCierreFormulario}>
+            {idTareaCreada !== null ? "× Cerrar" : "× Descartar"}
+          </button>
+        </div>
+      )}
+
+      {error && <p className="pixel-error" role="alert">{error}</p>}
 
       <label className="pixel-field">
         <span className="pixel-field-label">Título</span>
@@ -411,7 +452,20 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         />
       </label>
 
-      {!tareaAEditar && (
+      {esGrupal && (
+        <AsignarIntegrantes
+          integrantes={integrantes}
+          seleccionados={asignados}
+          onChange={(ids) => {
+            setAsignados(ids);
+            setErrorAsignados(undefined);
+          }}
+          error={errorAsignados}
+          usuarioActualId={usuarioActualId}
+        />
+      )}
+
+      {!esGrupal && !tareaAEditar && (
         <SelectorArchivosPendientes
           archivos={archivosAdjuntosPendientes}
           archivoAnalisisIA={archivoPdfAnalizable ? archivoIA : null}
@@ -419,7 +473,7 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
           analizando={analizando}
           avisoIA={avisoIA}
           errorIA={errorIA}
-          disabled={enviando || idTareaCreada !== null}
+          disabled={enviando}
           disabledIA={idTareaCreada !== null}
           onAgregar={agregarArchivosPendientes}
           onQuitar={quitarArchivoPendiente}
@@ -432,11 +486,10 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
             setErrorIA(null);
           }}
           onAnalizar={() => void manejarAutocompletadoIA()}
-          adjuntosHabilitados={adjuntosHabilitados()}
         />
       )}
 
-      {tareaAEditar && (
+      {!esGrupal && tareaAEditar && (
         <SeccionAdjuntosTarea
           key={tareaAEditar.id_tarea}
           idTarea={tareaAEditar.id_tarea}
@@ -444,27 +497,36 @@ function FormularioNuevaTarea({ onDescartar, onTareaCreada, tareaAEditar }: Form
         />
       )}
 
-      {progresoAdjuntos && <p className="pixel-form-progreso" role="status">{progresoAdjuntos}</p>}
-      {errorSubidaAdjuntos && <p className="pixel-error" role="alert">{errorSubidaAdjuntos}</p>}
-      {idTareaCreada !== null && (
+      {!esGrupal && progresoAdjuntos && (
+        <p className="pixel-form-progreso" role="status">{progresoAdjuntos}</p>
+      )}
+      {!esGrupal && errorSubidaAdjuntos && (
+        <p className="pixel-error" role="alert">{errorSubidaAdjuntos}</p>
+      )}
+      {!esGrupal && idTareaCreada !== null && (
         <p className="pixel-form-tarea-guardada" role="status">
-          {archivosAdjuntosPendientes.length > 0
-            ? "La tarea está guardada, pero el PDF/archivo todavía no. Reintenta la subida para completar el guardado; mantén esta ventana abierta mientras tanto."
-            : "La tarea y sus archivos quedaron guardados."}
+          La tarea ya está guardada. Si cierras, podrás volver a añadir estos archivos desde Editar.
         </p>
       )}
 
-      <div className="pixel-panel-footer">
-        <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>
-          {enviando
-            ? idTareaCreada !== null ? "Subiendo adjuntos…" : "Guardando…"
-            : tareaAEditar
-              ? "Guardar →"
-              : idTareaCreada !== null
-                ? archivosAdjuntosPendientes.length > 0 ? "Reintentar adjuntos →" : "Finalizar →"
-                : "Crear →"}
-        </button>
-      </div>
+      {!embebidoEnModal && (
+        <div className="pixel-panel-footer">
+          {esGrupal && (
+            <p className="tareas-grupo-nota">La prioridad se calcula automáticamente.</p>
+          )}
+          <button type="submit" className="pixel-btn-crear-tarea" disabled={enviando}>
+            {enviando
+              ? idTareaCreada !== null ? "Subiendo adjuntos…" : "Guardando…"
+              : tareaAEditar
+                ? "Guardar →"
+                : idTareaCreada !== null
+                  ? archivosAdjuntosPendientes.length > 0 ? "Reintentar adjuntos →" : "Finalizar →"
+                  : esGrupal
+                    ? "Crear tarea →"
+                    : "Crear →"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

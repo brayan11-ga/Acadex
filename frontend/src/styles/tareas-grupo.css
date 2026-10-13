@@ -1,0 +1,1206 @@
+/* Ruta: frontend/src/styles/tareas-grupo.css */
+
+/* Formulario individual embebido en el modal grupal */
+.tareas-grupo-form-embebido.pixel-panel {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tareas-grupo-form-embebido .pixel-panel-header {
+  display: none;
+}
+
+.tareas-grupo-form-embebido .pixel-panel-footer {
+  display: none;
+}
+
+.tareas-grupo-form-embebido .pixel-field-label {
+  font-family: var(--pixel-font-display);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--pixel-ink-soft);
+}
+
+/* ---------- Base ---------- */
+
+.tareas-grupo-pagina {
+  --tareas-grupo-error: var(--pixel-nivel-5);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 16px 64px;
+  background: linear-gradient(160deg, var(--pixel-bg-start), var(--pixel-bg-end));
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tareas-grupo-pagina *,
+.tareas-grupo-pagina *::before,
+.tareas-grupo-pagina *::after {
+  box-sizing: border-box;
+}
+
+.tareas-grupo-pagina h1,
+.tareas-grupo-pagina h2,
+.tareas-grupo-pagina h3,
+.tareas-grupo-pagina p,
+.tareas-grupo-pagina dl,
+.tareas-grupo-pagina dd,
+.tareas-grupo-pagina ul {
+  margin: 0;
+}
+
+.tareas-grupo-pagina ul {
+  padding: 0;
+  list-style: none;
+}
+
+.tareas-grupo-pagina button,
+.tareas-grupo-pagina input,
+.tareas-grupo-pagina select,
+.tareas-grupo-pagina textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.tareas-grupo-pagina :focus-visible {
+  outline: 2px solid var(--pixel-accent-soft);
+  outline-offset: 2px;
+}
+
+.tareas-grupo-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.tareas-grupo-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tareas-grupo-truncar {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Botones ---------- */
+
+.tareas-grupo-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 2px solid transparent;
+  border-radius: var(--pixel-radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease,
+    box-shadow 80ms ease;
+}
+
+.tareas-grupo-boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tareas-grupo-boton--primario {
+  background: var(--pixel-accent);
+  border-color: var(--pixel-accent);
+  color: var(--pixel-ink);
+  box-shadow: 0 4px 0 0 var(--pixel-accent-strong);
+}
+
+.tareas-grupo-boton--primario:hover:not(:disabled) {
+  background: var(--pixel-accent-soft);
+  border-color: var(--pixel-accent-soft);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 0 var(--pixel-accent-strong);
+}
+
+.tareas-grupo-boton--primario:active:not(:disabled) {
+  background: var(--pixel-accent-strong);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--pixel-accent-strong);
+}
+
+.tareas-grupo-boton--secundario {
+  background: transparent;
+  border-color: var(--pixel-border-strong);
+  color: var(--pixel-ink);
+}
+
+.tareas-grupo-boton--secundario:hover:not(:disabled) {
+  border-color: var(--pixel-accent-soft);
+  background: color-mix(in srgb, var(--pixel-accent) 10%, transparent);
+}
+
+.tareas-grupo-boton--secundario:active:not(:disabled),
+.tareas-grupo-boton--secundario[aria-expanded='true'] {
+  border-color: var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 18%, transparent);
+}
+
+.tareas-grupo-boton--descartar {
+  background: transparent;
+  border-color: var(--pixel-alta);
+  color: var(--pixel-alta);
+  font-family: var(--pixel-font-display);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.tareas-grupo-boton--descartar:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pixel-alta) 12%, transparent);
+}
+
+.tareas-grupo-boton--descartar:active:not(:disabled) {
+  background: color-mix(in srgb, var(--pixel-alta) 22%, transparent);
+  transform: translateY(1px);
+}
+
+.tareas-grupo-boton--display {
+  font-family: var(--pixel-font-display);
+  font-size: 11px;
+  font-weight: 400;
+  min-height: 48px;
+  padding: 0 22px;
+}
+
+.tareas-grupo-boton--pequeno {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.tareas-grupo-boton-contador {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--pixel-panel-alt);
+  color: var(--pixel-ink-soft);
+  font-size: 12px;
+}
+
+.tareas-grupo-boton-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: var(--pixel-radius-sm);
+  background: transparent;
+  color: var(--pixel-ink-soft);
+  cursor: pointer;
+}
+
+.tareas-grupo-boton-icono:hover {
+  border-color: var(--pixel-border-strong);
+  color: var(--pixel-ink);
+}
+
+.tareas-grupo-boton-icono:active {
+  background: var(--pixel-panel-alt);
+}
+
+/* ---------- Encabezado ---------- */
+
+.tareas-grupo-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--pixel-border);
+}
+
+.tareas-grupo-encabezado-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tareas-grupo-volver {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--pixel-accent-soft);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.tareas-grupo-volver:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.tareas-grupo-volver:active {
+  color: var(--pixel-accent);
+}
+
+.tareas-grupo-titulo {
+  font-family: var(--pixel-font-display);
+  font-size: clamp(18px, 5vw, 28px);
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.tareas-grupo-descripcion {
+  color: var(--pixel-ink-soft);
+}
+
+.tareas-grupo-contador {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: 999px;
+  background: var(--pixel-panel);
+  color: var(--pixel-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tareas-grupo-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tareas-grupo-acciones .tareas-grupo-boton {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .tareas-grupo-pagina {
+    padding: 32px 32px 80px;
+  }
+
+  .tareas-grupo-encabezado {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .tareas-grupo-acciones {
+    flex-direction: row;
+    flex-shrink: 0;
+  }
+
+  .tareas-grupo-acciones .tareas-grupo-boton {
+    width: auto;
+  }
+}
+
+/* ---------- Aviso ---------- */
+
+.tareas-grupo-aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--pixel-baja);
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, var(--pixel-panel));
+  font-weight: 600;
+}
+
+.tareas-grupo-aviso-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--pixel-baja);
+  color: var(--pixel-bg-end);
+  font-weight: 700;
+}
+
+/* ---------- Tarjetas ---------- */
+
+.tareas-grupo-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tareas-grupo-tarjeta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px 20px;
+  padding: 18px;
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
+  background: var(--pixel-panel);
+  transition: border-color 120ms ease;
+}
+
+.tareas-grupo-tarjeta:hover {
+  border-color: var(--pixel-border-strong);
+}
+
+.tareas-grupo-tarjeta--vencida {
+  border-color: color-mix(in srgb, var(--tareas-grupo-error) 55%, transparent);
+  box-shadow: inset 4px 0 0 0 var(--tareas-grupo-error);
+}
+
+.tareas-grupo-tarjeta--vencida:hover {
+  border-color: var(--tareas-grupo-error);
+}
+
+.tareas-grupo-tarjeta--completada .tareas-grupo-tarjeta-titulo {
+  color: var(--pixel-ink-soft);
+}
+
+.tareas-grupo-tarjeta-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tareas-grupo-tarjeta-titulo-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.tareas-grupo-tarjeta-titulo {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.tareas-grupo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  color: var(--pixel-ink-faint);
+  font-size: 13px;
+}
+
+.tareas-grupo-meta-item {
+  display: flex;
+  gap: 6px;
+}
+
+.tareas-grupo-meta-item dt {
+  color: var(--pixel-ink-faint);
+}
+
+.tareas-grupo-meta-item dt::after {
+  content: ':';
+}
+
+.tareas-grupo-meta-item dd {
+  color: var(--pixel-ink-soft);
+}
+
+.tareas-grupo-meta-item--vencida dd {
+  color: var(--tareas-grupo-error);
+  font-weight: 600;
+}
+
+.tareas-grupo-tarjeta-lado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tareas-grupo-tarjeta-pie {
+  display: flex;
+  padding-top: 14px;
+  border-top: 1px solid var(--pixel-border);
+}
+
+@media (min-width: 640px) {
+  .tareas-grupo-tarjeta {
+    grid-template-columns: 1fr auto;
+    padding: 20px 22px;
+  }
+
+  .tareas-grupo-tarjeta-lado {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .tareas-grupo-tarjeta-pie,
+  .tareas-grupo-asignados {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 639px) {
+  .tareas-grupo-tarjeta-pie .tareas-grupo-boton {
+    width: 100%;
+  }
+}
+
+/* ---------- Chips y etiquetas ---------- */
+
+.tareas-grupo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 2px 12px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: 999px;
+  color: var(--pixel-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tareas-grupo-estado--en-progreso {
+  border-color: var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 14%, transparent);
+  color: var(--pixel-accent-soft);
+}
+
+.tareas-grupo-estado--completada {
+  border-color: var(--pixel-baja);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+  color: var(--pixel-baja);
+}
+
+.tareas-grupo-prioridad::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.tareas-grupo-prioridad--baja {
+  color: var(--pixel-baja);
+}
+
+.tareas-grupo-prioridad--media {
+  color: var(--pixel-media);
+}
+
+.tareas-grupo-prioridad--alta {
+  color: var(--pixel-alta);
+}
+
+.tareas-grupo-nivel--1 {
+  --tareas-grupo-nivel: var(--pixel-nivel-1);
+}
+
+.tareas-grupo-nivel--2 {
+  --tareas-grupo-nivel: var(--pixel-nivel-2);
+}
+
+.tareas-grupo-nivel--3 {
+  --tareas-grupo-nivel: var(--pixel-nivel-3);
+}
+
+.tareas-grupo-nivel--4 {
+  --tareas-grupo-nivel: var(--pixel-nivel-4);
+}
+
+.tareas-grupo-nivel--5 {
+  --tareas-grupo-nivel: var(--pixel-nivel-5);
+}
+
+.tareas-grupo-nivel {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border: 1px solid var(--tareas-grupo-nivel);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tareas-grupo-nivel) 12%, transparent);
+  color: var(--tareas-grupo-nivel);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tareas-grupo-etiqueta-tuya,
+.tareas-grupo-etiqueta-vencida,
+.tareas-grupo-etiqueta-tu {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  border-radius: 4px;
+  font-family: var(--pixel-font-display);
+  font-size: 8px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tareas-grupo-etiqueta-tuya {
+  background: var(--pixel-accent);
+  color: var(--pixel-ink);
+}
+
+.tareas-grupo-etiqueta-vencida {
+  border: 1px solid var(--tareas-grupo-error);
+  color: var(--tareas-grupo-error);
+}
+
+.tareas-grupo-etiqueta-tu {
+  background: color-mix(in srgb, var(--pixel-accent) 25%, transparent);
+  color: var(--pixel-accent-soft);
+}
+
+/* ---------- Asignados en tarjeta ---------- */
+
+.tareas-grupo-asignados {
+  padding: 12px;
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-panel-alt) 55%, var(--pixel-panel));
+}
+
+.tareas-grupo-asignados-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.tareas-grupo-asignado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel);
+  font-size: 14px;
+}
+
+.tareas-grupo-asignados-vacio {
+  color: var(--pixel-ink-faint);
+  font-size: 14px;
+}
+
+.tareas-grupo-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--pixel-accent) 60%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pixel-accent) 22%, var(--pixel-panel));
+  color: var(--pixel-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Estados ---------- */
+
+.tareas-grupo-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border: 2px dashed var(--pixel-border-strong);
+  border-radius: var(--pixel-radius);
+  background: var(--pixel-panel);
+  text-align: center;
+}
+
+.tareas-grupo-estado--error {
+  border-color: color-mix(in srgb, var(--tareas-grupo-error) 55%, transparent);
+}
+
+.tareas-grupo-estado-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  border: 2px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel-alt);
+  color: var(--pixel-accent-soft);
+  font-family: var(--pixel-font-display);
+  font-size: 18px;
+  box-shadow: 4px 4px 0 0 var(--pixel-accent-strong);
+}
+
+.tareas-grupo-estado--error .tareas-grupo-estado-icono {
+  color: var(--tareas-grupo-error);
+  box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--tareas-grupo-error) 50%, transparent);
+}
+
+.tareas-grupo-estado-titulo {
+  font-family: var(--pixel-font-display);
+  font-size: clamp(11px, 3vw, 14px);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.tareas-grupo-estado-texto {
+  max-width: 42ch;
+  color: var(--pixel-ink-soft);
+}
+
+/* ---------- Skeleton ---------- */
+
+.tareas-grupo-skeleton {
+  display: block;
+  border-radius: 4px;
+  background: var(--pixel-panel-alt);
+  animation: tareas-grupo-pulso 1.2s steps(4) infinite;
+}
+
+.tareas-grupo-skeleton--titulo {
+  width: min(60%, 320px);
+  height: 18px;
+}
+
+.tareas-grupo-skeleton--linea {
+  width: min(40%, 220px);
+  height: 12px;
+}
+
+.tareas-grupo-skeleton--chip {
+  width: 96px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+@keyframes tareas-grupo-pulso {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tareas-grupo-skeleton {
+    animation: none;
+  }
+
+  .tareas-grupo-boton,
+  .tareas-grupo-tarjeta {
+    transition: none;
+  }
+}
+
+/* ---------- Modal ---------- */
+
+.tareas-grupo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: color-mix(in srgb, var(--pixel-bg-end) 82%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.tareas-grupo-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  padding: 20px 16px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius);
+  background: var(--pixel-panel);
+  box-shadow: 6px 6px 0 0 color-mix(in srgb, var(--pixel-accent-strong) 45%, transparent);
+  scrollbar-color: var(--pixel-border-strong) transparent;
+}
+
+@media (min-width: 640px) {
+  .tareas-grupo-overlay {
+    padding: 24px;
+  }
+
+  .tareas-grupo-modal {
+    max-height: calc(100dvh - 48px);
+    padding: 26px 28px;
+  }
+}
+
+.tareas-grupo-modal-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tareas-grupo-modal-titulo {
+  font-family: var(--pixel-font-display);
+  font-size: clamp(14px, 4vw, 18px);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.tareas-grupo-modal-subtitulo {
+  margin-top: 4px;
+  color: var(--pixel-ink-faint);
+  font-size: 13px;
+}
+
+.tareas-grupo-modal-cabecera .tareas-grupo-boton--descartar {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.tareas-grupo-confirmar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--pixel-alta);
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-alta) 10%, var(--pixel-panel));
+  font-weight: 600;
+}
+
+.tareas-grupo-confirmar-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tareas-grupo-banner-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--tareas-grupo-error);
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--tareas-grupo-error) 12%, var(--pixel-panel));
+  color: var(--pixel-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tareas-grupo-banner-error > span {
+  color: var(--tareas-grupo-error);
+  font-weight: 700;
+}
+
+/* ---------- Formulario ---------- */
+
+.tareas-grupo-form,
+.tareas-grupo-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tareas-grupo-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tareas-grupo-fila-doble {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 600px) {
+  .tareas-grupo-fila-doble {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tareas-grupo-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tareas-grupo-label {
+  font-family: var(--pixel-font-display);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--pixel-ink-soft);
+}
+
+.tareas-grupo-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel-alt);
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font-body);
+  font-size: 15px;
+  transition: border-color 120ms ease;
+}
+
+.tareas-grupo-input::placeholder {
+  color: var(--pixel-ink-faint);
+}
+
+.tareas-grupo-input:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pixel-accent-soft) 55%, var(--pixel-border-strong));
+}
+
+.tareas-grupo-input:focus-visible {
+  border-color: var(--pixel-accent);
+}
+
+.tareas-grupo-input[aria-invalid='true'] {
+  border-color: var(--tareas-grupo-error);
+}
+
+.tareas-grupo-input:disabled {
+  opacity: 0.6;
+}
+
+.tareas-grupo-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.tareas-grupo-error-campo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--tareas-grupo-error);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tareas-grupo-dificultad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tareas-grupo-dificultad-opcion {
+  position: relative;
+  cursor: pointer;
+}
+
+.tareas-grupo-dificultad-caja {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel-alt);
+  color: var(--tareas-grupo-nivel);
+  font-family: var(--pixel-font-display);
+  font-size: 13px;
+  transition:
+    border-color 120ms ease,
+    transform 80ms ease;
+}
+
+.tareas-grupo-dificultad-opcion:hover .tareas-grupo-dificultad-caja {
+  border-color: var(--tareas-grupo-nivel);
+}
+
+.tareas-grupo-dificultad-opcion:active .tareas-grupo-dificultad-caja {
+  transform: translateY(2px);
+}
+
+.tareas-grupo-check-input:checked + .tareas-grupo-dificultad-caja {
+  border: 2px solid var(--tareas-grupo-nivel);
+  background: color-mix(in srgb, var(--tareas-grupo-nivel) 22%, var(--pixel-panel-alt));
+  box-shadow: 3px 3px 0 0 color-mix(in srgb, var(--tareas-grupo-nivel) 50%, transparent);
+}
+
+.tareas-grupo-check-input:focus-visible + .tareas-grupo-dificultad-caja {
+  outline: 2px solid var(--pixel-accent-soft);
+  outline-offset: 2px;
+}
+
+.tareas-grupo-dificultad[aria-invalid='true'] .tareas-grupo-dificultad-caja {
+  border-color: color-mix(in srgb, var(--tareas-grupo-error) 70%, var(--pixel-border-strong));
+}
+
+.tareas-grupo-dificultad-etiqueta {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--tareas-grupo-nivel, var(--pixel-border-strong));
+  border-radius: var(--pixel-radius-sm);
+  color: var(--tareas-grupo-nivel, var(--pixel-ink-faint));
+  font-family: var(--pixel-font-display);
+  font-size: 9px;
+}
+
+.tareas-grupo-modal-pie {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.tareas-grupo-modal-pie .tareas-grupo-boton {
+  width: 100%;
+}
+
+.tareas-grupo-nota {
+  color: var(--pixel-ink-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (min-width: 600px) {
+  .tareas-grupo-modal-pie {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tareas-grupo-modal-pie .tareas-grupo-boton {
+    width: auto;
+  }
+
+  .tareas-grupo-nota {
+    text-align: left;
+  }
+}
+
+/* ---------- Casillas ---------- */
+
+.tareas-grupo-check-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tareas-grupo-check-caja {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 2px solid var(--pixel-border-strong);
+  border-radius: 4px;
+  background: var(--pixel-panel);
+  transition:
+    background-color 100ms ease,
+    border-color 100ms ease;
+}
+
+.tareas-grupo-check-caja::after {
+  content: '';
+  color: var(--pixel-ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tareas-grupo-check-input:checked + .tareas-grupo-check-caja {
+  border-color: var(--pixel-accent);
+  background: var(--pixel-accent);
+}
+
+.tareas-grupo-check-input:checked + .tareas-grupo-check-caja::after {
+  content: '✓';
+}
+
+.tareas-grupo-check-input:indeterminate + .tareas-grupo-check-caja {
+  border-color: var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 40%, var(--pixel-panel));
+}
+
+.tareas-grupo-check-input:indeterminate + .tareas-grupo-check-caja::after {
+  content: '–';
+}
+
+.tareas-grupo-check-input:focus-visible + .tareas-grupo-check-caja {
+  outline: 2px solid var(--pixel-accent-soft);
+  outline-offset: 2px;
+}
+
+.tareas-grupo-check-input:disabled + .tareas-grupo-check-caja {
+  opacity: 0.6;
+}
+
+/* ---------- Asignar integrantes ---------- */
+
+.tareas-grupo-asignar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius);
+  background: color-mix(in srgb, var(--pixel-panel-alt) 45%, var(--pixel-panel));
+}
+
+.tareas-grupo-asignar--error {
+  border-color: var(--tareas-grupo-error);
+}
+
+.tareas-grupo-asignar-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tareas-grupo-asignar-contador {
+  padding: 4px 10px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: 999px;
+  background: var(--pixel-panel);
+  color: var(--pixel-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tareas-grupo-asignar-todos {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--pixel-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tareas-grupo-asignar-todos:hover {
+  background: color-mix(in srgb, var(--pixel-accent) 10%, transparent);
+}
+
+.tareas-grupo-asignar-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 296px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--pixel-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.tareas-grupo-asignar-fila {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 14px;
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.tareas-grupo-asignar-fila:hover {
+  border-color: var(--pixel-border-strong);
+}
+
+.tareas-grupo-asignar-fila:active {
+  background: color-mix(in srgb, var(--pixel-accent) 8%, var(--pixel-panel));
+}
+
+.tareas-grupo-asignar-fila--seleccionada {
+  border-color: var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 12%, var(--pixel-panel));
+}
+
+.tareas-grupo-asignar-fila--seleccionada:hover {
+  border-color: var(--pixel-accent-soft);
+}
+
+.tareas-grupo-asignar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tareas-grupo-asignar-correo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tareas-grupo-asignar-secundario {
+  color: var(--pixel-ink-faint);
+  font-size: 12px;
+}
+
+.tareas-grupo-rol {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tareas-grupo-rol--lider {
+  color: var(--pixel-accent-soft);
+}
+
+.tareas-grupo-rol--miembro {
+  color: var(--pixel-baja);
+}
+
+.tareas-grupo-asignar-vacio {
+  color: var(--pixel-ink-faint);
+  font-size: 14px;
+}
