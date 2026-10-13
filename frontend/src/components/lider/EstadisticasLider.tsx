@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { ChartSummaryLoadingSkeleton } from '../skeletons/LoadingSkeletons';
 
 export interface ItemResumen {
     label: string;
@@ -56,7 +57,7 @@ export const Estadisticas = ({ titulo, items, cargando = false }: EstadisticasPr
     };
     }, [items, titulo, cargando]);
 
-    if (cargando) return <p>Cargando resumen...</p>;
+    if (cargando) return <ChartSummaryLoadingSkeleton />;
 
     return (
     <div className="resumen-estadisticas">

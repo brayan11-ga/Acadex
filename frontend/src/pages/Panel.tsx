@@ -6,6 +6,7 @@ import { actualizarTarea } from '../services/tareas';
 
 import { PanelHero } from '../components/panel/PanelHero';
 import { PanelTareasRecientes } from '../components/panel/PanelTareasRecientes';
+import { PanelLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 
 import '../styles/Panel.css';
 
@@ -30,13 +31,7 @@ export const Panel = () => {
   };
 
   if (cargando && !datos) {
-    return (
-      <div className="panel-contenedor panel-estado-container">
-        <div className="pixel-panel panel-mensaje-cargando">
-          <p className="pixel-text">Cargando tu panel...</p>
-        </div>
-      </div>
-    );
+    return <PanelLoadingSkeleton />;
   }
 
   const tareaPrioritaria = datos?.tareaPrioritaria;

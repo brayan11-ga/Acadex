@@ -6,6 +6,7 @@ import { TarjetaTarea } from "./TarjetaTarea";
 import { ModalDetalleTarea } from "./ModalDetalleTarea";
 import { Paginacion } from "./Paginacion";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
+import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
 
 interface ContenidoTareaProps {
@@ -57,7 +58,7 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         </div>
       </div>
 
-      {cargando && <p className="pixel-tareas-subtitle">Cargando tareas...</p>}
+      {cargando && <TaskListLoadingSkeleton />}
       {error && <p className="pixel-error">{error}</p>}
 
       {!cargando && !error && (

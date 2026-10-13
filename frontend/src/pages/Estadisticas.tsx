@@ -6,6 +6,7 @@ import type { ResumenEstadisticas } from '../types/estadisticas';
 import { WeeklyGoalCard } from '../components/estadisticas/WeeklyGoalCard';
 import { StatCard } from '../components/estadisticas/StatCard';
 import { EfficiencyInsights } from '../components/estadisticas/EfficiencyInsights';
+import { StatisticsPageLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 
 // Importamos los estilos independientes
 import '../styles/estadisticas.css';
@@ -29,12 +30,7 @@ export const Estadisticas: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="stats-page stats-state-container">
-        <div className="stats-spinner"></div>
-        <span className="stats-loading-text">Cargando estadísticas de Acadex...</span>
-      </div>
-    );
+    return <StatisticsPageLoadingSkeleton />;
   }
 
   if (error || !data) {

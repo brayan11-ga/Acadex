@@ -33,29 +33,11 @@
   margin-top: 0.35rem;
 }
 
-/* Estados de carga y error */
+/* Estados de error */
 .stats-state-container {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.stats-spinner {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 2px solid var(--paper-deep);
-  border-top-color: var(--mint);
-  border-radius: 9999px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.stats-loading-text {
-  margin-left: 0.75rem;
-  color: var(--ink-soft);
 }
 
 .stats-error-text {
