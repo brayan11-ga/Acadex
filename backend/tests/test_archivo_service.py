@@ -12,6 +12,7 @@ from fastapi import HTTPException, UploadFile
 from starlette.datastructures import Headers
 
 from app.services import archivo_service, tarea_service
+from app.schemas.tarea import TareaCreate
 
 
 def crear_upload(nombre: str, contenido: bytes, mime: str) -> UploadFile:
@@ -146,7 +147,101 @@ class ConsistenciaAlmacenamientoTests(unittest.TestCase):
             self.assertFalse(original.exists())
 
 
+class SupabaseStorageAdapterTests(unittest.TestCase):
+    def setUp(self):
+        self.configuracion = SimpleNamespace(
+            supabase_url="https://acadex-demo.supabase.co/",
+            supabase_service_role_key="clave-falsa-de-prueba",
+            supabase_storage_bucket="acadex-adjuntos",
+        )
+        self._settings = patch.object(archivo_service.supabase_storage, "settings", self.configuracion)
+        self._settings.start()
+
+    def tearDown(self):
+        self._settings.stop()
+
+    @patch.object(archivo_service.supabase_storage.httpx, "Client")
+    def test_subida_usa_https_bucket_privado_y_codifica_clave(self, crear_cliente):
+        cliente = Mock()
+        contexto = Mock()
+        contexto.__enter__ = Mock(return_value=cliente)
+        contexto.__exit__ = Mock(return_value=False)
+        crear_cliente.return_value = contexto
+        cliente.post.return_value = SimpleNamespace(is_success=True)
+
+        archivo_service.supabase_storage.subir(
+            "acadex-adjuntos", "4/guia de estudio.pdf", b"%PDF-1.7", "application/pdf"
+        )
+
+        url = cliente.post.call_args.args[0]
+        headers = cliente.post.call_args.kwargs["headers"]
+        self.assertEqual(
+            url,
+            "https://acadex-demo.supabase.co/storage/v1/object/acadex-adjuntos/4/guia%20de%20estudio.pdf",
+        )
+        self.assertEqual(headers["apikey"], "clave-falsa-de-prueba")
+        self.assertEqual(headers["Authorization"], "Bearer clave-falsa-de-prueba")
+        self.assertEqual(cliente.post.call_args.kwargs["content"], b"%PDF-1.7")
+
+    @patch.object(archivo_service.supabase_storage.httpx, "Client")
+    def test_borrado_usa_endpoint_de_objetos_y_no_url_publica(self, crear_cliente):
+        cliente = Mock()
+        contexto = Mock()
+        contexto.__enter__ = Mock(return_value=cliente)
+        contexto.__exit__ = Mock(return_value=False)
+        crear_cliente.return_value = contexto
+        cliente.request.return_value = SimpleNamespace(is_success=True)
+
+        archivo_service.supabase_storage.eliminar("acadex-adjuntos", "4/guia.pdf")
+
+        llamada = cliente.request.call_args
+        self.assertEqual(llamada.args[:2], (
+            "DELETE",
+            "https://acadex-demo.supabase.co/storage/v1/object/acadex-adjuntos",
+        ))
+        self.assertEqual(llamada.kwargs["json"], {"prefixes": ["4/guia.pdf"]})
+
+    @patch.object(archivo_service.supabase_storage.httpx, "Client")
+    def test_verificacion_exige_bucket_existente_y_privado(self, crear_cliente):
+        cliente = Mock()
+        contexto = Mock()
+        contexto.__enter__ = Mock(return_value=cliente)
+        contexto.__exit__ = Mock(return_value=False)
+        crear_cliente.return_value = contexto
+        cliente.get.return_value = SimpleNamespace(
+            is_success=True,
+            json=lambda: [{"id": "acadex-adjuntos", "public": False}],
+        )
+
+        archivo_service.supabase_storage.validar_bucket_privado()
+        self.assertIn("/storage/v1/bucket", cliente.get.call_args.args[0])
+
+        cliente.get.return_value = SimpleNamespace(
+            is_success=True,
+            json=lambda: [{"id": "acadex-adjuntos", "public": True}],
+        )
+        with self.assertRaises(archivo_service.supabase_storage.SupabaseStorageError):
+            archivo_service.supabase_storage.validar_bucket_privado()
+
+    def test_clave_secreta_actual_no_se_envia_como_bearer_jwt(self):
+        self.configuracion.supabase_secret_key = "sb_secret_clave-falsa-de-prueba"
+        self.configuracion.supabase_service_role_key = ""
+
+        encabezados = archivo_service.supabase_storage._headers()
+
+        self.assertEqual(encabezados, {"apikey": "sb_secret_clave-falsa-de-prueba"})
+
+
 class FlujoAdjuntosTests(unittest.TestCase):
+    def setUp(self):
+        self._settings = patch.object(
+            archivo_service, "settings", SimpleNamespace(attachments_enabled=True)
+        )
+        self._settings.start()
+
+    def tearDown(self):
+        self._settings.stop()
+
     @staticmethod
     def archivo_falso(ruta: str, *, autor: int | None = 12, id_tarea: int = 4):
         return SimpleNamespace(
@@ -211,6 +306,90 @@ class FlujoAdjuntosTests(unittest.TestCase):
             self.assertEqual(error.exception.status_code, 500)
             self.assertEqual(list(raiz.rglob("*.pdf")), [])
             db.rollback.assert_called_once()
+
+    def test_subida_supabase_registra_referencia_privada_y_compensa_si_falla_bd(self):
+        tarea = SimpleNamespace(id_usuario=12, id_grupo=None, nombre="Lectura")
+        configuracion = SimpleNamespace(
+            attachments_enabled=True,
+            attachments_storage_backend="supabase",
+            supabase_storage_bucket="acadex-adjuntos",
+        )
+        db = Mock()
+        with (
+            patch.object(archivo_service, "settings", configuracion),
+            patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(archivo_service.supabase_storage, "subir") as subir,
+            patch.object(archivo_service.supabase_storage, "eliminar") as eliminar,
+            patch.object(archivo_service.archivo_repository, "crear_archivo", side_effect=RuntimeError("db")),
+            patch.object(archivo_service.logger, "exception"),
+        ):
+            with self.assertRaises(HTTPException) as error:
+                archivo_service.subir_archivo_tarea(
+                    db,
+                    4,
+                    crear_upload("guia.pdf", b"%PDF-1.7 test", "application/pdf"),
+                    12,
+                )
+
+        self.assertEqual(error.exception.status_code, 500)
+        self.assertEqual(subir.call_args.args[0], "acadex-adjuntos")
+        self.assertTrue(subir.call_args.args[1].startswith("4/"))
+        self.assertEqual(subir.call_args.args[2], b"%PDF-1.7 test")
+        eliminar.assert_called_once_with("acadex-adjuntos", subir.call_args.args[1])
+        db.rollback.assert_called_once()
+
+    def test_descarga_supabase_usa_referencia_interna_y_devuelve_bytes(self):
+        tarea = SimpleNamespace(id_usuario=12, id_grupo=None)
+        archivo = self.archivo_falso("supabase://acadex-adjuntos/4/abc123.pdf")
+        with (
+            patch.object(
+                archivo_service,
+                "settings",
+                SimpleNamespace(attachments_enabled=True, attachments_storage_backend="supabase"),
+            ),
+            patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(archivo_service.archivo_repository, "obtener_archivo_de_tarea", return_value=archivo),
+            patch.object(archivo_service.supabase_storage, "descargar", return_value=b"%PDF-1.7 data") as descargar,
+        ):
+            archivo_devuelto, contenido = archivo_service.obtener_archivo_para_descarga(None, 4, 8, 12)
+
+        self.assertIs(archivo_devuelto, archivo)
+        self.assertEqual(contenido, b"%PDF-1.7 data")
+        descargar.assert_called_once_with("acadex-adjuntos", "4/abc123.pdf")
+
+    def test_borrado_supabase_restaura_objeto_si_falla_commit(self):
+        tarea = SimpleNamespace(id_usuario=12, id_grupo=None)
+        archivo = self.archivo_falso("supabase://acadex-adjuntos/4/abc123.pdf")
+        db = Mock()
+        with (
+            patch.object(
+                archivo_service,
+                "settings",
+                SimpleNamespace(attachments_enabled=True, attachments_storage_backend="supabase"),
+            ),
+            patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(archivo_service.archivo_repository, "obtener_archivo_de_tarea", return_value=archivo),
+            patch.object(archivo_service.archivo_repository, "existe_otra_referencia_a_ruta", return_value=False),
+            patch.object(archivo_service.supabase_storage, "descargar", return_value=b"contenido") as descargar,
+            patch.object(archivo_service.supabase_storage, "eliminar") as eliminar,
+            patch.object(archivo_service.supabase_storage, "subir") as subir,
+            patch.object(archivo_service.archivo_repository, "eliminar_archivo", side_effect=RuntimeError("db")),
+            patch.object(archivo_service.logger, "exception"),
+        ):
+            with self.assertRaises(HTTPException) as error:
+                archivo_service.eliminar_archivo_tarea(db, 4, 8, 12)
+
+        self.assertEqual(error.exception.status_code, 500)
+        descargar.assert_called_once_with("acadex-adjuntos", "4/abc123.pdf")
+        eliminar.assert_called_once_with("acadex-adjuntos", "4/abc123.pdf")
+        subir.assert_called_once_with(
+            "acadex-adjuntos",
+            "4/abc123.pdf",
+            b"contenido",
+            "application/pdf",
+            upsert=True,
+        )
+        db.rollback.assert_called_once()
 
     def test_descarga_exige_que_el_archivo_pertenezca_a_la_tarea(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
@@ -315,6 +494,75 @@ class EliminacionTareaTests(unittest.TestCase):
         ):
             tarea_service.eliminar_tarea(None, 7, 12)
         eliminar.assert_called_once_with(None, tarea)
+
+
+class CrearTareaConPdfTests(unittest.TestCase):
+    def crear_datos(self):
+        return TareaCreate(
+            nombre="Guía",
+            descripcion="Resolver preguntas",
+            fecha_entrega=datetime(2026, 10, 20),
+            dificultad_estimada=3,
+            tiempo_estimado=60,
+            id_categoria=4,
+        )
+
+    def test_confirma_tarea_y_pdf_en_una_transaccion(self):
+        tarea = SimpleNamespace(id_tarea=4)
+        usuario = SimpleNamespace(id_usuario=12)
+        db = Mock()
+        archivo_pdf = crear_upload("guia.pdf", b"%PDF-1.7", "application/pdf")
+
+        with (
+            patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=tarea) as crear_tarea,
+            patch.object(archivo_service, "subir_archivo_tarea") as subir_pdf,
+        ):
+            resultado = tarea_service.crear_tarea_con_pdf(db, self.crear_datos(), usuario, archivo_pdf)
+
+        self.assertIs(resultado, tarea)
+        self.assertFalse(crear_tarea.call_args.kwargs["commit"])
+        self.assertFalse(subir_pdf.call_args.kwargs["commit"])
+        db.commit.assert_called_once()
+        db.rollback.assert_not_called()
+
+    def test_fallo_de_storage_revierte_tarea_y_limpia_pdf_temporal(self):
+        tarea = SimpleNamespace(id_tarea=4)
+        usuario = SimpleNamespace(id_usuario=12)
+        db = Mock()
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
+            temporal = Path(directorio) / "subida.pdf"
+            temporal.write_bytes(b"%PDF-1.7")
+
+            def fallar_subida(*_args, recursos_creados, **_kwargs):
+                recursos_creados.append(("local", temporal))
+                raise HTTPException(status_code=503, detail="storage no disponible")
+
+            with (
+                patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=tarea),
+                patch.object(archivo_service, "subir_archivo_tarea", side_effect=fallar_subida),
+                self.assertRaises(HTTPException),
+            ):
+                tarea_service.crear_tarea_con_pdf(
+                    db,
+                    self.crear_datos(),
+                    usuario,
+                    crear_upload("guia.pdf", b"%PDF-1.7", "application/pdf"),
+                )
+
+            self.assertFalse(temporal.exists())
+            db.commit.assert_not_called()
+            db.rollback.assert_called_once()
+
+
+class AdjuntosDeshabilitadosTests(unittest.TestCase):
+    def test_backend_rechaza_listado_si_no_hay_almacenamiento_persistente(self):
+        with patch.object(
+            archivo_service, "settings", SimpleNamespace(attachments_enabled=False)
+        ):
+            with self.assertRaises(HTTPException) as error:
+                archivo_service.listar_archivos_de_tarea(Mock(), 4, 12)
+
+        self.assertEqual(error.exception.status_code, 503)
 
 
 if __name__ == "__main__":

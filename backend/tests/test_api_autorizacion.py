@@ -15,14 +15,21 @@ from starlette.requests import Request
 # These integrations are not needed by authorization tests and may be absent
 # from a minimal test environment. No AI or PDF analysis is exercised here.
 sys.modules.setdefault("pdfplumber", ModuleType("pdfplumber"))
-if "google.generativeai" not in sys.modules:
+try:
+    from google import genai as _google_genai  # noqa: F401
+    from google.genai import types as _google_genai_types  # noqa: F401
+except ImportError:
     google_module = sys.modules.setdefault("google", ModuleType("google"))
     if not hasattr(google_module, "__path__"):
         google_module.__path__ = []
-    generativeai_module = ModuleType("google.generativeai")
-    generativeai_module.configure = lambda **_kwargs: None
-    sys.modules["google.generativeai"] = generativeai_module
-    google_module.generativeai = generativeai_module
+    genai_module = ModuleType("google.genai")
+    genai_module.Client = lambda **_kwargs: None
+    types_module = ModuleType("google.genai.types")
+    types_module.GenerateContentConfig = lambda **kwargs: kwargs
+    genai_module.types = types_module
+    sys.modules["google.genai"] = genai_module
+    sys.modules["google.genai.types"] = types_module
+    google_module.genai = genai_module
 
 # The task router declares upload fields, but these tests do not exercise file
 # uploads. The current test runtime omits python-multipart, so skip only the
@@ -78,6 +85,10 @@ class AutenticacionRutasTests(unittest.TestCase):
             conectar.return_value.__enter__.return_value = conexion
             self.assertEqual(health_ready(), {"status": "ok"})
         conexion.execute.assert_called_once()
+        consulta = conexion.execute.call_args.args[0].text
+        self.assertIn("public.limites_solicitud", consulta)
+        self.assertIn("public.uso_analisis_ia", consulta)
+        self.assertIn("public.bloqueo_cuota_gemini", consulta)
 
         with (
             patch.object(engine, "connect", side_effect=SQLAlchemyError("fallo-sintetico")),
@@ -100,6 +111,7 @@ class AutenticacionRutasTests(unittest.TestCase):
         rutas_privadas = {
             ("/api/v1/tareas/", "GET"),
             ("/api/v1/tareas/", "POST"),
+            ("/api/v1/tareas/analizar-documento", "POST"),
             ("/api/v1/tareas/calendario", "GET"),
             ("/api/v1/tareas/asignadas/mias", "GET"),
             ("/api/v1/tareas/grupos/{id_grupo}", "POST"),

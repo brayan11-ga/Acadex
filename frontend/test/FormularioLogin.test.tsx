@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, test, vi } from 'vitest';
 import { FormularioLogin } from '../src/components/login/FormularioLogin';
 
 import { iniciarSesion } from '../src/services/authService';
 import { adminApi } from '../src/services/adminapi';
+import { store } from '../src/store/store';
 
 vi.mock('../src/services/authService', () => ({
   iniciarSesion: vi.fn(),
@@ -31,8 +33,9 @@ describe('CP-2 - Inicio de sesión', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/iniciarSesion']}>
-        <Routes>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/iniciarSesion']}>
+          <Routes>
           <Route
             path="/iniciarSesion"
             element={<FormularioLogin />}
@@ -42,8 +45,9 @@ describe('CP-2 - Inicio de sesión', () => {
             path="/panel"
             element={<h1>Panel de Acadex</h1>}
           />
-        </Routes>
-      </MemoryRouter>
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
 
     await user.type(
@@ -89,8 +93,9 @@ describe('CP-2 - Inicio de sesión', () => {
   );
 
   render(
-    <MemoryRouter initialEntries={['/iniciarSesion']}>
-      <Routes>
+    <Provider store={store}>
+      <MemoryRouter initialEntries={['/iniciarSesion']}>
+        <Routes>
         <Route
           path="/iniciarSesion"
           element={<FormularioLogin />}
@@ -100,8 +105,9 @@ describe('CP-2 - Inicio de sesión', () => {
           path="/panel"
           element={<h1>Panel de Acadex</h1>}
         />
-      </Routes>
-    </MemoryRouter>
+        </Routes>
+      </MemoryRouter>
+    </Provider>
   );
 
   await user.type(

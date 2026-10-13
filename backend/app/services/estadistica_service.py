@@ -35,7 +35,9 @@ def obtener_estadisticas_categoria_usuario(db: Session, id_usuario: int):
     ]
 
 
-def recalcular_estadistica_categoria(db: Session, id_usuario: int, id_categoria: int) -> None:
+def recalcular_estadistica_categoria(
+    db: Session, id_usuario: int, id_categoria: int, *, commit: bool = True
+) -> None:
     perfil = db.query(Perfil).filter(Perfil.id_usuario == id_usuario).first()
     if not perfil:
         return
@@ -68,7 +70,8 @@ def recalcular_estadistica_categoria(db: Session, id_usuario: int, id_categoria:
     if total == 0:
         if estadistica:
             db.delete(estadistica)
-            db.commit()
+            if commit:
+                db.commit()
         return
 
     if estadistica:
@@ -85,4 +88,5 @@ def recalcular_estadistica_categoria(db: Session, id_usuario: int, id_categoria:
         )
         db.add(estadistica)
 
-    db.commit()
+    if commit:
+        db.commit()

@@ -1,4 +1,5 @@
 import type { TareaBackend } from "../../services/tareas";
+import { adjuntosHabilitados } from "../../config/featureFlags";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
 
 interface ModalDetalleTareaProps {
@@ -30,7 +31,9 @@ export const ModalDetalleTarea = ({
         <p><strong>Tiempo estimado:</strong> {tarea.tiempo_estimado} min</p>
         <p><strong>Descripción:</strong> {tarea.descripcion || "Sin descripción"}</p>
 
-        <SeccionAdjuntosTarea idTarea={tarea.id_tarea} modo="lectura" />
+        {adjuntosHabilitados() && (
+          <SeccionAdjuntosTarea idTarea={tarea.id_tarea} modo="lectura" />
+        )}
       </div>
     </div>
   </div>

@@ -7,11 +7,13 @@ from app.models.tarea import Tarea
 from app.models.integrante import Integrante
 from app.schemas.tarea import TareaCreate, TareaUpdate
 
-def crear_tarea(db: Session, datos: TareaCreate) -> Tarea:
+def crear_tarea(db: Session, datos: TareaCreate, commit: bool = True) -> Tarea:
     nueva_tarea = Tarea(**datos.model_dump())
     db.add(nueva_tarea)
-    db.commit()
-    db.refresh(nueva_tarea)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(nueva_tarea)
     return nueva_tarea
 
 def obtener_tarea_por_id(db: Session, id_tarea: int) -> Optional[Tarea]:
@@ -28,12 +30,16 @@ def obtener_tareas_visibles_para_usuario(db: Session, id_usuario: int) -> List[T
         .all()
     )
 
-def actualizar_tarea(db: Session, tarea: Tarea, datos: TareaUpdate) -> Tarea:
+def actualizar_tarea(
+    db: Session, tarea: Tarea, datos: TareaUpdate, commit: bool = True
+) -> Tarea:
     cambios = datos.model_dump(exclude_unset=True)
     for campo, valor in cambios.items():
         setattr(tarea, campo, valor)
-    db.commit()
-    db.refresh(tarea)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(tarea)
     return tarea
 
 def eliminar_tarea(db: Session, tarea: Tarea) -> None:

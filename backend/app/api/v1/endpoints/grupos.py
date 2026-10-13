@@ -1,6 +1,6 @@
 # backend/app/api/v1/endpoints/grupos.py
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 from app.models.grupo import Grupo
 from app.dependencies.db import get_db
@@ -14,6 +14,7 @@ from app.schemas.grupo import (
     IntegranteResponse,
 )
 from app.services import grupo_service
+from app.core.request_guard import limitar_solicitudes
 
 router = APIRouter(prefix="/grupos", tags=["Grupos"])
 
@@ -38,9 +39,18 @@ def crear_grupo(
 @router.post("/unirse", response_model=IntegranteResponse, status_code=status.HTTP_201_CREATED)
 def unirse_a_grupo(
     datos: GrupoJoinRequest,
+    request: Request,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_usuario_actual),
 ):
+    limitar_solicitudes(
+        db,
+        "unirse_grupo_ip",
+        request.client.host if request.client else "desconocido",
+        maximo=120,
+        ventana_segundos=60 * 60,
+        mensaje="Demasiados intentos de unirse a grupos. Inténtalo más tarde.",
+    )
     integrante = grupo_service.unirse_a_grupo(db, datos.codigo_acceso, usuario.id_usuario)
     return {
         "id_integrante": integrante.id_integrante,

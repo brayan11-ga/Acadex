@@ -60,6 +60,16 @@ export function crearTarea(datos: NuevaTareaPayload): Promise<TareaBackend> {
   });
 }
 
+export function crearTareaConPdf(datos: NuevaTareaPayload, archivo: File): Promise<TareaBackend> {
+  const formData = new FormData();
+  formData.append("datos", JSON.stringify(datos));
+  formData.append("archivo", archivo);
+  return apiFetch<TareaBackend>("/tareas/con-pdf", {
+    method: "POST",
+    body: formData,
+  });
+}
+
 export function actualizarTarea(
   idTarea: number,
   datos: ActualizarTareaPayload

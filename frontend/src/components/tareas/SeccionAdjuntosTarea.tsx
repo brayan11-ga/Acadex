@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, Eye, FileImage, FileText, Paperclip, Trash2, UploadCloud, X } from "lucide-react";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
+import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   descargarArchivoTarea,
   eliminarArchivoTarea,
@@ -80,6 +81,12 @@ export function SeccionAdjuntosTarea({ idTarea, modo }: SeccionAdjuntosTareaProp
 
   useEffect(() => {
     let activo = true;
+    if (!adjuntosHabilitados()) {
+      setCargandoAdjuntos(false);
+      return () => {
+        activo = false;
+      };
+    }
     void listarArchivosTarea(idTarea)
       .then((resultado) => {
         if (activo) setAdjuntos(resultado);
@@ -350,6 +357,8 @@ export function SeccionAdjuntosTarea({ idTarea, modo }: SeccionAdjuntosTareaProp
       document.body,
     )
     : null;
+
+  if (!adjuntosHabilitados()) return null;
 
   return (
     <>

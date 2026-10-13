@@ -12,6 +12,7 @@ def crear_archivo(
     ruta: str,
     id_tarea: int,
     id_usuario_subida: int,
+    commit: bool = True,
 ) -> Archivo:
     archivo = Archivo(
         nombre=nombre,
@@ -22,7 +23,10 @@ def crear_archivo(
         id_usuario_subida=id_usuario_subida,
     )
     db.add(archivo)
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(archivo)
     return archivo
 

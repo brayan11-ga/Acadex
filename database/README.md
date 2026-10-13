@@ -10,7 +10,7 @@ Esta es la guía oficial para levantar la rama `docker` en desarrollo. El flujo 
 - `database/seed.sql` conserva datos de una estructura antigua y no forma parte de la inicialización actual. No lo ejecutes.
 - `backend/app/db/init.sql` está vacío y no participa en el arranque.
 
-La secuencia limpia es `database/init.sql`, `20261011_add_archivo_uploader.sql` y `20261011_add_registration_consents.sql`, en ese orden. Las migraciones se mantienen aunque el bootstrap las use, porque también son necesarias para bases existentes.
+La secuencia limpia es `database/init.sql`, `20261011_add_archivo_uploader.sql`, `20261011_add_registration_consents.sql`, `20261012_add_gemini_usage_limits.sql`, `20261012_add_gemini_quota_lockout.sql` y `20261012_add_security_guards.sql`, en ese orden. Las migraciones se mantienen aunque el bootstrap las use, porque también son necesarias para bases existentes.
 
 ## Requisitos
 
@@ -56,13 +56,13 @@ docker compose --env-file backend/.env logs -f db backend
 
 En macOS/Linux usa los mismos comandos. Compose espera que PostgreSQL acepte conexiones antes de iniciar FastAPI. El estado `healthy` del backend indica que la API responde; no reemplaza la verificación de esquema que sigue.
 
-Comprueba que la base fue inicializada con las dos actualizaciones:
+Comprueba que la base fue inicializada con las cinco actualizaciones:
 
 ```powershell
 docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /database/verify_schema.sql'
 ```
 
-Las seis columnas de verificación deben ser `t`. API: <http://localhost:8000/>. UI de correo de prueba: <http://localhost:8025/>.
+Las doce columnas de verificación deben ser `t`. API: <http://localhost:8000/>. UI de correo de prueba: <http://localhost:8025/>.
 
 Levanta el frontend en otra terminal:
 
@@ -78,7 +78,7 @@ Abre <http://localhost:5173/>. `frontend/.env.local` debe mantener `VITE_API_URL
 
 1. Registra una cuenta sintética desde la UI marcando las dos confirmaciones obligatorias.
 2. Inicia sesión y crea una tarea de prueba.
-3. Adjunta un PDF pequeño válido a la tarea y verifica que aparece en la lista y se puede descargar.
+3. Con la configuración predeterminada, verifica que los adjuntos no se ofrecen ni se guardan. Si se configuró la clave de Gemini, selecciona un PDF sintético para proponer una tarea y confirma que el archivo no queda guardado como adjunto.
 4. Los correos de recuperación de prueba se consultan en Mailpit; no se envían a destinatarios externos.
 
 Las pruebas automatizadas se describen abajo; el flujo manual no sustituye la revisión automatizada.
@@ -91,10 +91,13 @@ Las pruebas automatizadas se describen abajo; el flujo manual no sustituye la re
 docker compose --env-file backend/.env up -d db
 docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/20261011_add_archivo_uploader.sql'
 docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/20261011_add_registration_consents.sql'
+docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/20261012_add_gemini_usage_limits.sql'
+docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/20261012_add_gemini_quota_lockout.sql'
+docker compose --env-file backend/.env exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/20261012_add_security_guards.sql'
 docker compose --env-file backend/.env up --build -d backend
 ```
 
-La misma secuencia sirve en macOS/Linux. Las dos migraciones son aditivas e idempotentes para un esquema compatible: añade una columna nullable y crea una tabla de evidencia con su FK, `CHECK` y restricción `UNIQUE`. Si una instancia tiene objetos parciales con definiciones diferentes, detente y revisa el esquema antes de ejecutar; la idempotencia no repara definiciones incompatibles. No ejecutes `database/init.sql` sobre una base existente.
+La misma secuencia sirve en macOS/Linux. Las migraciones son aditivas e idempotentes para un esquema compatible: añaden la columna de autor, crean la tabla de consentimientos y sus restricciones, los contadores y bloqueo de cuota de Gemini, y los límites compartidos, vencimientos de bloqueo e índice único del cronómetro. La migración de seguridad se detiene sin borrar datos si encuentra más de un cronómetro activo para la misma tarea; revisa esas sesiones antes de volver a aplicarla. Si una instancia tiene objetos parciales con definiciones diferentes, detente y revisa el esquema antes de ejecutar; la idempotencia no repara definiciones incompatibles. No ejecutes `database/init.sql` sobre una base existente.
 
 Verifica los objetos después de aplicar las migraciones con la consulta de la sección anterior. Las filas históricas de `archivos` quedan con `id_usuario_subida = NULL`; no se inventa autoría ni consentimiento para cuentas preexistentes.
 

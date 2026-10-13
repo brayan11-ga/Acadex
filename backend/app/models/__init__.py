@@ -13,3 +13,6 @@ from app.models.notificacion import Notificacion
 from app.models.estadistica_categoria import EstadisticaCategoria
 from app.models.estadistica_categoria_grupo import EstadisticaCategoriaGrupo
 from app.models.consentimiento_usuario import ConsentimientoUsuario
+from app.models.uso_analisis_ia import UsoAnalisisIA
+from app.models.bloqueo_cuota_gemini import BloqueoCuotaGemini
+from app.models.limite_solicitud import LimiteSolicitud
