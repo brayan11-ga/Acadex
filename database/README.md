@@ -17,7 +17,7 @@ La secuencia limpia es `database/init.sql`, `20261011_add_archivo_uploader.sql` 
 - Windows: Docker Desktop con Compose v2 y Node.js 20.19 o superior, o 22.12 o superior.
 - macOS: Docker Desktop con Compose v2 y Node.js 20.19 o superior, o 22.12 o superior.
 - Linux: Docker Engine con el plugin Docker Compose v2 y Node.js 20.19 o superior, o 22.12 o superior.
-- Git. El uso de Vite requiere `npm`, incluido con Node.js.
+- Git. El uso de Vite requiere `pnpm`, incluido con Node.js.
 
 La versión mínima de Node corresponde al requisito de Vite 8 (`^20.19.0 || >=22.12.0`). Compose fija PostgreSQL en `17.11` y el backend usa `python:3.14-slim`; no es necesario instalar esas versiones localmente.
 
@@ -68,8 +68,8 @@ Levanta el frontend en otra terminal:
 
 ```powershell
 Set-Location frontend
-npm ci
-npm run dev -- --host 0.0.0.0
+pnpm install --frozen-lockfile
+pnpm dev --host 0.0.0.0
 ```
 
 Abre <http://localhost:5173/>. `frontend/.env.local` debe mantener `VITE_API_URL=http://localhost:8000`.
@@ -122,9 +122,9 @@ docker compose --env-file backend/.env exec -T backend python -m unittest discov
 Desde `frontend/`:
 
 ```powershell
-npm ci
-npm test -- --run
-npm run build
+pnpm install --frozen-lockfile
+pnpm test --run
+pnpm build
 ```
 
 Las pruebas PostgreSQL optativas crean un esquema aleatorio y lo eliminan al terminar; se bloquean si el nombre de la base no incluye `test`. Para no usar el volumen de desarrollo, crea una instancia Compose separada. En PowerShell, desde la raíz:
