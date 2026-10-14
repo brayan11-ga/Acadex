@@ -1,12 +1,13 @@
-FROM node:22.22.2-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package*.json ./
+RUN corepack enable
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]
