@@ -1,7 +1,7 @@
--- ACADEX: SOLO para un proyecto Supabase nuevo y vacio.
--- Ejecuta una sola vez el archivo completo en Supabase > SQL Editor.
--- Si aparece un error, deten y no lo ejecutes otra vez a ciegas.
--- Incluye esquema base, cinco migraciones, RLS y verificacion.
+-- HISTORICO: snapshot del antiguo bootstrap manual de Supabase.
+-- No ejecutar como flujo vigente: el esquema se versiona en backend/alembic/.
+-- Este archivo tambien habilita RLS; esa configuracion se reconciliara en una
+-- fase de seguridad separada. Se conserva sin cambios SQL para comparacion.
 
 -- ===== Esquema base y categorias =====
 
