@@ -1,12 +1,12 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey, CheckConstraint
+from sqlalchemy import CheckConstraint, Column, ForeignKey, Identity, Integer, REAL
 from app.db.base import Base
 
 class EstadisticaCategoriaGrupo(Base):
     __tablename__ = "estadistica_categoria_grupo"
 
-    id_estadistica_grupo = Column(Integer, primary_key=True, index=True)
-    promedio_tiempo = Column(Float)
-    promedio_dificultad = Column(Float)
+    id_estadistica_grupo = Column(Integer, Identity(always=True), primary_key=True)
+    promedio_tiempo = Column(REAL)
+    promedio_dificultad = Column(REAL)
     total_tareas = Column(Integer)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=False)
     id_categoria = Column(Integer, ForeignKey("categorias.id_categoria", ondelete="CASCADE"), nullable=False)

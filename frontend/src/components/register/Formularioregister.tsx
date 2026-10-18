@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registrarUsuario } from '../../services/authService';
 import { obtenerMensajeErrorRegistro } from '../../utils/mensajesAuth';
+import { LONGITUD_MINIMA_CONTRASENA } from '../../utils/contrasena';
 import '../../styles/register.css';
 import '../../styles/register-form.css';
 import ConsentimientoRegistro from './ConsentimientoRegistro';
@@ -27,7 +28,7 @@ export const FormularioRegistro = () => {
       setError('Las contraseñas no coinciden');
       return;
     }
-    if (password.length < 8) {
+    if (password.length < LONGITUD_MINIMA_CONTRASENA) {
       setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
@@ -60,7 +61,7 @@ export const FormularioRegistro = () => {
             <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@correo.com" autoComplete="email" required />
             <label htmlFor="username">Nombre de usuario</label>
             <input id="username" type="text" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Tu nombre de usuario" autoComplete="username" required />
-            <PasswordField id="password" label="Contraseña" value={password} onChange={setPassword} placeholder="Crea una contraseña" autoComplete="new-password" minLength={8} />
+            <PasswordField id="password" label="Contraseña" value={password} onChange={setPassword} placeholder="Crea una contraseña" autoComplete="new-password" minLength={LONGITUD_MINIMA_CONTRASENA} />
             <PasswordField id="confirmPassword" label="Confirmar contraseña" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repite tu contraseña" autoComplete="new-password" />
           </div>
 

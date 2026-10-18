@@ -1,0 +1,1 @@
+export const LONGITUD_MINIMA_CONTRASENA = 8;
