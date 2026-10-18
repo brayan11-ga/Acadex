@@ -1,11 +1,11 @@
-from sqlalchemy import (Column, Integer, String, Date, ForeignKey,
+from sqlalchemy import (Column, ForeignKey, Identity, Index, Integer, String, Date,
     CheckConstraint, UniqueConstraint, func)
 from app.db.base import Base
 
 class Integrante(Base):
     __tablename__ = "integrantes"
 
-    id_integrante = Column(Integer, primary_key=True, index=True)
+    id_integrante = Column(Integer, Identity(always=True), primary_key=True)
     rol = Column(String(50), nullable=False)
     fecha_ingreso = Column(Date, nullable=False, server_default=func.current_date())
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False)
@@ -14,4 +14,6 @@ class Integrante(Base):
     __table_args__ = (
         CheckConstraint("rol IN ('lider', 'miembro')", name="chk_rol_integrante"),
         UniqueConstraint("id_usuario", "id_grupo", name="uq_usuario_grupo"),
+        Index("idx_integrantes_grupo", "id_grupo"),
+        Index("idx_integrantes_usuario", "id_usuario"),
     )

@@ -1,13 +1,13 @@
-from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Identity, Index, Integer, REAL, text
 from app.db.base import Base
 
 class SesionCronometro(Base):
     __tablename__ = "sesiones_cronometro"
 
-    id_sesion = Column(Integer, primary_key=True, index=True)
+    id_sesion = Column(Integer, Identity(always=True), primary_key=True)
     fecha_inicio = Column(DateTime, nullable=False)
     fecha_fin = Column(DateTime)
-    duracion = Column(Float)
+    duracion = Column(REAL)
     id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
 
@@ -21,4 +21,6 @@ class SesionCronometro(Base):
             postgresql_where=text("fecha_fin IS NULL"),
             sqlite_where=text("fecha_fin IS NULL"),
         ),
+        Index("idx_sesiones_tarea", "id_tarea"),
+        Index("idx_sesiones_usuario", "id_usuario"),
     )

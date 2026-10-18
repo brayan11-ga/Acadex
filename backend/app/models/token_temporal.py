@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, CheckConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Identity, Integer, String, func, text
 from app.db.base import Base
 from pydantic import BaseModel
 from datetime import datetime
@@ -8,12 +8,12 @@ class TokenTemporal(Base):
 
     class Config:
         from_attributes = True
-    id_token = Column(Integer, primary_key=True, index=True)
+    id_token = Column(Integer, Identity(always=True), primary_key=True)
     tipo_token = Column(String(50), nullable=False)
     valor_token = Column(String(50), nullable=False, unique=True)
     fecha_creacion = Column(DateTime, nullable=False, server_default=func.now())
     fecha_expiracion = Column(DateTime, nullable=False)
-    usado = Column(Boolean, nullable=False, default=False)
+    usado = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=True)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=True)
 
