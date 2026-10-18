@@ -131,7 +131,9 @@ describe('CP-2 - Registro de usuario', () => {
     await completarConsentimientos(user);
     await user.click(screen.getByRole('button', { name: 'Registrarse' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('El correo ya está registrado');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Este correo ya tiene una cuenta. Inicia sesión o recupera tu contraseña.',
+    );
     expect(registrarUsuario).toHaveBeenCalledWith(
       'usuario@existente.com', 'Usuario Existente', 'Prueba123', true, true, ''
     );

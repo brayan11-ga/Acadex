@@ -11,6 +11,7 @@ import iconoReloj from "../../assets/icons/ui/reloj.png";
 import { listarCategorias, type Categoria } from "../../services/categorias";
 import {
   crearTarea,
+  crearTareaConPdf,
   actualizarTarea,
   analizarDocumentoIA,
   subirArchivoTarea,
@@ -19,6 +20,7 @@ import {
 } from "../../services/tareas";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
 import { SelectorArchivosPendientes } from "./SelectorArchivosPendientes";
+import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   claveArchivo,
   TAMANO_MAXIMO_ADJUNTO,
@@ -75,6 +77,7 @@ function FormularioNuevaTarea({
   const [errorSubidaAdjuntos, setErrorSubidaAdjuntos] = useState<string | null>(null);
   const [progresoAdjuntos, setProgresoAdjuntos] = useState<string | null>(null);
   const [archivosAdjuntosPendientes, setArchivosAdjuntosPendientes] = useState<File[]>([]);
+  const [adjuntosGuardados, setAdjuntosGuardados] = useState(false);
   const [idTareaCreada, setIdTareaCreada] = useState<number | null>(null);
   const [asignados, setAsignados] = useState<number[]>([]);
   const [errorAsignados, setErrorAsignados] = useState<string | undefined>();
@@ -143,12 +146,14 @@ function FormularioNuevaTarea({
     setProgresoAdjuntos(null);
     setArchivosAdjuntosPendientes(fallidos);
     if (fallidos.length > 0) {
+      setAdjuntosGuardados(false);
       setErrorSubidaAdjuntos(
         `La tarea se guardó, pero no se pudieron subir ${fallidos.length} archivo${fallidos.length === 1 ? "" : "s"}. Puedes reintentar sin crear otra tarea.`,
       );
       return false;
     }
 
+    if (archivos.length > 0) setAdjuntosGuardados(true);
     setErrorSubidaAdjuntos(null);
     return true;
   };
@@ -214,7 +219,9 @@ function FormularioNuevaTarea({
         setIdCategoria(propuesta.id_categoria);
       }
 
-      setAvisoIA("Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar.");
+      setAvisoIA(adjuntosHabilitados()
+        ? "Listo. Completé los campos con sugerencias del PDF; se adjuntará al guardar."
+        : "Listo. Completé los campos con sugerencias del PDF. El documento no se guardó como adjunto.");
     } catch (err) {
       setAvisoIA(null);
       setErrorIA(err instanceof Error ? err.message : "No se pudo analizar el PDF.");
@@ -298,18 +305,47 @@ function FormularioNuevaTarea({
         });
         onTareaCreada();
       } else {
-        const nuevaTarea = await crearTarea({
+        const datosTarea = {
           nombre: titulo,
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-        });
+        };
+        const guardarPdfConTarea = Boolean(
+          adjuntosHabilitados()
+          && archivoPdfAnalizable
+          && archivoIA
+          && archivosAdjuntosPendientes.some(
+            (archivo) => claveArchivo(archivo) === claveArchivo(archivoIA),
+          ),
+        );
+        let nuevaTarea: TareaBackend;
+        if (guardarPdfConTarea && archivoIA) {
+          try {
+            nuevaTarea = await crearTareaConPdf(datosTarea, archivoIA);
+          } catch (err) {
+            const detalle = err instanceof Error ? err.message : "Error al guardar el PDF.";
+            setError(`No se pudo confirmar el guardado conjunto de la tarea y su PDF. ${detalle}`);
+            return;
+          }
+        } else {
+          nuevaTarea = await crearTarea(datosTarea);
+        }
         setIdTareaCreada(nuevaTarea.id_tarea);
+        const adjuntosRestantes = guardarPdfConTarea && archivoIA
+          ? archivosAdjuntosPendientes.filter(
+            (archivo) => claveArchivo(archivo) !== claveArchivo(archivoIA),
+          )
+          : archivosAdjuntosPendientes;
+        if (guardarPdfConTarea) setArchivosAdjuntosPendientes(adjuntosRestantes);
+        if (guardarPdfConTarea && adjuntosRestantes.length === 0) {
+          setAdjuntosGuardados(true);
+        }
         const subidasCorrectas = await subirAdjuntosPendientes(
           nuevaTarea.id_tarea,
-          archivosAdjuntosPendientes,
+          adjuntosRestantes,
         );
         if (!subidasCorrectas) return;
         onTareaCreada();
@@ -340,7 +376,12 @@ function FormularioNuevaTarea({
               {esGrupal ? "Define el objetivo y a quién le toca." : "Define el objetivo de tu próxima sesión"}
             </p>
           </div>
-          <button type="button" className="pixel-link-descartar" onClick={manejarCierreFormulario}>
+          <button
+            type="button"
+            className="pixel-link-descartar"
+            onClick={manejarCierreFormulario}
+            disabled={enviando || (idTareaCreada !== null && archivosAdjuntosPendientes.length > 0)}
+          >
             {idTareaCreada !== null ? "× Cerrar" : "× Descartar"}
           </button>
         </div>
@@ -468,6 +509,7 @@ function FormularioNuevaTarea({
       {!esGrupal && !tareaAEditar && (
         <SelectorArchivosPendientes
           archivos={archivosAdjuntosPendientes}
+          adjuntosHabilitados={adjuntosHabilitados()}
           archivoAnalisisIA={archivoPdfAnalizable ? archivoIA : null}
           analisisDisponible={archivoPdfAnalizable && idTareaCreada === null}
           analizando={analizando}
@@ -505,7 +547,11 @@ function FormularioNuevaTarea({
       )}
       {!esGrupal && idTareaCreada !== null && (
         <p className="pixel-form-tarea-guardada" role="status">
-          La tarea ya está guardada. Si cierras, podrás volver a añadir estos archivos desde Editar.
+          {errorSubidaAdjuntos
+            ? "La tarea está guardada, pero el PDF/archivo todavía no se subió. Reintenta antes de cerrar."
+            : adjuntosGuardados
+              ? "La tarea y sus archivos quedaron guardados."
+              : "La tarea ya está guardada."}
         </p>
       )}
 
