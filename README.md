@@ -1,6 +1,10 @@
 # ACADEX
 
+[![CI](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml/badge.svg)](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml)
+
 Aplicación web académica colaborativa para organizar tareas, grupos, integrantes, archivos y progreso de proyectos. Usa React, TypeScript y Vite; FastAPI y SQLAlchemy; y PostgreSQL.
+
+El CI (integración continua) ejecuta lint (revisión automatizada), build (compilación) y pruebas del frontend en cada pull request (solicitud de integración) hacia `develop` o `main`. También prueba el backend sin PostgreSQL y, en un trabajo aislado, con una base PostgreSQL desechable.
 
 ## Inicio rápido con Docker Compose
 
@@ -147,6 +151,14 @@ docker compose ps
 Revisa primero las nuevas revisiones de `backend/alembic/versions/` y sigue el procedimiento de la guía de base de datos. Conserva tus cambios locales y crea un respaldo antes de modificar una base con información que necesites.
 
 ### Pruebas
+
+El trabajo backend del CI instala `backend/requirements.txt` y ejecuta desde `backend/`:
+
+```sh
+python -m pytest test tests -q
+```
+
+Este comando no habilita el acceso PostgreSQL; por eso las pruebas que necesitan esa base quedan omitidas en ese trabajo. El trabajo PostgreSQL del CI ejecuta Alembic y, en procesos separados, las mismas suites `test` y `tests/test_postgres_integration.py` que corresponden a los servicios `api-tests` e `integration` de abajo.
 
 Las pruebas unitarias de la guarda PostgreSQL no requieren una base de datos y pueden ejecutarse en el contenedor backend:
 
