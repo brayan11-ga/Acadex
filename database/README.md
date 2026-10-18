@@ -83,8 +83,16 @@ Las suites de integración se ejecutan mediante `docker-compose.test.yml`, en pr
 Desde la raíz del repositorio:
 
 ```sh
-docker compose -f docker-compose.test.yml run --build --rm integration
+# Suite backend/tests, sin activar integración PostgreSQL.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# Suite backend/test de API.
 docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, en un proceso separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Limpia contenedores y red de pruebas al terminar.
 docker compose -f docker-compose.test.yml down
 ```
 
