@@ -102,6 +102,139 @@ RLS activo en `public.alembic_version`. Esa prueba local usó un superusuario,
 que omite RLS. Ejecuta el comando con el rol propietario de la tabla y valida
 por separado los permisos del rol de migración de Supabase.
 
+## Procedimiento final para Windows (PowerShell)
+
+Este procedimiento es para una persona autorizada a operar la base. No lo
+ejecutes desde una sesión de prueba ni con una conexión que apunte a otra base.
+El respaldo debe quedar fuera del repositorio y con acceso restringido.
+
+### A. Preparar el entorno y revisar el destino
+
+Desde la raíz del repositorio, conserva `backend/.env` si ya existe. Si falta,
+copia la plantilla y configúrala localmente; no la agregues a Git:
+
+```powershell
+if (-not (Test-Path backend/.env)) {
+    Copy-Item backend/.env.example backend/.env
+}
+```
+
+Configura `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` y `DB_PASSWORD` para la
+base autorizada. Puedes introducirlos en la sesión actual sin poner la
+contraseña en un comando guardado:
+
+```powershell
+$env:DB_HOST = Read-Host 'DB_HOST del destino aprobado'
+$env:DB_PORT = Read-Host 'DB_PORT del destino aprobado'
+$env:DB_USER = Read-Host 'DB_USER del destino aprobado'
+$env:DB_NAME = Read-Host 'DB_NAME del destino aprobado'
+$claveSegura = Read-Host 'DB_PASSWORD del destino aprobado' -AsSecureString
+$punteroClave = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($claveSegura)
+try {
+    $env:DB_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($punteroClave)
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($punteroClave)
+    Remove-Variable claveSegura, punteroClave
+}
+```
+
+La contraseña se mantiene en memoria de la sesión para que la lea Alembic; no
+la escribas en el historial, en la URL de conexión ni en un archivo versionado.
+Las demás opciones requeridas por la aplicación deben estar configuradas en
+`backend/.env` o en variables protegidas de esa sesión. Antes de seguir,
+confirma por un canal seguro que el host y nombre de base corresponden al
+destino aprobado. No imprimas la contraseña ni una URL con credenciales.
+
+### B. Crear y comprobar el respaldo
+
+Elige una carpeta segura fuera del repositorio. `pg_dump` pedirá la contraseña
+sin incluirla en el comando:
+
+```powershell
+$respaldo = Join-Path $env:USERPROFILE "acadex-antes-alembic-$(Get-Date -Format yyyyMMdd-HHmmss).dump"
+pg_dump --host $env:DB_HOST --port $env:DB_PORT --username $env:DB_USER --dbname $env:DB_NAME --password --format=custom --no-owner --no-privileges --schema=public --file $respaldo
+if ($LASTEXITCODE -ne 0) { throw 'pg_dump falló; no continúes con stamp.' }
+if (-not (Test-Path $respaldo) -or (Get-Item $respaldo).Length -le 0) { throw 'El respaldo no existe o está vacío.' }
+```
+
+Guarda el respaldo fuera del repositorio, restringe su acceso y verifica que el
+archivo exista y tenga tamaño mayor que cero. Para restaurarlo, usa una base
+aislada y sigue la sección de comparación; nunca pruebes la restauración encima
+de la base que estás protegiendo.
+
+### C. Comparar, adoptar y verificar
+
+Instala las dependencias del backend según `backend/requirements.txt` y trabaja
+desde `backend/`. Si aún no hay un entorno virtual local, créalo. Estos comandos
+no cambian archivos versionados:
+
+```powershell
+Set-Location backend
+if (-not (Test-Path .venv\Scripts\python.exe)) { py -m venv .venv }
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Compara primero la estructura completa de la base objetivo con `alembic upgrade
+head` aplicado a una base vacía. No leas filas personales. Si falta o difiere
+un objeto, detente y resuelve la diferencia antes de adoptar.
+
+En la misma sesión de PowerShell, permite solo el comando `stamp`:
+
+```powershell
+$env:ALEMBIC_ALLOW_ADOPT_EXISTING = '1'
+.\.venv\Scripts\python.exe -m alembic stamp head
+if ($LASTEXITCODE -ne 0) { throw 'stamp falló; detén el procedimiento.' }
+$env:ALEMBIC_ALLOW_ADOPT_EXISTING = $null
+.\.venv\Scripts\python.exe -m alembic current
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo verificar alembic current.' }
+.\.venv\Scripts\python.exe -m alembic upgrade head
+if ($LASTEXITCODE -ne 0) { throw 'upgrade head falló; no despliegues el backend.' }
+.\.venv\Scripts\python.exe -m alembic upgrade head
+if ($LASTEXITCODE -ne 0) { throw 'La segunda verificación de upgrade falló.' }
+```
+
+`current` debe mostrar la revisión `head` aprobada. Ambas ejecuciones de
+`upgrade head` deben terminar sin aplicar revisiones nuevas. La variable de
+adopción no habilita `upgrade`; quítala al terminar `stamp`.
+
+Después del `stamp`, aplica también el comando RLS de la sección anterior a
+`public.alembic_version`, con el rol propietario adecuado. `psql` pedirá la
+contraseña; no la añadas a la línea de comandos:
+
+```powershell
+psql --host $env:DB_HOST --port $env:DB_PORT --username $env:DB_USER --dbname $env:DB_NAME --password --command "ALTER TABLE public.alembic_version ENABLE ROW LEVEL SECURITY;"
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo activar RLS en alembic_version.' }
+psql --host $env:DB_HOST --port $env:DB_PORT --username $env:DB_USER --dbname $env:DB_NAME --password --command "SELECT relrowsecurity FROM pg_catalog.pg_class WHERE oid = 'public.alembic_version'::regclass;"
+```
+
+La consulta de verificación lee solo el catálogo de PostgreSQL, no filas de la
+aplicación; debe devolver `t`. Comprueba también `/health/ready` y operaciones
+de la aplicación en un entorno controlado. La prueba con el usuario superusuario
+local no valida los permisos RLS de los roles de Supabase.
+
+### D. Arranque de Render y reversión
+
+El comando del contenedor backend en `backend/Dockerfile` inicia Uvicorn; no
+ejecuta Alembic. El repositorio no contiene una configuración de Render que
+añada una migración al arranque. Por eso, no asumas que el backend de Render
+migra la base al iniciar: la adopción y cualquier migración deben ejecutarse
+como operación explícita y controlada.
+
+Si necesitas retirar solo el registro de Alembic, conéctate a la base correcta
+como propietario y ejecuta:
+
+```sql
+DROP TABLE public.alembic_version;
+```
+
+Esto elimina únicamente la tabla de seguimiento de Alembic. No deshace cambios
+de esquema ni borra datos de las tablas Acadex. No uses `CASCADE`. Luego detén
+cualquier despliegue y vuelve a comparar el esquema antes de decidir el
+siguiente paso. Para revertir cambios de una migración, evalúa esa migración por
+separado o restaura el respaldo; borrar `alembic_version` no la revierte.
+Al terminar o abortar, cierra esta sesión de PowerShell para retirar las
+credenciales temporales de su entorno.
+
 ## Recuperación
 
 Detén el despliegue si falla una comparación o una verificación. `stamp` cambia
