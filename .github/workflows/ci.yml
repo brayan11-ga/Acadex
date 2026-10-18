@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend (lint, build y pruebas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Activar Corepack y pnpm 12.11.2
+        run: |
+          corepack enable
+          corepack prepare pnpm@12.11.2 --activate
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Revisar estilo
+        run: pnpm lint
+
+      - name: Compilar frontend
+        run: pnpm build
+
+      - name: Ejecutar pruebas frontend
+        run: pnpm test --run
+
+  backend:
+    name: Backend sin PostgreSQL
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Valores sintéticos para pruebas unitarias. No son credenciales reales.
+      APP_ENV: test
+      DB_USER: ci_test_user
+      DB_PASSWORD: ci-only-fake-password
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_NAME: acadex_ci_unused
+      DB_SSLMODE: disable
+      SECRET_KEY: ci-only-fake-signing-key-not-for-deployment
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: '15'
+      ATTACHMENTS_ENABLED: 'false'
+      PASSWORD_RESET_ENABLED: 'false'
+      GEMINI_API_KEY: ''
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configurar Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
+
+      - name: Instalar dependencias del backend
+        run: python -m pip install -r requirements.txt
+
+      - name: Ejecutar pruebas sin PostgreSQL
+        run: python -m pytest test tests -q
+
+  backend-postgres:
+    name: Backend con PostgreSQL aislado
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.14-slim
+    services:
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: acadex_ci_runner
+          POSTGRES_PASSWORD: ci-only-disposable-password
+          POSTGRES_DB: acadex_test
+        options: >-
+          --health-cmd "pg_isready -U acadex_ci_runner -d acadex_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Base efímera exclusiva de este job; host=db es el servicio postgres:17.
+      APP_ENV: test
+      DB_USER: acadex_ci_runner
+      DB_PASSWORD: ci-only-disposable-password
+      DB_HOST: db
+      DB_PORT: '5432'
+      DB_NAME: acadex_test
+      DB_SSLMODE: disable
+      SECRET_KEY: ci-only-fake-signing-key-not-for-deployment
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: '15'
+      ATTACHMENTS_ENABLED: 'true'
+      ATTACHMENTS_STORAGE_BACKEND: local
+      PASSWORD_RESET_ENABLED: 'false'
+      GEMINI_API_KEY: ''
+      ACADEX_RUN_POSTGRES_TESTS: '1'
+      ACADEX_TEST_DB_NAME: acadex_test
+      ACADEX_TEST_DB_TARGET: compose
+      ACADEX_TEST_DB_HOST: db
+      ACADEX_TEST_DB_PORT: '5432'
+      ACADEX_TEST_DB_USER: acadex_ci_runner
+      ACADEX_TEST_DB_PASSWORD: ci-only-disposable-password
+      ACADEX_TEST_COMPOSE_PROJECT: acadex-test-abcdef12
+      COMPOSE_PROJECT_NAME: acadex-test-abcdef12
+      ACADEX_TEST_RUNNER_CONTEXT: isolated-compose
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Instalar dependencias del backend
+        run: python -m pip install -r requirements.txt
+
+      - name: Marcar runner efímero y aislado
+        run: |
+          mkdir -p /run/secrets
+          printf 'ci disposable runner only\n' > /run/secrets/acadex-test-runner
+
+      - name: Aplicar migraciones a la base efímera
+        run: python -m alembic upgrade head
+
+      - name: Ejecutar pruebas de API con PostgreSQL
+        run: python -m pytest test -q
+
+      - name: Verificar migraciones antes de la suite PostgreSQL
+        run: python -m alembic upgrade head
+
+      - name: Ejecutar integración PostgreSQL
+        run: python -m pytest tests/test_postgres_integration.py -q
