@@ -10,8 +10,11 @@ export function headersConToken(extra: Record<string, string> = {}): Record<stri
 }
 
 export class ApiRequestError extends Error {
-    constructor(public readonly status: number, message: string) {
+    public readonly status: number;
+
+    constructor(status: number, message: string) {
         super(message);
+        this.status = status;
         this.name = 'ApiRequestError';
     }
 }
@@ -44,20 +47,6 @@ export const adminApi = {
         headers: headersConToken(),
     }),
     
-    actualizar: <T>(entidad: string, id: number | string, datos: Record<string, unknown>) =>
-    fetchJSON<T>(`/${entidad}/${id}`, {
-        method: 'PUT',
-        headers: headersConToken({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(datos),
-    }),
-
-    crear: <T>(entidad: string, datos: Record<string, unknown>) =>
-    fetchJSON<T>(`/${entidad}`, {
-        method: 'POST',
-        headers: headersConToken({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(datos),
-    }),
-
     obtenerMe: async <T>() => {
         const respuesta = await fetch(`${API_BASE_URL}/usuarios/me`, {
             headers: headersConToken(),

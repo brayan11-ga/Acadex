@@ -29,11 +29,13 @@ export function GenericTable<T extends Record<string, any>>({
     onEliminar,
     accionesExtra = [],
 }: GenericTableProps<T>) {
+    const mostrarAcciones = !soloLectura && Boolean(onEditar || onEliminar || accionesExtra.length);
+
     if (cargando) {
         return (
             <AdminTableLoadingSkeleton
                 columns={columnas.map((columna) => columna.label)}
-                hasActions={!soloLectura}
+                hasActions={mostrarAcciones}
             />
         );
     }
@@ -54,7 +56,7 @@ export function GenericTable<T extends Record<string, any>>({
             {columnas.map((col) => (
             <th key={String(col.key)}>{col.label}</th>
             ))}
-            {!soloLectura && <th>Acciones</th>}
+            {mostrarAcciones && <th>Acciones</th>}
         </tr>
         </thead>
         <tbody>
@@ -65,14 +67,14 @@ export function GenericTable<T extends Record<string, any>>({
                 {col.render ? col.render(fila) : String(fila[col.key] ?? '')}
                 </td>
             ))}
-            {!soloLectura && (
+            {mostrarAcciones && (
                 <td>
-                <button className="btn btn-secundario" onClick={() => onEditar?.(fila)}>
+                {onEditar && <button className="btn btn-secundario" onClick={() => onEditar(fila)}>
                     Editar
-                </button>
-                <button className="btn btn-peligro" onClick={() => onEliminar?.(fila)}>
+                </button>}
+                {onEliminar && <button className="btn btn-peligro" onClick={() => onEliminar(fila)}>
                     Eliminar
-                </button>
+                </button>}
                 {accionesExtra.map((accion) => (
                     <button
                     key={accion.etiqueta}

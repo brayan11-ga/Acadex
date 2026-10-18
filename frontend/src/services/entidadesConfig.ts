@@ -49,8 +49,7 @@ export interface EntidadConfig<T extends object=Record<string,unknown>> {
     emptyState?: { title: string; description: string };
     idField:keyof T & string;
     columnas: ColumnConfig<T>[];
-    campos: FieldConfig[];
-    camposCrear?: FieldConfig[];
+    campos?: FieldConfig[];
     valoresVacios: Record<string,unknown>;
     soloLectura?: boolean;
 }
@@ -69,11 +68,6 @@ export const usuariosConfig: EntidadConfig<Usuarios> = {
         {key:'fecha_registro',label:'Fecha de registro'},
         {key:'es_admin', label:'admin',render:(row)=>(row.es_admin ? 'Si':'No'),},
     ],
-    campos:[
-        {name:'correo_electronico',label:'Correo electronico',type:'email',required:true},
-        {name:'es_admin',label:'¿Es administrador?', type:'checkbox'},
-            // 'contrasena' no se expone: se maneja aparte (registro/reset),
-    ],
     valoresVacios:{correo_electronico:'',es_admin:false},
 };
 
@@ -86,10 +80,8 @@ export const categoriasConfig: EntidadConfig<Categoria> = {
     },
     idField:'id_categoria',
     columnas: [{ key: 'nombre_categoria', label: 'Nombre' }],
-    campos: [
-    { name: 'nombre_categoria', label: 'Nombre de la categoría', type: 'text', required: true },
-    ],
     valoresVacios: { nombre_categoria: '' },
+    soloLectura: true,
 };
 
 export const gruposConfig: EntidadConfig<Grupo> = {
