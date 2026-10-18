@@ -29,9 +29,24 @@ def delete_usuario(db: Session, usuario: Usuario) -> None:
     db.delete(usuario)
     db.commit()
 
-def update_usuario(db: Session, usuario: Usuario, datos: dict) -> Usuario:
+def update_usuario(
+    db: Session,
+    usuario: Usuario,
+    datos: dict,
+    *,
+    contrasena_hash: str | None = None,
+) -> Usuario:
+    if "contrasena" in datos:
+        raise ValueError("Pasa contrasena_hash; nunca persistas contrasena en claro.")
+    if contrasena_hash is not None and not contrasena_hash.startswith(
+        ("$2a$", "$2b$", "$2y$")
+    ):
+        raise ValueError("contrasena_hash debe contener un hash bcrypt.")
+
     for campo, valor in datos.items():
         setattr(usuario, campo, valor)
+    if contrasena_hash is not None:
+        usuario.contrasena = contrasena_hash
     db.commit()
     db.refresh(usuario)
     return usuario
