@@ -4,10 +4,25 @@ El flujo recomendado de instalación está en el [README raíz](../README.md). E
 
 Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y pnpm 12.11.2; el archivo `frontend/package.json` declara el gestor de paquetes.
 
+## Comandos del frontend con pnpm
+
+Ejecuta estos comandos desde `frontend/`. Corepack selecciona la versión de pnpm declarada en `package.json`:
+
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm build
+pnpm test --run
+pnpm lint
+```
+
+`dev` inicia el servidor local; `build` genera el sitio compilado; `test --run` ejecuta todas las pruebas una vez; `lint` analiza el código sin modificarlo.
+
 ## Fuente vigente y archivos históricos
 
 - `backend/alembic.ini`, `backend/alembic/env.py` y `backend/alembic/versions/`: configuración, conexión y secuencia vigente de migraciones. La revisión inicial contiene un snapshot autocontenido del esquema base para que el despliegue del backend no dependa de montar `database/`.
-- `database/init.sql` y `backend/migrations/*.sql`: historia SQL anterior, conservada para comparación y transición. Compose ya no la ejecuta ni se debe usar como procedimiento nuevo.
+- **Histórico:** `database/init.sql` y `backend/migrations/*.sql` son la ruta SQL anterior, conservada para comparación y transición. `database/scripts/acadex.sql` todavía incluye `init.sql` como envoltorio antiguo; el arranque actual con Compose y Alembic no ejecuta esos archivos. No los uses como procedimiento nuevo.
 - `database/supabase_new_project.sql` y `database/supabase_resume_migrations.sql`: antiguos snapshots manuales de Supabase; además del esquema activan políticas de seguridad a nivel de fila (RLS). Se conservan como referencia, pero no son la ruta vigente ni deben ejecutarse durante esta transición.
 - `database/verify_schema.sql`: consulta de solo lectura para comprobar objetos del esquema.
 - `database/scripts/acadex.sql`: antiguo punto de entrada compatible con `psql`; reúne el esquema SQL histórico y no es la ruta vigente.

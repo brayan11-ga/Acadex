@@ -4,7 +4,7 @@ Aplicación web académica colaborativa para organizar tareas, grupos, integrant
 
 ## Inicio rápido con Docker Compose
 
-Esta es la ruta recomendada para probar ACADEX desde un computador limpio. Solo necesitas **Git** y **Docker Desktop** con Docker Compose v2.24.0 o superior. No necesitas instalar Node.js, Python, PostgreSQL ni npm en el computador anfitrión.
+Esta es la ruta recomendada para probar ACADEX desde un computador limpio. Solo necesitas **Git** y **Docker Desktop** con Docker Compose v2.24.0 o superior. No necesitas instalar Node.js, Python, PostgreSQL ni pnpm en el computador anfitrión.
 
 Comprueba Docker Compose y que el motor esté iniciado:
 
@@ -211,7 +211,7 @@ La validación de portabilidad de extremo a extremo también requiere comprobar 
 
 ## Ejecución manual sin Docker Compose
 
-Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. Requiere Node.js/npm, Python y una instancia PostgreSQL ya instalada y configurada; no es necesaria para el flujo recomendado con Compose.
+Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. Requiere Node.js, pnpm, Python y una instancia PostgreSQL ya instalada y configurada; no es necesaria para el flujo recomendado con Compose.
 
 1. Copia las plantillas sin sobrescribir configuraciones existentes:
 
@@ -245,6 +245,16 @@ Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. 
    pnpm dev
    ```
 
+   Desde `frontend/`, los demás comandos disponibles son:
+
+   ```sh
+   pnpm build
+   pnpm test --run
+   pnpm lint
+   ```
+
+   `build` compila TypeScript y genera el sitio; `test --run` ejecuta Vitest una vez; `lint` revisa el código con Oxlint.
+
 Para preparar el esquema manualmente, usa una base desechable o sigue los pasos de migración de [database/README.md](database/README.md). No ejecutes SQL de inicialización sobre una base existente.
 
 ## Arquitectura y módulos
@@ -255,7 +265,7 @@ Para preparar el esquema manualmente, usa una base desechable o sigue los pasos 
 - Servicios locales: Mailpit para correo de prueba; análisis documental con Gemini opcional.
 - Módulos: usuarios y perfiles; tareas, grupos e integrantes; cronómetro, notificaciones y estadísticas; adjuntos y análisis documental.
 
-Consulta [STRUCTURE.md](STRUCTURE.md) para el mapa del repositorio y [database/README.md](database/README.md) para el ciclo de vida del esquema.
+Consulta [docs/STRUCTURE.md](docs/STRUCTURE.md) para el mapa del repositorio y [database/README.md](database/README.md) para el ciclo de vida del esquema.
 
 ## Seguridad del repositorio
 
