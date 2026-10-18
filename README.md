@@ -171,7 +171,43 @@ docker compose exec -T frontend npm test -- --run
 docker compose exec -T frontend npm run build
 ```
 
-La validación de portabilidad de extremo a extremo requiere arrancar Docker Desktop, comprobar la salud de los servicios y probar la persistencia tras un reinicio.
+### Verificar un clon limpio y aislado
+
+Este procedimiento crea una base local nueva. Usa un nombre de proyecto Compose único: Compose agrega ese nombre a los contenedores y al volumen PostgreSQL, por lo que la prueba no reutiliza los datos del proyecto normal. Confirma que los puertos elegidos estén libres.
+
+En PowerShell, ejecuta esto desde el repositorio fuente. Clona la rama actual desde la ruta local y copia las plantillas. Los archivos copiados son locales y están ignorados por Git; no pegues credenciales reales:
+
+```powershell
+$source = (Get-Location).Path
+$branch = (git branch --show-current).Trim()
+git clone --branch $branch --single-branch --no-hardlinks $source Acadex-prueba
+cd Acadex-prueba
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env.local
+$project = "acadex-prueba-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+$env:ACADEX_FRONTEND_PORT = "28173"
+$env:ACADEX_API_PORT = "28180"
+$env:ACADEX_DB_PORT = "28543"
+$env:ACADEX_MAILPIT_UI_PORT = "28025"
+$env:ACADEX_MAILPIT_SMTP_PORT = "21025"
+docker compose -p $project up --build -d
+docker compose -p $project ps -a
+$migrateId = docker compose -p $project ps -aq migrate
+docker inspect $migrateId --format '{{.State.Status}} {{.State.ExitCode}}'
+Invoke-RestMethod http://localhost:28180/health/ready
+```
+
+La migración debe mostrar estado `exited` y código `0`; la verificación de salud debe responder correctamente. Abre `http://localhost:28180/docs` y usa la documentación interactiva para registrar una cuenta, iniciar sesión y crear una tarea con el token devuelto por el login. Los códigos esperados son 201 para registro, 200 para login y 201 para crear la tarea.
+
+Al terminar, elimina solo este proyecto de prueba y su volumen nuevo:
+
+```powershell
+docker compose -p $project down --volumes --remove-orphans
+```
+
+Conserva el mismo `$project` en todos los comandos. No uses el nombre del proyecto normal para esta limpieza, porque `--volumes` borra su base PostgreSQL.
+
+La validación de portabilidad de extremo a extremo también requiere comprobar la salud de los servicios y probar la persistencia tras un reinicio.
 
 ## Ejecución manual sin Docker Compose
 
