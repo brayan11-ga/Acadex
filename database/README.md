@@ -9,7 +9,7 @@ El flujo recomendado de instalación está en el [README raíz](../README.md). E
 - `database/supabase_new_project.sql` y `database/supabase_resume_migrations.sql`: antiguos snapshots manuales de Supabase; además del esquema activan políticas de seguridad a nivel de fila (RLS). Se conservan como referencia, pero no son la ruta vigente ni deben ejecutarse durante esta transición.
 - `database/verify_schema.sql`: consulta de solo lectura para comprobar objetos del esquema.
 - `database/scripts/acadex.sql`: antiguo punto de entrada compatible con `psql`; reúne el esquema SQL histórico y no es la ruta vigente.
-- `database/seed.sql`: datos de una estructura antigua, excluidos de la inicialización vigente. No lo ejecutes para una instalación nueva.
+- `database/seed.sql` fue eliminado porque pertenecía a una estructura antigua y contenía una contraseña fija. No cargues administradores desde SQL.
 - `backend/app/db/init.sql`: archivo vacío que no participa en el arranque.
 
 La secuencia vigente se aplica con `alembic upgrade head`, en el orden de las seis revisiones versionadas bajo `backend/alembic/versions/`. La base PostgreSQL desechable de pruebas llega a `head` antes de ejecutar las pruebas de integración.
@@ -27,6 +27,17 @@ Los SQL anteriores no se borraron. Permanecen como evidencia de la conversión y
 - **Actualización del esquema:** `docker compose up --build` ejecuta `migrate` automáticamente. En una base existente, confirma primero el destino, su nombre, revisión e historial; compara el esquema y prepara un respaldo verificado. Nunca ejecutes el snapshot base en una base existente. Supabase no se ha reconciliado con Alembic; revisa su esquema, historial y políticas RLS por separado antes de decidir cualquier acción. No uses `stamp`, `upgrade` ni SQL a ciegas.
 
 Para pgAdmin instalado en el computador, una instalación nueva usa host `localhost`, puerto `5433` y base `acadex`. Usa el usuario y la contraseña locales configurados para Compose. Este acceso es local; no uses credenciales de Supabase.
+
+## Crear o promover un administrador
+
+No hay una cuenta admin ni una contraseña predeterminadas. Después de iniciar el stack local, ejecuta el comando y escribe el correo y la contraseña en los avisos interactivos. La contraseña no se muestra al escribirla:
+
+```sh
+docker compose up --build -d
+docker compose exec -it backend python -m scripts.crear_admin
+```
+
+El comando crea el usuario si el correo no existe o promueve el usuario existente. En ambos casos guarda la contraseña con bcrypt; también crea el perfil si hace falta. Para automatización controlada, acepta `ACADEX_ADMIN_EMAIL` y `ACADEX_ADMIN_PASSWORD` si ambas variables ya están en el entorno del proceso. No imprimas la contraseña en logs ni la guardes en el repositorio.
 
 No uses `docker compose down -v` como rutina de detención o actualización: elimina `pgdata`. Tampoco cambies `DB_USER`, `DB_PASSWORD` o `DB_NAME` esperando que PostgreSQL modifique un volumen existente; las variables `POSTGRES_*` de la imagen solo inicializan una base nueva.
 
