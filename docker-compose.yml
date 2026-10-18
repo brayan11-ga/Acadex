@@ -92,6 +92,8 @@ services:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:${ACADEX_API_PORT:-8000}}
     ports:
       - "127.0.0.1:${ACADEX_FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend/src:/app/src
     depends_on:
       backend:
         condition: service_healthy

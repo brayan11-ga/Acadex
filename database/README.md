@@ -2,6 +2,8 @@
 
 El flujo recomendado de instalación está en el [README raíz](../README.md). Esta guía explica qué administra Compose en PostgreSQL y cómo probar cambios sin tocar la base normal del desarrollador. El stack requiere Docker Compose v2.24.0 o superior, necesario para que `env_file.required: false` admita la ausencia de `backend/.env`.
 
+Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y pnpm 12.11.2; el archivo `frontend/package.json` declara el gestor de paquetes.
+
 ## Fuente vigente y archivos históricos
 
 - `backend/alembic.ini`, `backend/alembic/env.py` y `backend/alembic/versions/`: configuración, conexión y secuencia vigente de migraciones. La revisión inicial contiene un snapshot autocontenido del esquema base para que el despliegue del backend no dependa de montar `database/`.

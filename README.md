@@ -124,7 +124,7 @@ Los datos de PostgreSQL viven en el volumen `pgdata`; los adjuntos locales, si s
 
 ### Versiones y reproducibilidad
 
-Los Dockerfiles fijan Node en `22.22.2-alpine` y Python en `3.14.8-slim`; Compose fija PostgreSQL en `17.11` y Mailpit en `v1.31.4`. `frontend/package-lock.json` y `backend/requirements.txt` fijan las versiones de dependencias. Los tags versionados reducen cambios inesperados, pero no fijan el digest inmutable de cada imagen; además, las instalaciones iniciales descargan imágenes y paquetes de sus registros. El stack y el build de producción del frontend se validaron en Windows con Docker Desktop y contenedores Linux. No se han probado todas las arquitecturas de CPU ni todos los sistemas anfitriones.
+Los Dockerfiles usan Node `24-alpine` y Python `3.14.8-slim`; Compose usa PostgreSQL `17.11` y Mailpit `v1.31.4`. `frontend/pnpm-lock.yaml` y `backend/requirements.txt` fijan las versiones de dependencias. Los tags versionados reducen cambios inesperados, pero no fijan el digest inmutable de cada imagen; además, las instalaciones iniciales descargan imágenes y paquetes de sus registros. El stack y el build de producción del frontend se validaron en Windows con Docker Desktop y contenedores Linux. No se han probado todas las arquitecturas de CPU ni todos los sistemas anfitriones.
 
 ### Primera instalación y actualización del esquema
 
@@ -164,11 +164,11 @@ docker compose -f docker-compose.test.yml down
 
 Los valores predeterminados de credenciales de ese Compose son exclusivamente locales para la base efímera; no los reutilices en producción. Puedes cambiar el identificador del proyecto y sus credenciales con `ACADEX_TEST_COMPOSE_PROJECT`, `ACADEX_TEST_DB_USER` y `ACADEX_TEST_DB_PASSWORD`. El identificador debe ser `acadex-test-` seguido de 8 a 32 caracteres hexadecimales. Consulta [database/README.md](database/README.md) para las barreras y el alcance de estas pruebas.
 
-Para ejecutar las pruebas frontend sin instalar Node/npm en el anfitrión, con el servicio frontend iniciado:
+Para ejecutar las pruebas frontend sin instalar Node.js/pnpm en el anfitrión, con el servicio frontend iniciado:
 
 ```sh
-docker compose exec -T frontend npm test -- --run
-docker compose exec -T frontend npm run build
+docker compose exec -T frontend pnpm test --run
+docker compose exec -T frontend pnpm build
 ```
 
 ### Verificar un clon limpio y aislado
@@ -240,8 +240,9 @@ Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. 
 
    ```sh
    cd frontend
-   npm ci
-   npm run dev
+   corepack enable
+   pnpm install --frozen-lockfile
+   pnpm dev
    ```
 
 Para preparar el esquema manualmente, usa una base desechable o sigue los pasos de migración de [database/README.md](database/README.md). No ejecutes SQL de inicialización sobre una base existente.
