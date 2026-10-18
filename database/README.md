@@ -30,14 +30,22 @@ Para pgAdmin instalado en el computador, una instalación nueva usa host `localh
 
 ## Crear o promover un administrador
 
-No hay una cuenta admin ni una contraseña predeterminadas. Después de iniciar el stack local, ejecuta el comando y escribe el correo y la contraseña en los avisos interactivos. La contraseña no se muestra al escribirla:
+No hay una cuenta admin ni una contraseña predeterminadas. Después de iniciar el stack local, ejecuta el comando y escribe el correo. Si la cuenta no existe, escribe y confirma la contraseña en los avisos ocultos. Si ya existe, el comando solo la promueve a administradora y conserva su contraseña:
 
 ```sh
 docker compose up --build -d
 docker compose exec -it backend python -m scripts.crear_admin
 ```
 
-El comando crea el usuario si el correo no existe o promueve el usuario existente. En ambos casos guarda la contraseña con bcrypt; también crea el perfil si hace falta. Para automatización controlada, acepta `ACADEX_ADMIN_EMAIL` y `ACADEX_ADMIN_PASSWORD` si ambas variables ya están en el entorno del proceso. No imprimas la contraseña en logs ni la guardes en el repositorio.
+El comando crea el usuario si el correo no existe o promueve el usuario existente. La contraseña de una cuenta nueva se guarda con bcrypt; también se crea el perfil si hace falta. Para automatización, el proceso debe recibir `ACADEX_ADMIN_EMAIL`, `ACADEX_ADMIN_PASSWORD` y `ACADEX_ADMIN_PASSWORD_CONFIRM`. Las dos variables de contraseña deben coincidir. No imprimas la contraseña en logs ni la guardes en el repositorio.
+
+Para cambiar la contraseña de una cuenta existente, solicita el cambio de forma explícita; el comando pedirá confirmar la contraseña oculta:
+
+```sh
+docker compose exec -it backend python -m scripts.crear_admin --reset-password
+```
+
+En ejecución automatizada, `--reset-password` también es obligatorio y el proceso debe recibir las tres variables indicadas arriba. Sin `--reset-password`, el script ignora cualquier contraseña definida para una cuenta que ya existe y no la imprime ni la registra.
 
 No uses `docker compose down -v` como rutina de detención o actualización: elimina `pgdata`. Tampoco cambies `DB_USER`, `DB_PASSWORD` o `DB_NAME` esperando que PostgreSQL modifique un volumen existente; las variables `POSTGRES_*` de la imagen solo inicializan una base nueva.
 

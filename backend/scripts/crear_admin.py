@@ -1,5 +1,6 @@
 """Crea o promueve un administrador sin credenciales predeterminadas."""
 
+import argparse
 from collections.abc import Mapping
 from getpass import getpass
 import os
@@ -19,71 +20,97 @@ from app.services.usuario_service import hash_password
 _VALIDADOR_CORREO = TypeAdapter(EmailStr)
 
 
-def _validar_datos(correo: str, contrasena: str) -> tuple[str, str]:
+def _validar_correo(correo: str) -> str:
     try:
-        correo_validado = str(_VALIDADOR_CORREO.validate_python(correo.strip()))
+        return str(_VALIDADOR_CORREO.validate_python(correo.strip()))
     except ValidationError:
         raise ValueError("El correo no tiene un formato válido.") from None
 
+
+def _validar_contrasena(contrasena: str) -> str:
     if len(contrasena) < LONGITUD_MINIMA_CONTRASENA or not contrasena.strip():
         raise ValueError(
             f"La contraseña debe tener al menos {LONGITUD_MINIMA_CONTRASENA} caracteres."
         )
-    return correo_validado, contrasena
+    return contrasena
 
 
-def obtener_credenciales(
+def obtener_correo(
     entorno: Mapping[str, str] | None = None,
     *,
     leer: Callable[[str], str] = input,
-    leer_secreto: Callable[[str], str] = getpass,
-) -> tuple[str, str]:
+) -> str:
     entorno = os.environ if entorno is None else entorno
     correo = entorno.get("ACADEX_ADMIN_EMAIL", "").strip()
-    contrasena = entorno.get("ACADEX_ADMIN_PASSWORD", "")
+    if not correo:
+        correo = leer("Correo del administrador: ").strip()
+    return _validar_correo(correo)
 
-    if correo or contrasena:
-        if not correo or not contrasena:
+
+def obtener_contrasena(
+    entorno: Mapping[str, str] | None = None,
+    *,
+    leer_secreto: Callable[[str], str] = getpass,
+) -> str:
+    entorno = os.environ if entorno is None else entorno
+    contrasena = entorno.get("ACADEX_ADMIN_PASSWORD", "")
+    confirmacion = entorno.get("ACADEX_ADMIN_PASSWORD_CONFIRM", "")
+
+    if contrasena or confirmacion:
+        if not contrasena or not confirmacion:
             raise ValueError(
-                "Define ACADEX_ADMIN_EMAIL y ACADEX_ADMIN_PASSWORD juntas."
+                "Define ACADEX_ADMIN_PASSWORD y ACADEX_ADMIN_PASSWORD_CONFIRM juntas."
             )
     else:
-        correo = leer("Correo del administrador: ").strip()
         contrasena = leer_secreto("Contraseña nueva: ")
         confirmacion = leer_secreto("Confirma la contraseña: ")
-        if contrasena != confirmacion:
-            raise ValueError("Las contraseñas no coinciden.")
 
-    return _validar_datos(correo, contrasena)
+    if contrasena != confirmacion:
+        raise ValueError("Las contraseñas no coinciden.")
+    return _validar_contrasena(contrasena)
 
 
 def crear_o_promover_administrador(
     db: Session,
     correo: str,
-    contrasena: str,
+    contrasena: str | None = None,
+    *,
+    reset_password: bool = False,
 ) -> str:
-    correo, contrasena = _validar_datos(correo, contrasena)
+    correo = _validar_correo(correo)
     usuario = (
         db.query(Usuario)
         .filter(Usuario.correo_electronico == correo)
         .first()
     )
-    era_admin = bool(usuario and usuario.es_admin)
-    hash_nuevo = hash_password(contrasena)
 
     if usuario is None:
+        if reset_password:
+            raise ValueError("No existe un usuario al cual restablecer la contraseña.")
+        if contrasena is None:
+            raise ValueError("Se necesita una contraseña para crear el administrador.")
+        contrasena = _validar_contrasena(contrasena)
         usuario = Usuario(
             correo_electronico=correo,
-            contrasena=hash_nuevo,
+            contrasena=hash_password(contrasena),
             es_admin=True,
         )
         db.add(usuario)
         db.flush()
         estado = "creado"
     else:
-        usuario.contrasena = hash_nuevo
+        era_admin = bool(usuario.es_admin)
+        if reset_password:
+            if contrasena is None:
+                raise ValueError("Se necesita una contraseña confirmada para restablecerla.")
+            usuario.contrasena = hash_password(_validar_contrasena(contrasena))
+        elif contrasena is not None:
+            raise ValueError("Usa --reset-password para cambiar una contraseña existente.")
+
         usuario.es_admin = True
-        estado = "actualizado" if era_admin else "promovido"
+        estado = "actualizado" if era_admin and reset_password else (
+            "ya administrador" if era_admin else "promovido"
+        )
 
     perfil = (
         db.query(Perfil)
@@ -107,16 +134,43 @@ def crear_o_promover_administrador(
     return estado
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Crea o promueve un administrador Acadex.")
+    parser.add_argument(
+        "--reset-password",
+        action="store_true",
+        help="cambia la contraseña de una cuenta existente tras confirmarla",
+    )
+    argumentos = parser.parse_args(argv)
+
     try:
-        correo, contrasena = obtener_credenciales()
+        correo = obtener_correo()
     except ValueError as error:
         print(f"Error: {error}", file=sys.stderr)
         return 2
 
     try:
         with Session(engine) as db:
-            estado = crear_o_promover_administrador(db, correo, contrasena)
+            existe = (
+                db.query(Usuario)
+                .filter(Usuario.correo_electronico == correo)
+                .first()
+                is not None
+            )
+            if argumentos.reset_password and not existe:
+                raise ValueError("No existe un usuario al cual restablecer la contraseña.")
+
+            requiere_contrasena = not existe or argumentos.reset_password
+            contrasena = obtener_contrasena() if requiere_contrasena else None
+            estado = crear_o_promover_administrador(
+                db,
+                correo,
+                contrasena,
+                reset_password=argumentos.reset_password,
+            )
+    except ValueError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 2
     except Exception:
         print("No se pudo guardar el usuario administrador.", file=sys.stderr)
         return 1
