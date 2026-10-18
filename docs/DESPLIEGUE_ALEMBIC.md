@@ -17,18 +17,19 @@ del repositorio. Usa una copia aislada para ensayar el procedimiento.
 - La única diferencia textual en una restricción `CHECK` era el formato de un
   cast entre `VARCHAR` y `TEXT`; la condición resultó equivalente.
 - El índice parcial único `uq_sesiones_tarea_activa` coincidía.
-- Las 18 tablas de la copia tenían RLS activado; las migraciones no lo activan.
-  La copia no tenía políticas RLS.
-- La copia no tenía `alembic_version`; la base de referencia sí, con la revisión
-  `20261016_06`.
-- `backend/alembic/env.py` rechaza una base con tablas Acadex y sin
-  `public.alembic_version` en las líneas 56–79. La comprobación se ejecuta en
-  cada operación en línea, incluida `stamp`, en las líneas 99–105.
-
-Por esas diferencias, no se ejecutó `stamp`. Antes hay que decidir y registrar
-en una migración cómo conservar el estado RLS, y revisar una forma explícita y
-protegida de permitir `stamp` después de comparar el esquema. No elimines la
-protección para permitir `upgrade` a ciegas.
+- Las 18 tablas de la copia tenían RLS activado y no tenían políticas. El equipo
+  decidió conservar RLS como configuración de Supabase, sin una migración para
+  las tablas de negocio.
+- La copia local se comparó con la referencia y se adoptó en `20261016_06`.
+  `current` mostró esa revisión; dos ejecuciones de `upgrade head` no aplicaron
+  revisiones nuevas.
+- La API local respondió en `/health/ready`; registro, login y creación de una
+  tarea sintética pasaron. El usuario local de PostgreSQL era superusuario y
+  omite RLS; la prueba no valida políticas ni permisos RLS de Supabase.
+- La guardia de `backend/alembic/env.py` solo permite adoptar con
+  `ALEMBIC_ALLOW_ADOPT_EXISTING=1`, únicamente para `stamp`, y después de
+  verificar las 18 tablas esperadas. `upgrade` sigue bloqueado en una base sin
+  historial.
 
 ## Procedimiento recomendado
 
@@ -59,24 +60,16 @@ Compara también `information_schema`, claves, restricciones `CHECK`, índices,
 ### 3. Resolver diferencias antes de marcar la revisión
 
 No uses `stamp` si hay diferencias estructurales sin resolver. Añade una
-migración revisada para normalizar el esquema, o documenta y aprueba por qué
-una diferencia pertenece solo al entorno. Haz que la migración sea repetible;
-para objetos opcionales usa formas idempotentes como `ALTER TABLE IF EXISTS`.
-
-En este proyecto, una migración que habilite RLS debe cubrir las 18 tablas
-existentes y las bases nuevas. `ALTER TABLE IF EXISTS public.<tabla> ENABLE ROW
-LEVEL SECURITY` es repetible. Debe probarse con el usuario de conexión real del
-backend: RLS sin políticas puede denegar consultas a roles que no sean dueños
-de las tablas ni tengan `BYPASSRLS`.
+migración revisada para diferencias que deban pertenecer al esquema. En este
+proyecto, RLS de las tablas de negocio se conserva como configuración propia de
+Supabase y no se agrega a Alembic.
 
 ### 4. Permitir `stamp` de forma controlada
 
-La protección actual de `backend/alembic/env.py` también bloquea `stamp` cuando
-la base tiene tablas Acadex, pero no tiene `alembic_version`. No la evadas con
-SQL manual ni retires el control para todas las operaciones. Primero se debe
-aprobar un cambio que permita `stamp` solo mediante una opción explícita y solo
-después de la comparación y aprobación del esquema. Ese cambio no forma parte
-de esta guía ni de la auditoría realizada.
+La guardia de `backend/alembic/env.py` bloquea `stamp` si falta la opción
+explícita. Solo después de comparar y aprobar el esquema, define
+`ALEMBIC_ALLOW_ADOPT_EXISTING=1` en la sesión actual de PowerShell. La variable
+no permite `upgrade`, `downgrade` ni otros comandos sobre una base sin historial.
 
 ### 5. Registrar y verificar la revisión
 
@@ -95,6 +88,19 @@ Si `upgrade head` encuentra una revisión posterior, revisa primero su SQL y el
 plan de datos; no supongas que `stamp` aplicó esas operaciones. Luego valida
 `/health/ready` y ejecuta registro, inicio de sesión y creación de tarea con
 datos de prueba sintéticos.
+
+### 6. Activar RLS en la tabla de control de Alembic
+
+Después del `stamp` en Supabase, activa RLS en la tabla de historial de Alembic:
+
+```sql
+ALTER TABLE public.alembic_version ENABLE ROW LEVEL SECURITY;
+```
+
+El comando se ejecutó correctamente en `acadex_copia`; el catálogo confirmó
+RLS activo en `public.alembic_version`. Esa prueba local usó un superusuario,
+que omite RLS. Ejecuta el comando con el rol propietario de la tabla y valida
+por separado los permisos del rol de migración de Supabase.
 
 ## Recuperación
 
