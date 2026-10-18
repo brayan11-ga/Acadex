@@ -4,10 +4,14 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 
 from app.config.settings import settings
 from app.db.base import Base
+from app.db.alembic_safety import (
+    obtener_comando_alembic,
+    validar_historial_esquema,
+)
 from app.db.session import engine
 import app.models  # noqa: F401 - registra los 18 modelos en Base.metadata
 
@@ -54,30 +58,13 @@ def _validar_destino_de_pruebas(connection) -> None:
 
 
 def _rechazar_esquema_existente_sin_historial(connection) -> None:
-    """No trata de adoptar a ciegas una base creada antes de Alembic."""
-    inspector = inspect(connection)
-    tablas_acadex = set(inspector.get_table_names(schema="public")) & set(
-        target_metadata.tables
+    """No adopta a ciegas; permite solo stamp explícito de esquema completo."""
+    validar_historial_esquema(
+        connection,
+        tablas_esperadas=set(target_metadata.tables),
+        comando=obtener_comando_alembic(config),
+        permitir_adopcion=os.getenv("ALEMBIC_ALLOW_ADOPT_EXISTING") == "1",
     )
-    tiene_tabla_version = inspector.has_table("alembic_version", schema="public")
-
-    if not tiene_tabla_version:
-        if tablas_acadex:
-            raise RuntimeError(
-                "Alembic se detuvo: public ya contiene tablas de Acadex pero no "
-                "existe public.alembic_version. Primero compare y reconcilie esa "
-                "base; no use stamp ni ejecute la revisión inicial a ciegas."
-            )
-        return
-
-    revisiones = connection.execute(
-        text("SELECT version_num FROM public.alembic_version")
-    ).scalars().all()
-    if not revisiones and tablas_acadex:
-        raise RuntimeError(
-            "Alembic se detuvo: public.alembic_version está vacío y ya hay tablas "
-            "de Acadex. Compare y reconcilie esa base antes de continuar."
-        )
 
 
 def run_migrations_offline() -> None:
