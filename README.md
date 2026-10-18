@@ -243,16 +243,17 @@ Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. 
    ```sh
    cd frontend
    corepack enable
-   pnpm install --frozen-lockfile
-   pnpm dev
+   corepack pnpm --version
+   corepack pnpm install --frozen-lockfile
+   corepack pnpm dev
    ```
 
-   Desde `frontend/`, los demás comandos disponibles son:
+   `corepack pnpm --version` debe mostrar la versión fijada por `packageManager` en `frontend/package.json` (actualmente `12.11.2`). Desde `frontend/`, los demás comandos disponibles son:
 
    ```sh
-   pnpm build
-   pnpm test --run
-   pnpm lint
+   corepack pnpm build
+   corepack pnpm test --run
+   corepack pnpm lint
    ```
 
    `build` compila TypeScript y genera el sitio; `test --run` ejecuta Vitest una vez; `lint` revisa el código con Oxlint.

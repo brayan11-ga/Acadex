@@ -2,19 +2,20 @@
 
 El flujo recomendado de instalación está en el [README raíz](../README.md). Esta guía explica qué administra Compose en PostgreSQL y cómo probar cambios sin tocar la base normal del desarrollador. El stack requiere Docker Compose v2.24.0 o superior, necesario para que `env_file.required: false` admita la ausencia de `backend/.env`.
 
-Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y pnpm 12.11.2; el archivo `frontend/package.json` declara el gestor de paquetes.
+Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y Corepack. El campo `packageManager` de `frontend/package.json` fija pnpm 12.11.2.
 
 ## Comandos del frontend con pnpm
 
-Ejecuta estos comandos desde `frontend/`. Corepack selecciona la versión de pnpm declarada en `package.json`:
+Ejecuta estos comandos desde `frontend/`. Usa Corepack para seleccionar la versión declarada en `package.json`:
 
 ```sh
 corepack enable
-pnpm install --frozen-lockfile
-pnpm dev
-pnpm build
-pnpm test --run
-pnpm lint
+corepack pnpm --version
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
+corepack pnpm build
+corepack pnpm test --run
+corepack pnpm lint
 ```
 
 `dev` inicia el servidor local; `build` genera el sitio compilado; `test --run` ejecuta todas las pruebas una vez; `lint` analiza el código sin modificarlo.
