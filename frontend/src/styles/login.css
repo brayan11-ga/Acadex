@@ -115,6 +115,29 @@ OLVIDÓ CONTRASEÑA
     text-decoration-color: var(--azure-soft);
 }
 
+.form-error,
+.form-success {
+    margin: 1rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid;
+    border-radius: var(--radius-chip);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.form-error {
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.1);
+    color: #fecaca;
+}
+
+.form-success {
+    border-color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    color: #a7f3d0;
+}
+
 /* ===========================
 BOTÓN INICIAR
 =========================== */

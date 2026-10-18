@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, TrendingUp, ListChecks, type LucideIcon } from 'lucide-react';
+import { AdminSummaryLoadingSkeleton } from '../skeletons/LoadingSkeletons';
 
 export interface ItemResumen {
   label: string;
@@ -17,11 +18,7 @@ const iconosPorDefecto: LucideIcon[] = [Users, ListChecks, TrendingUp];
 
 export const EstadisticasAdmin: React.FC<Props> = ({ titulo, items, cargando }) => {
   if (cargando) {
-    return (
-      <div className="stat-card admin-loading">
-        <p>Cargando resumen de administración...</p>
-      </div>
-    );
+    return <AdminSummaryLoadingSkeleton />;
   }
 
   return (

@@ -150,7 +150,14 @@ def actualizar_usuario(db: Session, id_usuario: int, datos: UsuarioUpdate) -> Us
         )
 
     datos_dict = datos.model_dump(exclude_unset=True)
-    return repo.update_usuario(db, usuario, datos_dict)
+    contrasena = datos_dict.pop("contrasena", None)
+    contrasena_hash = hash_password(contrasena) if contrasena is not None else None
+    return repo.update_usuario(
+        db,
+        usuario,
+        datos_dict,
+        contrasena_hash=contrasena_hash,
+    )
 
 def eliminar_usuario(db: Session, id_usuario: int) -> None:
     usuario = repo.get_usuario_by_id(db, id_usuario)

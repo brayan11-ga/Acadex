@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { MyGroups } from "../components/grupos/MyGroups";
 import { CreateGroupModal } from "../components/grupos/CreateGroupModal";
 import { JoinGroupModal } from "../components/grupos/JoinGroupModal";
+import { GroupsLoadingSkeleton } from "../components/skeletons/LoadingSkeletons";
 import {
   listarMisGrupos,
   crearGrupo,
@@ -51,7 +52,7 @@ function Grupos() {
     navigate(`/grupos/${idGrupo}/tareas`);
   };
 
-  if (cargando) return <p>Cargando grupos...</p>;
+  if (cargando) return <GroupsLoadingSkeleton />;
   if (error) return <p>{error}</p>;
 
   return (

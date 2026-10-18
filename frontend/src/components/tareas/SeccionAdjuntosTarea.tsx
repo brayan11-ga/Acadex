@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, Eye, FileImage, FileText, Paperclip, Trash2, UploadCloud, X } from "lucide-react";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
+import { AttachmentsLoadingSkeleton } from "../skeletons/LoadingSkeletons";
+import { EmptyState } from "../ui/EmptyState";
 import { adjuntosHabilitados } from "../../config/featureFlags";
 import {
   descargarArchivoTarea,
@@ -467,11 +469,18 @@ export function SeccionAdjuntosTarea({ idTarea, modo }: SeccionAdjuntosTareaProp
         {errorAdjuntos && <p className="pixel-error" role="alert">{errorAdjuntos}</p>}
         {mensaje && <p className="pixel-adjuntos-exito" role="status">{mensaje}</p>}
         {cargandoAdjuntos ? (
-          <p className="pixel-tareas-subtitle">Cargando adjuntos…</p>
-        ) : adjuntos.length === 0 ? (
-          <p className="pixel-tareas-subtitle">
-            {esEditable ? "Esta tarea aún no tiene adjuntos." : "Esta tarea no tiene adjuntos."}
-          </p>
+          <AttachmentsLoadingSkeleton />
+        ) : errorAdjuntos ? null : adjuntos.length === 0 ? (
+          <EmptyState
+            className="empty-state--compact"
+            headingLevel={4}
+            title={esEditable ? "Esta tarea aún no tiene archivos adjuntos" : "Esta tarea no tiene archivos adjuntos"}
+            description={
+              esEditable
+                ? "Puedes agregar documentos desde el área de carga."
+                : "Los archivos asociados a esta tarea aparecerán aquí."
+            }
+          />
         ) : (
           <ul className="pixel-adjuntos-lista">
             {adjuntos.map((adjunto) => (

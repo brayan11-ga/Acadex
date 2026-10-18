@@ -1,17 +1,11 @@
 // src/pages/Tareas.tsx
 import { useOutletContext } from 'react-router-dom';
 import ContenidoTareas from '../components/tareas/ContenidoTareas';
-import type { TareaBackend } from '../services/tareas';
+import type { AppLayoutContext } from '../types/AppLayoutContext';
 import '../styles/tareas.css';
 
-interface AppContext {
-  abrirModalGlobal: () => void;
-  abrirModalEditar: (tarea: TareaBackend) => void;
-  refreshKey: number;
-}
-
 function Tareas() {
-  const { abrirModalGlobal, abrirModalEditar, refreshKey } = useOutletContext<AppContext>();
+  const { abrirModalGlobal, abrirModalEditar, refreshKey } = useOutletContext<AppLayoutContext>();
 
   return (
     <div className="pixel-tareas-page">

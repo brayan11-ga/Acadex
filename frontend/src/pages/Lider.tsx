@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Navigate, useNavigate,useParams } from 'react-router-dom';
 import { listarMisGrupos, obtenerIntegrantes, expulsarIntegrante, eliminarGrupo } from '../services/grupos';import type { GrupoConRol, Integrante } from '../types/grupo';
 import { obtenerIdUsuarioActual } from '../utils/jwt';
+import { GroupMembersLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 import '../styles/group-detail.css';
 
 function Lider(){
@@ -62,7 +63,7 @@ function Lider(){
     
     console.log({ idGrupo, id, cargando, error, grupo });
     if (Number.isNaN(id)) return<Navigate to="/grupos" replace/>;
-    if (cargando) return <p>Cargando panel...</p>;
+    if (cargando) return <GroupMembersLoadingSkeleton label="Cargando el panel de líder" />;
     if (error) return <p>{error}</p>;
     if (!grupo || grupo.rol !=="lider") return <Navigate to="/grupos" replace/>;
 

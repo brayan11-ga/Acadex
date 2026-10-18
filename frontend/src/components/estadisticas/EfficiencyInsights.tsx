@@ -2,6 +2,7 @@
 import React from 'react';
 import { Lightbulb, Sparkles } from 'lucide-react';
 import type { Insight } from '../../types/estadisticas';
+import { EmptyState } from '../ui/EmptyState';
 
 interface Props {
   insights: Insight[];
@@ -21,7 +22,14 @@ export const EfficiencyInsights: React.FC<Props> = ({ insights, sugerenciaIa }) 
         </div>
 
         <div className="insights-list">
-          {insights.map((ins, idx) => (
+          {insights.length === 0 ? (
+            <EmptyState
+              className="empty-state--statistics"
+              headingLevel={4}
+              title="Aún no hay suficientes datos"
+              description="Completa algunas tareas para que Acadex pueda mostrar tendencias de eficiencia."
+            />
+          ) : insights.map((ins, idx) => (
             <div key={idx} className="insight-item">
               <div className="insight-content">
                 <h5 className="insight-item-title">{ins.titulo}</h5>
@@ -48,7 +56,12 @@ export const EfficiencyInsights: React.FC<Props> = ({ insights, sugerenciaIa }) 
               <p className="ai-desc">{sugerenciaIa.descripcion}</p>
             </div>
           ) : (
-            <p className="ai-desc">Analizando patrones de rendimiento...</p>
+            <EmptyState
+              className="empty-state--statistics"
+              headingLevel={4}
+              title="Aún no hay sugerencias"
+              description="Cuando haya suficiente actividad, aparecerán recomendaciones personalizadas."
+            />
           )}
         </div>
       </div>

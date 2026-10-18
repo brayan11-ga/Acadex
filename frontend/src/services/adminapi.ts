@@ -9,6 +9,16 @@ export function headersConToken(extra: Record<string, string> = {}): Record<stri
     };
 }
 
+export class ApiRequestError extends Error {
+    public readonly status: number;
+
+    constructor(status: number, message: string) {
+        super(message);
+        this.status = status;
+        this.name = 'ApiRequestError';
+    }
+}
+
 export async function fetchJSON<T>(path: string, options: RequestInit = {}): Promise<T | null> {
     try {
     const respuesta = await fetch(`${API_BASE_URL}${path}`, options);
@@ -37,21 +47,15 @@ export const adminApi = {
         headers: headersConToken(),
     }),
     
-    actualizar: <T>(entidad: string, id: number | string, datos: Record<string, unknown>) =>
-    fetchJSON<T>(`/${entidad}/${id}`, {
-        method: 'PUT',
-        headers: headersConToken({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(datos),
-    }),
-
-    crear: <T>(entidad: string, datos: Record<string, unknown>) =>
-    fetchJSON<T>(`/${entidad}`, {
-        method: 'POST',
-        headers: headersConToken({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(datos),
-    }),
-
-    obtenerMe: <T>() => fetchJSON<T>('/usuarios/me', { headers: headersConToken() }),
+    obtenerMe: async <T>() => {
+        const respuesta = await fetch(`${API_BASE_URL}/usuarios/me`, {
+            headers: headersConToken(),
+        });
+        if (!respuesta.ok) {
+            throw new ApiRequestError(respuesta.status, 'No se pudo verificar la sesión.');
+        }
+        return (await respuesta.json()) as T;
+    },
     resumen: <T>() => fetchJSON<T>('/admin/resumen', { headers: headersConToken() }),
 };
 

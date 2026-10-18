@@ -1,22 +1,22 @@
 from sqlalchemy import (
-    Column, Integer, String, Text, TIMESTAMP, Boolean, Float,
-    ForeignKey, CheckConstraint
+    Boolean, CheckConstraint, Column, ForeignKey, Identity, Index, Integer,
+    REAL, String, Text, TIMESTAMP, text
 )
 from app.db.base import Base
 
 class Tarea(Base):
     __tablename__ = "tareas"
 
-    id_tarea = Column(Integer, primary_key=True, index=True)
+    id_tarea = Column(Integer, Identity(always=True), primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     fecha_entrega = Column(TIMESTAMP, nullable=False)
-    estado = Column(String(50), nullable=False, default="pendiente")
+    estado = Column(String(50), nullable=False, default="pendiente", server_default=text("'pendiente'"))
     dificultad_estimada = Column(Integer, nullable=False)
     tiempo_estimado = Column(Integer, nullable=False)
     prioridad = Column(Integer, nullable=True)
-    tiempo_acumulado = Column(Float, nullable=False, default=0)
-    cronometro_activo = Column(Boolean, nullable=False, default=False)
+    tiempo_acumulado = Column(REAL, nullable=False, default=0, server_default=text("0"))
+    cronometro_activo = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     ultima_pausa = Column(TIMESTAMP, nullable=True)
 
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
@@ -32,4 +32,9 @@ class Tarea(Base):
             "(id_usuario IS NULL AND id_grupo IS NOT NULL)",
             name="chk_tarea_owner",
         ),
+        Index("idx_tareas_categoria", "id_categoria"),
+        Index("idx_tareas_fecha_entrega", "fecha_entrega"),
+        Index("idx_tareas_grupo", "id_grupo"),
+        Index("idx_tareas_nombre", "nombre"),
+        Index("idx_tareas_usuario", "id_usuario"),
     )

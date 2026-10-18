@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint, Column, Date, Integer, String
+from sqlalchemy import CheckConstraint, Column, Date, Integer, String, text
 
 from app.db.base import Base
 
@@ -11,7 +11,7 @@ class UsoAnalisisIA(Base):
     fecha_utc = Column(Date, primary_key=True)
     alcance = Column(String(10), primary_key=True)
     identificador_alcance = Column(String(64), primary_key=True)
-    cantidad = Column(Integer, nullable=False, default=0)
+    cantidad = Column(Integer, nullable=False, default=0, server_default=text("0"))
 
     __table_args__ = (
         CheckConstraint("cantidad >= 0", name="ck_uso_analisis_ia_cantidad"),

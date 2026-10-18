@@ -913,3 +913,23 @@ INSERT INTO public.categorias (nombre_categoria) VALUES
 ('Diseño UX/UI'),
 ('Matemáticas')
 ON CONFLICT (nombre_categoria) DO NOTHING;
+
+-- Consentimientos de usuario
+CREATE TABLE public.consentimientos_usuario (
+    id_consentimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    tipo_consentimiento VARCHAR(40) NOT NULL,
+    version_politica VARCHAR(30) NOT NULL,
+    fecha_aceptacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT fk_consentimientos_usuario_usuario
+        FOREIGN KEY (id_usuario)
+        REFERENCES public.usuarios(id_usuario)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_consentimientos_usuario_tipo
+        CHECK (tipo_consentimiento IN ('tratamiento_datos', 'aviso_almacenamiento')),
+    CONSTRAINT uq_consentimientos_usuario_version
+        UNIQUE (id_usuario, tipo_consentimiento, version_politica)
+);
+
+CREATE INDEX idx_consentimientos_usuario
+    ON public.consentimientos_usuario(id_usuario);

@@ -1,5 +1,6 @@
 # schema/auth.py
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
+from app.schemas.contrasena import Contrasena
 
 class LoginRequest(BaseModel):
     correo_electronico: EmailStr
@@ -21,11 +22,4 @@ class ForgotPasswordIn(BaseModel):
 
 class ResetPasswordIn(BaseModel):
     token: str
-    nueva_contrasena: str = Field(min_length=8)
-
-    @field_validator("nueva_contrasena")
-    @classmethod
-    def nueva_contrasena_no_vacia(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("La contraseña no puede estar vacía")
-        return v
+    nueva_contrasena: Contrasena

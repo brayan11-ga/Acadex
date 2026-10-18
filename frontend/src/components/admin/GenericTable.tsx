@@ -1,4 +1,6 @@
 import type { ColumnConfig } from './Types';
+import { AdminTableLoadingSkeleton } from '../skeletons/LoadingSkeletons';
+import { EmptyState } from '../ui/EmptyState';
 
 interface AccionExtra<T> {
     etiqueta: string;
@@ -11,6 +13,7 @@ interface GenericTableProps<T> {
     filas: T[];
     cargando?: boolean;
     soloLectura?: boolean;
+    emptyState?: { title: string; description: string };
     onEditar?: (fila: T) => void;
     onEliminar?: (fila: T) => void;
     accionesExtra?: AccionExtra<T>[]; // <-- nuevo
@@ -21,12 +24,30 @@ export function GenericTable<T extends Record<string, any>>({
     filas,
     cargando = false,
     soloLectura = false,
+    emptyState,
     onEditar,
     onEliminar,
     accionesExtra = [],
 }: GenericTableProps<T>) {
-    if (cargando) return <p>Cargando...</p>;
-    if (filas.length === 0) return <p>No hay registros.</p>;
+    const mostrarAcciones = !soloLectura && Boolean(onEditar || onEliminar || accionesExtra.length);
+
+    if (cargando) {
+        return (
+            <AdminTableLoadingSkeleton
+                columns={columnas.map((columna) => columna.label)}
+                hasActions={mostrarAcciones}
+            />
+        );
+    }
+    if (filas.length === 0) {
+        return (
+            <EmptyState
+                className="empty-state--compact"
+                title={emptyState?.title ?? 'Aún no hay registros'}
+                description={emptyState?.description ?? 'Cuando haya datos, aparecerán aquí.'}
+            />
+        );
+    }
 
     return (
     <table className="tabla-admin">
@@ -35,7 +56,7 @@ export function GenericTable<T extends Record<string, any>>({
             {columnas.map((col) => (
             <th key={String(col.key)}>{col.label}</th>
             ))}
-            {!soloLectura && <th>Acciones</th>}
+            {mostrarAcciones && <th>Acciones</th>}
         </tr>
         </thead>
         <tbody>
@@ -46,14 +67,14 @@ export function GenericTable<T extends Record<string, any>>({
                 {col.render ? col.render(fila) : String(fila[col.key] ?? '')}
                 </td>
             ))}
-            {!soloLectura && (
+            {mostrarAcciones && (
                 <td>
-                <button className="btn btn-secundario" onClick={() => onEditar?.(fila)}>
+                {onEditar && <button className="btn btn-secundario" onClick={() => onEditar(fila)}>
                     Editar
-                </button>
-                <button className="btn btn-peligro" onClick={() => onEliminar?.(fila)}>
+                </button>}
+                {onEliminar && <button className="btn btn-peligro" onClick={() => onEliminar(fila)}>
                     Eliminar
-                </button>
+                </button>}
                 {accionesExtra.map((accion) => (
                     <button
                     key={accion.etiqueta}

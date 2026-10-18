@@ -7,5 +7,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './test/setup.ts',
+    testTimeout: 15000,
+    env: {
+      VITE_API_URL: 'http://localhost:8000',
+    },
   },
 });

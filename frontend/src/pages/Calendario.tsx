@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { obtenerTareasCalendario, type TareaBackend } from '../services/tareas';
 import { listarCategorias, type Categoria } from '../services/categorias';
 import { ModalDetalleTarea } from '../components/tareas/ModalDetalleTarea';
+import { Skeleton, SkeletonStatus } from '../components/ui/Skeleton';
 import '../styles/calendario.css';
 
 export const Calendario: React.FC = () => {
@@ -134,7 +135,15 @@ export const Calendario: React.FC = () => {
       <header className="calendario-header">
         <h2>
           {meses[mes]} {año}{' '}
-          {cargando && <small style={{ fontSize: '0.8rem', color: '#a5b4fc' }}>(Cargando...)</small>}
+          {cargando && (
+            <SkeletonStatus
+              as="span"
+              label="Cargando las tareas del calendario"
+              className="skeleton-status--inline skeleton-calendar-status"
+            >
+              <Skeleton width="5.5rem" height="0.85rem" />
+            </SkeletonStatus>
+          )}
         </h2>
         <div className="calendario-controles">
           <button onClick={añoAnterior}>&lt;&lt; Año</button>

@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, Text, Date, func
+from sqlalchemy import Column, Date, Identity, Integer, String, Text, func
 from app.db.base import Base
 
 class Grupo(Base):
     __tablename__ = "grupos"
 
-    id_grupo = Column(Integer, primary_key=True, index=True)
+    id_grupo = Column(Integer, Identity(always=True), primary_key=True)
     nombre_grupo = Column(String(50), nullable=False)
     descripcion = Column(Text)
     codigo_acceso = Column(String(20), nullable=False, unique=True)

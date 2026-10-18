@@ -1,3 +1,5 @@
+import { EmptyState } from "../ui/EmptyState";
+
 interface TareaMini {
   id: number | string;
   fechaVencimiento: string;
@@ -8,9 +10,10 @@ interface TareaMini {
 
 interface PanelTareasRecientesProps {
   proximasTareas?: TareaMini[];
+  onCrearTarea?: () => void;
 }
 
-export const PanelTareasRecientes = ({ proximasTareas }: PanelTareasRecientesProps) => {
+export const PanelTareasRecientes = ({ proximasTareas, onCrearTarea }: PanelTareasRecientesProps) => {
   return (
     <section className="panel-grid-bottom">
       <div className="bottom-header">
@@ -19,7 +22,7 @@ export const PanelTareasRecientes = ({ proximasTareas }: PanelTareasRecientesPro
       </div>
       
       <div className="proximas-tareas-grid">
-        {proximasTareas?.map((tarea) => (
+        {proximasTareas && proximasTareas.length > 0 ? proximasTareas.map((tarea) => (
           <div key={tarea.id} className="tarjeta-mini pixel-panel">
             <div className="tarjeta-mini-top">
               <span className="tarjeta-icono">📄</span>
@@ -40,7 +43,15 @@ export const PanelTareasRecientes = ({ proximasTareas }: PanelTareasRecientesPro
               )}
             </div>
           </div>
-        ))}
+        )) : (
+          <EmptyState
+            className="empty-state--panel"
+            headingLevel={4}
+            title="No tienes tareas próximas"
+            description="Crea una tarea para empezar a organizar tus actividades."
+            action={onCrearTarea ? { label: "Crear tarea", onClick: onCrearTarea } : undefined}
+          />
+        )}
       </div>
     </section>
   );

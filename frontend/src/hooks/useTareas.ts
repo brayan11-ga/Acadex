@@ -106,6 +106,8 @@ const cancelarEliminar = () => {
     cargando, error, tareaDetalle, setTareaDetalle,
     filtroActivo, setFiltroActivo, modoVista, setModoVista,
     paginaActual, setPaginaActual, totalPaginas, tareasPaginadas, tareasPendientes,
+    totalTareas: tareas.length,
+    totalTareasFiltradas: tareasFiltradas.length,
     nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles,
     tareaAEliminar, solicitarEliminar, confirmarEliminar, cancelarEliminar
   };
