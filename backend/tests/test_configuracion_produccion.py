@@ -1,4 +1,7 @@
 import unittest
+from pathlib import Path
+
+from dotenv import dotenv_values
 
 from pydantic import ValidationError
 
@@ -20,6 +23,33 @@ class ConfiguracionProduccionTests(unittest.TestCase):
             **cambios,
         }
         return Settings(**valores)
+
+    def test_plantilla_backend_define_booleanos_validos(self):
+        plantilla = Path(__file__).resolve().parents[1] / ".env.example"
+        variables = dotenv_values(plantilla)
+        claves = {
+            "ATTACHMENTS_ENABLED": "attachments_enabled",
+            "PASSWORD_RESET_ENABLED": "password_reset_enabled",
+            "SMTP_STARTTLS": "smtp_starttls",
+        }
+
+        for nombre, atributo in claves.items():
+            with self.subTest(variable=nombre):
+                valor = variables.get(nombre, "").strip().lower()
+                self.assertIn(valor, {"true", "false"})
+
+        valores = {
+            nombre.lower(): valor
+            for nombre, valor in variables.items()
+            if valor is not None
+        }
+        configuracion = Settings(_env_file=None, **valores)
+        for nombre, atributo in claves.items():
+            with self.subTest(variable=nombre):
+                self.assertEqual(
+                    getattr(configuracion, atributo),
+                    variables[nombre].strip().lower() == "true",
+                )
 
     def test_url_postgresql_escapa_credenciales_y_expone_tls_separado(self):
         configuracion = self.crear_settings(
