@@ -1,0 +1,103 @@
+name: ${ACADEX_TEST_COMPOSE_PROJECT:-acadex-test-aca0d0aa}
+
+services:
+  db:
+    image: postgres:17.11
+    environment:
+      POSTGRES_USER: ${ACADEX_TEST_DB_USER:-acadex_test_runner}
+      POSTGRES_PASSWORD: ${ACADEX_TEST_DB_PASSWORD:-acadex_test_local_only}
+      POSTGRES_DB: acadex_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - test-only
+
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    networks:
+      - test-only
+
+  migrate:
+    build: ./backend
+    environment: &test_environment
+      APP_ENV: test
+      DB_USER: ${ACADEX_TEST_DB_USER:-acadex_test_runner}
+      DB_PASSWORD: ${ACADEX_TEST_DB_PASSWORD:-acadex_test_local_only}
+      DB_NAME: acadex_test
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_SSLMODE: disable
+      DB_SSLROOTCERT: ""
+      SECRET_KEY: acadex-test-only-signing-key-never-use-in-production-0123456789
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_STARTTLS: "false"
+      MAIL_FROM: no-reply@acadex.test
+      ATTACHMENTS_ENABLED: "true"
+      ATTACHMENTS_STORAGE_BACKEND: local
+      ACADEX_RUN_POSTGRES_TESTS: "1"
+      ACADEX_TEST_DB_NAME: acadex_test
+      ACADEX_TEST_DB_TARGET: compose
+      ACADEX_TEST_DB_HOST: db
+      ACADEX_TEST_DB_PORT: "5432"
+      ACADEX_TEST_DB_USER: ${ACADEX_TEST_DB_USER:-acadex_test_runner}
+      ACADEX_TEST_DB_PASSWORD: ${ACADEX_TEST_DB_PASSWORD:-acadex_test_local_only}
+      ACADEX_TEST_COMPOSE_PROJECT: ${ACADEX_TEST_COMPOSE_PROJECT:-acadex-test-aca0d0aa}
+      COMPOSE_PROJECT_NAME: ${ACADEX_TEST_COMPOSE_PROJECT:-acadex-test-aca0d0aa}
+      ACADEX_TEST_RUNNER_CONTEXT: isolated-compose
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - acadex-test-runner
+    networks:
+      - test-only
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+
+  integration:
+    build: ./backend
+    environment: *test_environment
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    secrets:
+      - acadex-test-runner
+    networks:
+      - test-only
+    command: ["python", "-m", "pytest", "tests/test_postgres_integration.py", "-q"]
+
+  api-tests:
+    build: ./backend
+    environment: *test_environment
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    secrets:
+      - acadex-test-runner
+    networks:
+      - test-only
+    command: ["python", "-m", "pytest", "test", "-q"]
+
+secrets:
+  acadex-test-runner:
+    file: ./backend/tests/fixtures/acadex-test-runner.marker
+
+networks:
+  test-only:
+    internal: true
