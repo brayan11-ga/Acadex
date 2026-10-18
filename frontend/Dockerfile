@@ -2,7 +2,7 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 RUN corepack enable
 RUN pnpm install --frozen-lockfile
 

@@ -1,13 +1,14 @@
 from datetime import date
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
+from app.schemas.contrasena import Contrasena
 
 class UsuarioBase(BaseModel):
     correo_electronico: EmailStr
 
 class UsuarioCreate(UsuarioBase):
     nombre_usuario: str | None = Field(default=None, min_length=1, max_length=50)
-    contrasena: str
+    contrasena: Contrasena
     acepta_tratamiento_datos: bool
     confirma_aviso_almacenamiento: bool
     sitio_web: str = ""
@@ -24,7 +25,7 @@ class UsuarioCreate(UsuarioBase):
 
 class UsuarioUpdate(BaseModel):
     correo_electronico:Optional[EmailStr]=None
-    contrasena:Optional[str]=None
+    contrasena: Contrasena | None = None
 
 class UsuarioOut(UsuarioBase):
     id_usuario: int

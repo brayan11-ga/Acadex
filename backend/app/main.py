@@ -2,33 +2,17 @@
 import logging
 
 from fastapi import FastAPI, HTTPException, status
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.router import router
-from app.db.base import Base
-from app.db.session import engine
 import app.models  # noqa
 from app.config.settings import settings
 from app.db.session import engine
 from app.services import supabase_storage
 
 settings.validar_configuracion_produccion()
-
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    yield
-
-
-api = FastAPI(title="Acadex API", lifespan=lifespan)
-
-api.include_router(router)
 
 api = FastAPI(title="Acadex API")
 

@@ -4,18 +4,11 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-acadex_dev}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-acadex_local_only}
-      POSTGRES_DB: ${DB_NAME:-acadex_dev}
+      POSTGRES_DB: ${DB_NAME:-acadex}
     ports:
       - "127.0.0.1:${ACADEX_DB_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/00_schema.sql:ro
-      - ./backend/migrations/20261011_add_archivo_uploader.sql:/docker-entrypoint-initdb.d/10_add_archivo_uploader.sql:ro
-      - ./backend/migrations/20261011_add_registration_consents.sql:/docker-entrypoint-initdb.d/20_add_registration_consents.sql:ro
-      - ./backend/migrations/20261012_add_gemini_usage_limits.sql:/docker-entrypoint-initdb.d/30_add_gemini_usage_limits.sql:ro
-      - ./backend/migrations/20261012_add_gemini_quota_lockout.sql:/docker-entrypoint-initdb.d/40_add_gemini_quota_lockout.sql:ro
-      - ./backend/migrations/20261012_add_security_guards.sql:/docker-entrypoint-initdb.d/50_add_security_guards.sql:ro
-      - ./backend/migrations:/migrations:ro
       - ./database/verify_schema.sql:/database/verify_schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
@@ -23,6 +16,28 @@ services:
       timeout: 5s
       retries: 12
       start_period: 5s
+
+  migrate:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      APP_ENV: development
+      DB_USER: ${DB_USER:-acadex_dev}
+      DB_PASSWORD: ${DB_PASSWORD:-acadex_local_only}
+      DB_NAME: ${DB_NAME:-acadex}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_SSLMODE: disable
+      DB_SSLROOTCERT: ""
+      SECRET_KEY: ${SECRET_KEY:-local-development-secret-change-this-before-use}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "-m", "alembic", "upgrade", "head"]
 
   mailpit:
     image: axllent/mailpit:v1.31.4
@@ -38,7 +53,7 @@ services:
     environment:
       DB_USER: ${DB_USER:-acadex_dev}
       DB_PASSWORD: ${DB_PASSWORD:-acadex_local_only}
-      DB_NAME: ${DB_NAME:-acadex_dev}
+      DB_NAME: ${DB_NAME:-acadex}
       DB_HOST: db
       DB_PORT: "5432"
       SECRET_KEY: ${SECRET_KEY:-local-development-secret-change-this-before-use}
@@ -47,13 +62,16 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       MAIL_FROM: ${MAIL_FROM:-no-reply@acadex.local}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${ACADEX_FRONTEND_PORT:-5173}}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${ACADEX_FRONTEND_PORT:-5173}}
       ACADEX_UPLOADS_DIR: /app/uploads/tareas
     ports:
       - "127.0.0.1:${ACADEX_API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       mailpit:
         condition: service_started
     volumes:
@@ -62,7 +80,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     stop_grace_period: 30s
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3).read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3).read()"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -71,13 +89,20 @@ services:
   frontend:
     build: ./frontend
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:${ACADEX_API_PORT:-8000}}
     ports:
-      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:${ACADEX_FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./frontend/src:/app/src
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
 
 volumes:
   pgdata:

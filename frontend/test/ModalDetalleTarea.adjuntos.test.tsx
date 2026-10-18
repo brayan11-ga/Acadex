@@ -17,6 +17,10 @@ const docxRenderer = vi.hoisted(() => ({
   render: vi.fn(),
 }));
 
+const entornoPruebas = vi.hoisted(() => ({
+  VITE_ATTACHMENTS_ENABLED: "true",
+}));
+
 vi.mock("../src/services/tareas", () => ({
   listarArchivosTarea: servicios.listar,
   subirArchivoTarea: servicios.subir,
@@ -30,6 +34,10 @@ vi.mock("../src/services/tareas", () => ({
 
 vi.mock("../src/services/categorias", () => ({
   listarCategorias: servicios.listarCategorias,
+}));
+
+vi.mock("../src/config/featureFlags", () => ({
+  adjuntosHabilitados: () => entornoPruebas.VITE_ATTACHMENTS_ENABLED === "true",
 }));
 
 vi.mock("docx-preview", () => ({
@@ -110,7 +118,7 @@ async function completarDatosDeTarea() {
 describe("adjuntos de tareas", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv("VITE_ATTACHMENTS_ENABLED", "true");
+    entornoPruebas.VITE_ATTACHMENTS_ENABLED = "true";
     servicios.listar.mockResolvedValue([adjunto]);
     servicios.subir.mockResolvedValue(adjunto);
     servicios.descargar.mockResolvedValue(new Blob(["archivo"]));
@@ -135,7 +143,7 @@ describe("adjuntos de tareas", () => {
   });
 
   it("oculta adjuntos y mantiene el análisis Gemini sin conservar el PDF", async () => {
-    vi.stubEnv("VITE_ATTACHMENTS_ENABLED", "false");
+    entornoPruebas.VITE_ATTACHMENTS_ENABLED = "false";
     renderModalDetalle();
     expect(screen.queryByRole("heading", { name: /adjuntos de la tarea/i })).not.toBeInTheDocument();
     expect(servicios.listar).not.toHaveBeenCalled();

@@ -1,6 +1,7 @@
--- ACADEX: continuar SOLO si el esquema base ya existe en public.
--- Comprueba public.archivos y public.usuarios antes de ejecutar.
--- NO ejecutar sobre una base con datos de ACADEX.
+-- HISTORICO: antiguo bloque manual de migraciones para Supabase.
+-- No ejecutar como flujo vigente: no registra public.alembic_version y tambien
+-- habilita RLS. La transicion de bases existentes y la seguridad RLS requieren
+-- una comparacion y autorizacion separadas. Se conserva para auditoria.
 SET search_path TO public;
 
 -- ===== Migracion 20261011_add_archivo_uploader.sql =====

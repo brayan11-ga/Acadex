@@ -9,6 +9,13 @@ export function headersConToken(extra: Record<string, string> = {}): Record<stri
     };
 }
 
+export class ApiRequestError extends Error {
+    constructor(public readonly status: number, message: string) {
+        super(message);
+        this.name = 'ApiRequestError';
+    }
+}
+
 export async function fetchJSON<T>(path: string, options: RequestInit = {}): Promise<T | null> {
     try {
     const respuesta = await fetch(`${API_BASE_URL}${path}`, options);
@@ -51,7 +58,15 @@ export const adminApi = {
         body: JSON.stringify(datos),
     }),
 
-    obtenerMe: <T>() => fetchJSON<T>('/usuarios/me', { headers: headersConToken() }),
+    obtenerMe: async <T>() => {
+        const respuesta = await fetch(`${API_BASE_URL}/usuarios/me`, {
+            headers: headersConToken(),
+        });
+        if (!respuesta.ok) {
+            throw new ApiRequestError(respuesta.status, 'No se pudo verificar la sesión.');
+        }
+        return (await respuesta.json()) as T;
+    },
     resumen: <T>() => fetchJSON<T>('/admin/resumen', { headers: headersConToken() }),
 };
 

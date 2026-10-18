@@ -37,4 +37,10 @@ class ConsentimientoUsuario(Base):
             "version_politica",
             name="uq_consentimientos_usuario_version",
         ),
+        {
+            "comment": (
+                "Evidencia versionada de autorización de tratamiento de datos y "
+                "lectura del aviso de almacenamiento local."
+            )
+        },
     )

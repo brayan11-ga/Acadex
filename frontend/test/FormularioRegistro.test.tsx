@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, test, vi } from 'vitest';
 import { FormularioRegistro } from '../src/components/register/Formularioregister';
+import { LONGITUD_MINIMA_CONTRASENA } from '../src/utils/contrasena';
 
 import { registrarUsuario } from '../src/services/authService';
 
@@ -95,6 +96,28 @@ describe('CP-2 - Registro de usuario', () => {
     expect(registrarUsuario).not.toHaveBeenCalled();
   });
 
+  test('acepta una contraseña de exactamente ocho caracteres', async () => {
+    const user = userEvent.setup();
+    vi.clearAllMocks();
+    vi.mocked(registrarUsuario).mockResolvedValue({
+      id_usuario: 1,
+      correo_electronico: 'prueba@acadex.com',
+    });
+    const password = 'x'.repeat(LONGITUD_MINIMA_CONTRASENA);
+
+    render(<MemoryRouter><FormularioRegistro /></MemoryRouter>);
+    await user.type(screen.getByLabelText('Correo electrónico'), 'prueba@acadex.com');
+    await user.type(screen.getByLabelText('Nombre de usuario'), 'Usuario Prueba');
+    await user.type(screen.getByLabelText('Contraseña'), password);
+    await user.type(screen.getByLabelText('Confirmar contraseña'), password);
+    await completarConsentimientos(user);
+    await user.click(screen.getByRole('button', { name: 'Registrarse' }));
+
+    expect(registrarUsuario).toHaveBeenCalledWith(
+      'prueba@acadex.com', 'Usuario Prueba', password, true, true, ''
+    );
+  });
+
   test('muestra un error cuando el correo ya está registrado', async () => {
     const user = userEvent.setup();
     vi.clearAllMocks();
@@ -108,7 +131,9 @@ describe('CP-2 - Registro de usuario', () => {
     await completarConsentimientos(user);
     await user.click(screen.getByRole('button', { name: 'Registrarse' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('El correo ya está registrado');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Este correo ya tiene una cuenta. Inicia sesión o recupera tu contraseña.',
+    );
     expect(registrarUsuario).toHaveBeenCalledWith(
       'usuario@existente.com', 'Usuario Existente', 'Prueba123', true, true, ''
     );

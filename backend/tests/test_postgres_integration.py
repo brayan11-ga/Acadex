@@ -1,12 +1,13 @@
-"""Pruebas optativas con PostgreSQL en una base cuyo nombre incluye "test".
+"""Pruebas optativas que solo se habilitarán desde un runner aislado de Compose.
 
-La suite crea un esquema temporal con nombre aleatorio y solo lo elimina a él.
-Para habilitarla, definir ACADEX_RUN_POSTGRES_TESTS=1 y configurar las variables
-DB_* para una base aislada como acadex_test.
+La configuración test-only y el marcador operativo se validan antes de importar
+la aplicación o SQLAlchemy. El Compose actual no proporciona ese marcador, por
+lo que esta integración permanece bloqueada hasta implementar el runner aislado.
 """
 
 import io
 import os
+import sys
 import tempfile
 import unittest
 import uuid
@@ -14,28 +15,88 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi import HTTPException, UploadFile
-from sqlalchemy import DateTime, Integer, String, create_engine, event, inspect, text
-from sqlalchemy.orm import Session
-from starlette.datastructures import Headers
-
-from app.db.base import Base
-import app.models  # noqa: F401 - registra todos los modelos en metadata
-from app.models.archivo import Archivo
-from app.models.asignacion_tarea import AsignacionTarea
-from app.models.categoria import Categoria
-from app.models.consentimiento_usuario import ConsentimientoUsuario
-from app.models.grupo import Grupo
-from app.models.integrante import Integrante
-from app.models.perfil import Perfil
-from app.models.tarea import Tarea
-from app.models.usuario import Usuario
-from app.services import archivo_service, usuario_service
-from app.config.settings import settings
-from app.core.legal import VERSION_AVISO_ALMACENAMIENTO, VERSION_POLITICA_DATOS
+from app.testing.postgres_safety import (
+    TEST_RUNNER_MARKER_PATH,
+    UnsafeTestDatabaseError,
+    crear_engine_pruebas,
+    crear_esquema_pruebas,
+    eliminar_esquema_pruebas,
+    proyectar_configuracion_pruebas_backend,
+    validar_configuracion_pruebas,
+    validar_runner_compose_aislado,
+)
 
 
 _EJECUTAR = os.getenv("ACADEX_RUN_POSTGRES_TESTS") == "1"
+_TEST_CONFIG = None
+
+if _EJECUTAR:
+    _CONFIGURACION_PRECARGADA = {
+        "app.config.settings",
+        "app.db.session",
+        "app.main",
+    }.intersection(sys.modules)
+    if _CONFIGURACION_PRECARGADA:
+        raise UnsafeTestDatabaseError(
+            "Ejecuta la integración PostgreSQL en un proceso de pruebas dedicado; "
+            "ya se cargaron módulos de configuración o sesión del backend."
+        )
+
+    # Estas guardas deben preceder a cualquier import que pueda construir el
+    # engine global de app.db.session.
+    _TEST_CONFIG = validar_configuracion_pruebas(os.environ)
+    _EN_CONTENEDOR = Path("/.dockerenv").is_file()
+    _MARCADOR_AISLAMIENTO = Path(TEST_RUNNER_MARKER_PATH).is_file()
+    validar_runner_compose_aislado(
+        os.environ,
+        en_contenedor=_EN_CONTENEDOR,
+        marcador_aislamiento_presente=_MARCADOR_AISLAMIENTO,
+    )
+    proyectar_configuracion_pruebas_backend(_TEST_CONFIG, os.environ)
+
+    from fastapi import HTTPException, UploadFile
+    from sqlalchemy import DateTime, Integer, String, create_engine, event, inspect, text
+    from sqlalchemy.engine import URL
+    from sqlalchemy.orm import Session
+    from starlette.datastructures import Headers
+
+    from app.db.base import Base
+    import app.models  # noqa: F401 - registra todos los modelos en metadata
+    from app.models.archivo import Archivo
+    from app.models.asignacion_tarea import AsignacionTarea
+    from app.models.categoria import Categoria
+    from app.models.consentimiento_usuario import ConsentimientoUsuario
+    from app.models.grupo import Grupo
+    from app.models.integrante import Integrante
+    from app.models.perfil import Perfil
+    from app.models.tarea import Tarea
+    from app.models.usuario import Usuario
+    from app.services import archivo_service, usuario_service
+    from app.core.legal import VERSION_AVISO_ALMACENAMIENTO, VERSION_POLITICA_DATOS
+
+
+def _crear_engine_sqlalchemy(config, **options):
+    """Construye la URL solo con credenciales de pruebas ya validadas."""
+    return create_engine(
+        URL.create(
+            "postgresql+psycopg2",
+            username=config.username,
+            password=config.password,
+            host=config.host,
+            port=config.port,
+            database=config.database,
+        ),
+        **options,
+    )
+
+
+def _crear_engine_postgres_pruebas(**options):
+    return crear_engine_pruebas(
+        os.environ,
+        lambda config: _crear_engine_sqlalchemy(config, **options),
+        en_contenedor=Path("/.dockerenv").is_file(),
+        marcador_aislamiento_presente=Path(TEST_RUNNER_MARKER_PATH).is_file(),
+    )
 
 
 @unittest.skipUnless(
@@ -44,38 +105,109 @@ _EJECUTAR = os.getenv("ACADEX_RUN_POSTGRES_TESTS") == "1"
 )
 class PostgreSQLIntegracionTests(unittest.TestCase):
     def setUp(self):
-        self.admin_engine = create_engine(settings.database_url)
-        with self.admin_engine.connect() as connection:
-            database_name = connection.execute(text("SELECT current_database()")).scalar_one()
-        if "test" not in database_name.lower():
-            self.admin_engine.dispose()
-            self.fail(
-                "Pruebas bloqueadas: la base indicada no contiene 'test' en su nombre. "
-                "Usa una base aislada, por ejemplo acadex_test."
-            )
-
+        self.admin_engine = _crear_engine_postgres_pruebas()
         self.schema_name = f"acadex_test_{uuid.uuid4().hex}"
-        with self.admin_engine.begin() as connection:
-            connection.execute(text(f'CREATE SCHEMA "{self.schema_name}"'))
+        try:
+            crear_esquema_pruebas(
+                self.admin_engine,
+                self.schema_name,
+                configured_database=_TEST_CONFIG.database,
+                expected_database=_TEST_CONFIG.database,
+                run_postgres_tests=os.getenv("ACADEX_RUN_POSTGRES_TESTS"),
+            )
+        except Exception:
+            self.admin_engine.dispose()
+            raise
 
-        self.engine = create_engine(
-            settings.database_url,
+        self.engine = _crear_engine_postgres_pruebas(
             connect_args={"options": f"-c search_path={self.schema_name}"},
         )
         try:
             Base.metadata.create_all(self.engine)
         except Exception:
             self.engine.dispose()
-            with self.admin_engine.begin() as connection:
-                connection.execute(text(f'DROP SCHEMA "{self.schema_name}" CASCADE'))
+            eliminar_esquema_pruebas(
+                self.admin_engine,
+                self.schema_name,
+                configured_database=_TEST_CONFIG.database,
+                expected_database=_TEST_CONFIG.database,
+                run_postgres_tests=os.getenv("ACADEX_RUN_POSTGRES_TESTS"),
+            )
             self.admin_engine.dispose()
             raise
 
     def tearDown(self):
         self.engine.dispose()
-        with self.admin_engine.begin() as connection:
-            connection.execute(text(f'DROP SCHEMA "{self.schema_name}" CASCADE'))
+        eliminar_esquema_pruebas(
+            self.admin_engine,
+            self.schema_name,
+            configured_database=_TEST_CONFIG.database,
+            expected_database=_TEST_CONFIG.database,
+            run_postgres_tests=os.getenv("ACADEX_RUN_POSTGRES_TESTS"),
+        )
         self.admin_engine.dispose()
+
+    def test_historia_alembic_y_esquema_publico_coinciden_con_modelos(self):
+        inspector = inspect(self.admin_engine)
+        tablas_modelo = set(Base.metadata.tables)
+        tablas_publicas = set(inspector.get_table_names(schema="public"))
+
+        self.assertEqual(len(tablas_modelo), 18)
+        self.assertEqual(tablas_publicas - {"alembic_version"}, tablas_modelo)
+        with self.admin_engine.connect() as connection:
+            revisiones = connection.execute(
+                text("SELECT version_num FROM public.alembic_version")
+            ).scalars().all()
+            categorias_iniciales = connection.execute(
+                text("SELECT count(*) FROM public.categorias")
+            ).scalar_one()
+        self.assertEqual(revisiones, ["20261016_06"])
+        self.assertEqual(categorias_iniciales, 9)
+
+        dialect = self.admin_engine.dialect
+        for table_name, expected_table in Base.metadata.tables.items():
+            with self.subTest(table=table_name):
+                actual_columns = {
+                    column["name"]: column
+                    for column in inspector.get_columns(table_name, schema="public")
+                }
+                self.assertEqual(set(actual_columns), set(expected_table.columns.keys()))
+
+                for expected_column in expected_table.columns:
+                    actual_column = actual_columns[expected_column.name]
+                    self.assertEqual(actual_column["nullable"], expected_column.nullable)
+                    self.assertEqual(
+                        actual_column["type"].compile(dialect=dialect).upper(),
+                        expected_column.type.compile(dialect=dialect).upper(),
+                    )
+                    self.assertEqual(
+                        actual_column.get("identity") is not None,
+                        expected_column.identity is not None,
+                    )
+                    if expected_column.identity is not None:
+                        self.assertEqual(
+                            actual_column["identity"].get("always"),
+                            expected_column.identity.always,
+                        )
+                    self.assertEqual(
+                        actual_column.get("default") is not None,
+                        expected_column.server_default is not None
+                        and expected_column.identity is None,
+                    )
+
+                expected_index_names = {index.name for index in expected_table.indexes}
+                actual_indexes = {
+                    index["name"]: index
+                    for index in inspector.get_indexes(table_name, schema="public")
+                }
+                self.assertTrue(expected_index_names.issubset(actual_indexes))
+                for expected_index in expected_table.indexes:
+                    actual_index = actual_indexes[expected_index.name]
+                    self.assertEqual(
+                        actual_index["column_names"],
+                        [column.name for column in expected_index.columns],
+                    )
+                    self.assertEqual(actual_index["unique"], expected_index.unique)
 
     def test_esquema_publico_inicializado_coincide_con_modelos_y_migraciones(self):
         inspector = inspect(self.admin_engine)
