@@ -1,3 +1,4 @@
+# Ruta: backend/tests/test_ia_service.py
 import json
 import unittest
 from datetime import datetime, timezone
@@ -36,8 +37,8 @@ class ServicioGeminiTests(unittest.TestCase):
         return cliente
 
     def _respuesta_valida(self, id_categoria=7):
-        return SimpleNamespace(
-            text=json.dumps(
+        return self._respuesta_con_texto(
+            json.dumps(
                 {
                     "titulo": "Taller de ciencias",
                     "descripcion": "Resolver los ejercicios del documento.",
@@ -47,6 +48,64 @@ class ServicioGeminiTests(unittest.TestCase):
                 }
             )
         )
+
+    def _respuesta_con_texto(
+        self, texto, finish_reason=ia_service.types.FinishReason.STOP
+    ):
+        return SimpleNamespace(
+            text=texto,
+            candidates=[SimpleNamespace(finish_reason=finish_reason)],
+        )
+
+    def test_respuesta_vacia_con_max_tokens_es_error_controlado(self):
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto(
+                "", ia_service.types.FinishReason.MAX_TOKENS
+            )
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            with self.assertRaises(HTTPException) as error:
+                ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(error.exception.status_code, 502)
+        self.assertIn("incompleta", error.exception.detail.lower())
+
+    def test_json_cortado_por_max_tokens_es_error_controlado(self):
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto(
+                '{"titulo":"Taller de ciencias",',
+                ia_service.types.FinishReason.MAX_TOKENS,
+            )
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            with self.assertRaises(HTTPException) as error:
+                ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(error.exception.status_code, 502)
+        self.assertIn("incompleta", error.exception.detail.lower())
+
+    def test_json_completo_en_bloque_json_se_analiza(self):
+        contenido = self._respuesta_valida().text
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto(f"```json\n{contenido}\n```")
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        self.assertEqual(propuesta.id_categoria, 7)
 
     def test_envia_una_solicitud_estructurada_y_valida_la_categoria(self):
         cliente = self._cliente_falso(self._respuesta_valida())
@@ -74,7 +133,7 @@ class ServicioGeminiTests(unittest.TestCase):
             solicitud["config"].response_json_schema,
             ia_service.ESQUEMA_PROPUESTA_IA,
         )
-        self.assertEqual(solicitud["config"].max_output_tokens, 512)
+        self.assertEqual(solicitud["config"].max_output_tokens, 1024)
 
     def test_categoria_inventada_se_descarta(self):
         cliente = self._cliente_falso(self._respuesta_valida(id_categoria=9999))
@@ -118,6 +177,36 @@ class ServicioGeminiTests(unittest.TestCase):
 
         self.assertEqual(error.exception.status_code, 503)
         self.assertNotIn("texto privado del proveedor", "\n".join(logs.output))
+
+    def test_log_registra_metadatos_sin_contenido_del_pdf_ni_respuesta(self):
+        texto_pdf_privado = "PDF_PRIVADO_NO_DEBE_APARECER"
+        texto_respuesta_privado = "RESPUESTA_PRIVADA_NO_DEBE_APARECER"
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto(
+                texto_respuesta_privado,
+                ia_service.types.FinishReason.MAX_TOKENS,
+            )
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value=texto_pdf_privado),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            with self.assertLogs("app.services.ia_service", level="WARNING") as logs:
+                with self.assertRaises(HTTPException) as error:
+                    ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        salida_log = "\n".join(logs.output)
+        self.assertEqual(error.exception.status_code, 502)
+        self.assertIn("tipo_excepcion=RespuestaGeminiIncompletaError", salida_log)
+        self.assertIn("codigo_gemini=no_disponible", salida_log)
+        self.assertIn("finish_reason=MAX_TOKENS", salida_log)
+        self.assertIn(
+            f"longitud_respuesta={len(texto_respuesta_privado)}", salida_log
+        )
+        self.assertNotIn(texto_pdf_privado, salida_log)
+        self.assertNotIn(texto_respuesta_privado, salida_log)
+        self.assertNotIn("clave-sintetica", salida_log)
 
     def test_clave_ausente_no_llama_a_google_ni_consumo_cupo(self):
         with (
