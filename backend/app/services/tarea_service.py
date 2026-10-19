@@ -10,7 +10,7 @@ from app.schemas.tarea import TareaCreate, TareaUpdate
 from app.repositories import asignacion_tarea_repository, grupo_repository
 from app.schemas.tarea import TareaGrupalCreate
 from app.models.usuario import Usuario
-from app.services import archivo_service
+from app.services import archivo_service, prioridad_service
 
 
 def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:
@@ -29,7 +29,13 @@ def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bo
                 detail="No tienes permiso para crear tareas en este grupo.",
             )
         datos_seguridad = datos.model_copy(update={"id_usuario": None})
-    return tarea_repository.crear_tarea(db, datos_seguridad, commit=commit)
+        tarea=tarea_repository.crear_tarea(db, datos_seguridad, commit=False)
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
+        if commit:
+            db.commit()
+            db.refresh(tarea)
+    return tarea
 
 
 def crear_tarea_con_pdf(
@@ -133,6 +139,10 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                 id_usuario_historial,
                 tarea_actualizada.id_categoria,
                 commit=False,
+            )
+            
+            prioridad_service.recalcular_pendientes(
+                db,tarea_actualizada.id_categoria, tarea_actualizada.id_usuario, tarea_actualizada.id_grupo,
             )
 
         # Reabrir conserva el historial como evidencia de una finalización
