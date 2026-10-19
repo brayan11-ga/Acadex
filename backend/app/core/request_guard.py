@@ -106,7 +106,7 @@ def limitar_solicitudes(
         raise
     except (SQLAlchemyError, RuntimeError):
         db.rollback()
-        logger.warning("No se pudo aplicar el límite temporal de solicitudes")
+        logger.warning("No se pudo aplicar el límite temporal de solicitudes", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="La protección temporal no está disponible.",
