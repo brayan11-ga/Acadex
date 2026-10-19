@@ -133,7 +133,7 @@ class ServicioGeminiTests(unittest.TestCase):
             solicitud["config"].response_json_schema,
             ia_service.ESQUEMA_PROPUESTA_IA,
         )
-        self.assertEqual(solicitud["config"].max_output_tokens, 512)
+        self.assertEqual(solicitud["config"].max_output_tokens, 1024)
 
     def test_categoria_inventada_se_descarta(self):
         cliente = self._cliente_falso(self._respuesta_valida(id_categoria=9999))
