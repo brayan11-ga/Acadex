@@ -293,6 +293,43 @@ class FlujoAdjuntosTests(unittest.TestCase):
             self.assertTrue(respuesta["puede_eliminar"])
             self.assertNotIn("ruta", respuesta)
 
+    def test_rechaza_subida_cuando_alcanza_maximo_de_archivos(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
+            raiz = Path(directorio)
+            tarea = SimpleNamespace(
+                id_usuario=12, id_grupo=None, nombre="Lectura", max_archivos=2
+            )
+            db = Mock()
+            with (
+                patch.object(archivo_service, "DIRECTORIO_BASE_UPLOADS", raiz),
+                patch.object(
+                    archivo_service.tarea_repository,
+                    "obtener_tarea_por_id",
+                    return_value=tarea,
+                ),
+                patch.object(
+                    archivo_service.archivo_repository,
+                    "contar_archivos_de_tarea",
+                    return_value=2,
+                ) as contar,
+                patch.object(
+                    archivo_service.archivo_repository, "crear_archivo"
+                ) as crear,
+            ):
+                with self.assertRaises(HTTPException) as error:
+                    archivo_service.subir_archivo_tarea(
+                        db,
+                        4,
+                        crear_upload("guia.pdf", b"%PDF-1.7 test", "application/pdf"),
+                        12,
+                    )
+
+            self.assertEqual(error.exception.status_code, 409)
+            self.assertIn("máximo de 2 archivos", error.exception.detail)
+            contar.assert_called_once_with(db, 4)
+            crear.assert_not_called()
+            self.assertEqual(list(raiz.rglob("*.pdf")), [])
+
     def test_fallo_al_guardar_metadatos_compensa_el_binario(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
             raiz = Path(directorio)
