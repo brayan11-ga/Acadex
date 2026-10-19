@@ -31,6 +31,57 @@ del repositorio. Usa una copia aislada para ensayar el procedimiento.
   verificar las 18 tablas esperadas. `upgrade` sigue bloqueado en una base sin
   historial.
 
+## Aplicar migraciones nuevas en producción
+
+Sigue este orden. No despliegues código que necesite una columna nueva hasta
+que la migración y sus verificaciones hayan terminado.
+
+### 1. Crear y comprobar un respaldo
+
+Guarda un respaldo recuperable fuera del repositorio y con acceso restringido.
+Comprueba que el archivo exista y ensaya su restauración en una base aislada.
+No guardes el respaldo ni datos personales en Git.
+
+### 2. Ensayar en una copia
+
+Usa una copia restaurada con la misma versión principal de PostgreSQL que
+producción. Monta el respaldo en solo lectura, restaura con
+`pg_restore --no-owner --no-privileges` y confirma primero la revisión actual.
+Ejecuta `alembic upgrade head`, revisa esquema y conteos permitidos, y repite
+`upgrade head` para confirmar que no quedan cambios pendientes. Compara tablas,
+columnas, restricciones e índices contra una base vacía migrada a `head`.
+No consultes filas personales.
+
+### 3. Aplicar la migración
+
+Verifica por un canal seguro que la conexión apunta a la base de producción
+aprobada y que el respaldo está disponible. Ejecuta `alembic upgrade head` una
+sola vez desde un proceso de migración controlado. No inicies esa migración en
+cada worker de la API.
+
+### 4. Verificar el resultado
+
+Confirma que `alembic current` muestra `head`. Comprueba las columnas,
+restricciones y conteos definidos para la migración; detente si algo difiere
+del ensayo. Revisa también la disponibilidad de la API y una operación
+sintética segura antes de desplegar el código nuevo.
+
+### 5. Desplegar el backend
+
+Despliega el backend que requiere el esquema nuevo solo después de completar
+la migración y las verificaciones. Observa el estado de salud y los errores de
+la aplicación tras el despliegue. Conserva el respaldo hasta confirmar la
+estabilidad.
+
+En `20261018_01`, PostgreSQL 17 puede añadir la columna `max_archivos` con un
+valor constante por metadatos, sin reescribir toda la tabla. Validar la nueva
+restricción `CHECK` sí requiere recorrer las filas existentes y puede bloquear
+operaciones sobre `tareas` mientras se aplica el `ALTER TABLE`. El tiempo real
+depende del tamaño de la tabla, la carga y las transacciones activas; mídelo en
+el ensayo, no lo supongas. Consulta la documentación de PostgreSQL 17 sobre
+[`ALTER TABLE`](https://www.postgresql.org/docs/17/sql-altertable.html) y
+[modificación de tablas](https://www.postgresql.org/docs/17/ddl-alter.html).
+
 ## Procedimiento recomendado
 
 ### 1. Crear un respaldo recuperable
