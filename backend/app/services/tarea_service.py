@@ -1,3 +1,4 @@
+# Ruta: backend/app/services/tarea_service.py
 from datetime import date, datetime
 from typing import List, Optional
 from fastapi import HTTPException, UploadFile, status
@@ -245,17 +246,9 @@ def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[
     return tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
 
 def listar_asignados_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[Usuario]:
+    # obtener_tarea ya valida el acceso: dueño en las individuales y miembro del grupo
+    # en las grupales. Cualquier miembro del grupo puede ver los asignados (RF-045).
     tarea = obtener_tarea(db, id_tarea, id_usuario)
-    if tarea.id_grupo is not None:
-        es_lider = _es_lider(db, id_usuario, tarea.id_grupo)
-        es_asignado = asignacion_tarea_repository.usuario_tiene_asignacion(
-            db, tarea.id_tarea, id_usuario
-        )
-        if not es_lider and not es_asignado:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="No tienes permiso para consultar las asignaciones de esta tarea.",
-            )
     return asignacion_tarea_repository.obtener_usuarios_asignados(db, tarea.id_tarea)
 
 def verificar_permiso_tarea(
