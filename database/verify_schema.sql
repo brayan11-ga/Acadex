@@ -52,4 +52,13 @@ SELECT
         WHERE indexrelid = to_regclass('public.uq_sesiones_tarea_activa')
           AND indisunique
           AND pg_get_expr(indpred, indrelid) = '(fecha_fin IS NULL)'
-    ) AS unicidad_sesion_activa_por_tarea;
+    ) AS unicidad_sesion_activa_por_tarea,
+    EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'tareas'
+          AND column_name = 'max_archivos'
+          AND data_type = 'integer'
+          AND is_nullable = 'NO'
+          AND column_default = '10'
+    ) AS max_archivos_tarea;

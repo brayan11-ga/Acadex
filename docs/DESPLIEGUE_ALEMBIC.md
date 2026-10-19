@@ -11,7 +11,7 @@ del repositorio. Usa una copia aislada para ensayar el procedimiento.
 
 ## Estado comprobado del proyecto
 
-- La revisión `head` actual es `20261016_06`.
+- La revisión `head` actual es `20261018_01` (la adopción inicial de la copia se registró en `20261016_06`).
 - La copia restaurada tenía las mismas 18 tablas, 110 columnas, 72
   restricciones y 43 índices que una base nueva creada con las migraciones.
 - La única diferencia textual en una restricción `CHECK` era el formato de un

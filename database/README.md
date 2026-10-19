@@ -29,7 +29,7 @@ pnpm lint
 - `database/seed.sql` fue eliminado porque pertenecía a una estructura antigua y contenía una contraseña fija. No cargues administradores desde SQL.
 - `backend/app/db/init.sql`: archivo vacío que no participa en el arranque.
 
-La secuencia vigente se aplica con `alembic upgrade head`, en el orden de las seis revisiones versionadas bajo `backend/alembic/versions/`. La base PostgreSQL desechable de pruebas llega a `head` antes de ejecutar las pruebas de integración.
+La secuencia vigente se aplica con `alembic upgrade head`, en el orden de las siete revisiones versionadas bajo `backend/alembic/versions/`. La base PostgreSQL desechable de pruebas llega a `head` antes de ejecutar las pruebas de integración.
 
 Las bases que ya tienen tablas pero todavía no tienen `public.alembic_version` no se adoptan automáticamente. `env.py` detecta ese caso y aborta antes de ejecutar DDL. La base local persistente de Docker `acadex_dev` sí fue respaldada y comparada antes de registrar `20261016_03`; después se aplicaron las revisiones hasta `20261016_06`. Se verificaron 18 tablas funcionales, las nueve categorías originales y que `alembic check` no encontrara operaciones pendientes. Este resultado corresponde solo a Docker local; no confirma el PostgreSQL instalado en Windows ni las bases auxiliares. Supabase no se ha reconciliado ni migrado con Alembic. Antes de cualquier cambio en una base existente, confirma su identidad, compara esquema e historial y prepara un respaldo; en Supabase también se requiere una revisión separada de las políticas RLS. No ejecutes `stamp`, `upgrade` ni SQL a ciegas.
 

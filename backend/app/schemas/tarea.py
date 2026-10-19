@@ -3,6 +3,11 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 from typing import List
 
+from app.config.settings import (
+    MAX_ARCHIVOS_POR_TAREA,
+    MAX_ARCHIVOS_POR_TAREA_DEFECTO,
+)
+
 class TareaBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
@@ -50,6 +55,7 @@ class TareaUpdate(BaseModel):
     tiempo_estimado: Optional[int] = None
     prioridad: Optional[int] = None
     id_categoria: Optional[int] = None
+    max_archivos: Optional[int] = Field(default=None, ge=1)
 
 class TareaResponse(TareaBase):
     id_tarea: int
@@ -58,6 +64,8 @@ class TareaResponse(TareaBase):
     cronometro_activo: bool
     id_usuario: Optional[int] = None
     id_grupo: Optional[int] = None
+    max_archivos: int
+    total_archivos: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,6 +77,9 @@ class TareaGrupalCreate(BaseModel):
     tiempo_estimado: int
     id_categoria: int
     ids_usuarios: List[int] = Field(default_factory=list)
+    max_archivos: int = Field(
+        default=MAX_ARCHIVOS_POR_TAREA_DEFECTO, ge=1, le=MAX_ARCHIVOS_POR_TAREA
+    )
 
 class IntegranteAsignadoResponse(BaseModel):
     id_usuario: int

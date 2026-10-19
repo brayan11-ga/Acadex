@@ -391,6 +391,12 @@ def subir_archivo_tarea(
 ) -> dict:
     _exigir_adjuntos_habilitados()
     tarea = _autorizacion_tarea(db, id_tarea, id_usuario)
+    total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
+    if total_archivos >= tarea.max_archivos:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Esta tarea ya alcanzó el máximo de {tarea.max_archivos} archivos.",
+        )
     nombre, tipo, tamano = _validar_archivo(archivo)
     extension = Path(nombre).suffix.lower()
     ruta_fisica: Path | None = None

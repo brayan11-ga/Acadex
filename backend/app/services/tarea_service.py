@@ -8,7 +8,9 @@ from app.models.historial_tarea import HistorialTarea
 from app.repositories import tarea_repository
 from app.schemas.tarea import TareaCreate, TareaUpdate
 from app.repositories import asignacion_tarea_repository, grupo_repository
+from app.repositories import archivo_repository
 from app.schemas.tarea import TareaGrupalCreate
+from app.config.settings import MAX_ARCHIVOS_POR_TAREA
 from app.models.usuario import Usuario
 from app.services import archivo_service
 
@@ -79,10 +81,26 @@ def obtener_tarea(db: Session, id_tarea: int, id_usuario: int) -> Tarea:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para acceder a esta tarea.",
         )
+    if db is not None:
+        tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, tarea.id_tarea)
     return tarea
 
+def _adjuntar_total_archivos(db: Session, tareas: List[Tarea]) -> List[Tarea]:
+    # Una sola consulta agrupada rellena total_archivos en todas las tareas (sin N+1).
+    if db is None or not tareas:
+        return tareas
+    conteos = archivo_repository.obtener_conteo_archivos_por_tareas(
+        db, [tarea.id_tarea for tarea in tareas]
+    )
+    for tarea in tareas:
+        tarea.total_archivos = conteos.get(tarea.id_tarea, 0)
+    return tareas
+
+
 def listar_tareas(db: Session, id_usuario: int) -> List[Tarea]:
-    return tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(
+        db, tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    )
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario: int) -> Tarea:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
@@ -95,6 +113,27 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para modificar esta tarea.",
+            )
+    if cambios.get("max_archivos") is not None:
+        nuevo_max = cambios["max_archivos"]
+        if tarea.id_grupo is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Las tareas individuales no permiten definir un máximo de archivos.",
+            )
+        if nuevo_max > MAX_ARCHIVOS_POR_TAREA:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El máximo permitido por el sistema es {MAX_ARCHIVOS_POR_TAREA}.",
+            )
+        total_actual = archivo_repository.contar_archivos_de_tarea(db, tarea.id_tarea)
+        if nuevo_max < total_actual:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"No puedes fijar el máximo en {nuevo_max}: "
+                    f"la tarea ya tiene {total_actual} archivos."
+                ),
             )
     estado_anterior = tarea.estado
 
@@ -184,8 +223,11 @@ def listar_tareas_calendario(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para consultar las tareas de este grupo.",
         )
-    return tarea_repository.obtener_tareas_por_rango(
-        db, desde, hasta, id_usuario_actual, id_grupo
+    return _adjuntar_total_archivos(
+        db,
+        tarea_repository.obtener_tareas_por_rango(
+            db, desde, hasta, id_usuario_actual, id_grupo
+        ),
     )
 
 def crear_tarea_grupal(
@@ -220,7 +262,9 @@ def crear_tarea_grupal(
         id_grupo=id_grupo,
     )
     try:
-        tarea = tarea_repository.crear_tarea(db, tarea_datos, commit=False)
+        tarea = tarea_repository.crear_tarea(
+            db, tarea_datos, commit=False, max_archivos=datos.max_archivos
+        )
 
         for integrante in integrantes:
             asignacion_tarea_repository.crear_asignacion(
@@ -235,7 +279,9 @@ def crear_tarea_grupal(
         raise
 
 def listar_tareas_asignadas(db: Session, id_usuario: int) -> List[Tarea]:
-    return asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(
+        db, asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
+    )
 
 def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[Tarea]:
     if grupo_repository.obtener_integrante(db, id_usuario, id_grupo) is None:
@@ -243,7 +289,9 @@ def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para consultar las tareas de este grupo.",
         )
-    return tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
+    return _adjuntar_total_archivos(
+        db, tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
+    )
 
 def listar_asignados_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[Usuario]:
     # obtener_tarea ya valida el acceso: dueño en las individuales y miembro del grupo

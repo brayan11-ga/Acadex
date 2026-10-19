@@ -6,6 +6,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
 
+# Tope fijo del sistema para el límite de archivos por tarea. No lo define el usuario
+# ni puede superarlo, ni siquiera el líder (ver docs/decisiones/tareas-grupales.md).
+MAX_ARCHIVOS_POR_TAREA = 10
+
+# Valor por defecto del límite al crear una tarea grupal si el líder no lo envía.
+MAX_ARCHIVOS_POR_TAREA_DEFECTO = 3
+
+
 class Settings(BaseSettings):
     db_user: str
     db_password: str

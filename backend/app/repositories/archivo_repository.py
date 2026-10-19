@@ -1,5 +1,6 @@
 # backend/app/repositories/archivo_repository.py
 from typing import List
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.archivo import Archivo
 
@@ -33,6 +34,35 @@ def crear_archivo(
 
 def obtener_archivos_de_tarea(db: Session, id_tarea: int) -> List[Archivo]:
     return db.query(Archivo).filter(Archivo.id_tarea == id_tarea).all()
+
+
+def contar_archivos_de_tarea(db: Session, id_tarea: int) -> int:
+    """Cuenta los archivos de una sola tarea (validaciones puntuales)."""
+    return (
+        db.query(func.count(Archivo.id_archivo))
+        .filter(Archivo.id_tarea == id_tarea)
+        .scalar()
+        or 0
+    )
+
+
+def obtener_conteo_archivos_por_tareas(
+    db: Session, ids_tareas: List[int]
+) -> dict[int, int]:
+    """Cuenta los archivos de varias tareas en una sola consulta agrupada.
+
+    Evita el problema N+1 al listar tareas: una sola consulta devuelve el
+    conteo por tarea en lugar de una consulta por cada tarea.
+    """
+    if not ids_tareas:
+        return {}
+    filas = (
+        db.query(Archivo.id_tarea, func.count(Archivo.id_archivo))
+        .filter(Archivo.id_tarea.in_(ids_tareas))
+        .group_by(Archivo.id_tarea)
+        .all()
+    )
+    return {id_tarea: total for id_tarea, total in filas}
 
 
 def obtener_archivo_de_tarea(db: Session, id_tarea: int, id_archivo: int) -> Archivo | None:

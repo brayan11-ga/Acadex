@@ -7,8 +7,17 @@ from app.models.tarea import Tarea
 from app.models.integrante import Integrante
 from app.schemas.tarea import TareaCreate, TareaUpdate
 
-def crear_tarea(db: Session, datos: TareaCreate, commit: bool = True) -> Tarea:
-    nueva_tarea = Tarea(**datos.model_dump())
+def crear_tarea(
+    db: Session,
+    datos: TareaCreate,
+    commit: bool = True,
+    *,
+    max_archivos: int | None = None,
+) -> Tarea:
+    valores = datos.model_dump()
+    if max_archivos is not None:
+        valores["max_archivos"] = max_archivos
+    nueva_tarea = Tarea(**valores)
     db.add(nueva_tarea)
     db.flush()
     if commit:
