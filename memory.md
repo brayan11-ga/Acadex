@@ -42,6 +42,7 @@
 - `src/utils/jwt.ts` decodifica el JWT solo para uso visual; la seguridad real va en el backend.
 - Los componentes de grupos se partieron de v0 (Vercel) y se adaptaron: sin Next.js, Tailwind ni shadcn, con `.css` en `src/styles/`. Flujo con agentes: el código de v0 se guarda en `frontend/_v0/` (no se importa) y el agente lo adapta siguiendo `frontend/AGENTS.md`.
 - Se descartó el acceso con Google (decisión de todo el equipo): solo correo y contraseña.
+- Gemini: respuestas vacías, truncadas o JSON inválido devuelven 502; logs guardan metadatos sin contenido del PDF ni de la respuesta.
 - Al expulsar a un integrante, la app le envía una notificación.
 - La documentación de requisitos vive en `docs/RF/` (58 RF con historia y escenarios) y `docs/RNF/` (32 RNF por categoría). RF-013 quedó fusionado en RF-010.
 

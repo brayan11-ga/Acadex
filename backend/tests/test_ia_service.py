@@ -178,6 +178,36 @@ class ServicioGeminiTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, 503)
         self.assertNotIn("texto privado del proveedor", "\n".join(logs.output))
 
+    def test_log_registra_metadatos_sin_contenido_del_pdf_ni_respuesta(self):
+        texto_pdf_privado = "PDF_PRIVADO_NO_DEBE_APARECER"
+        texto_respuesta_privado = "RESPUESTA_PRIVADA_NO_DEBE_APARECER"
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto(
+                texto_respuesta_privado,
+                ia_service.types.FinishReason.MAX_TOKENS,
+            )
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value=texto_pdf_privado),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            with self.assertLogs("app.services.ia_service", level="WARNING") as logs:
+                with self.assertRaises(HTTPException) as error:
+                    ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        salida_log = "\n".join(logs.output)
+        self.assertEqual(error.exception.status_code, 502)
+        self.assertIn("tipo_excepcion=RespuestaGeminiIncompletaError", salida_log)
+        self.assertIn("codigo_gemini=no_disponible", salida_log)
+        self.assertIn("finish_reason=MAX_TOKENS", salida_log)
+        self.assertIn(
+            f"longitud_respuesta={len(texto_respuesta_privado)}", salida_log
+        )
+        self.assertNotIn(texto_pdf_privado, salida_log)
+        self.assertNotIn(texto_respuesta_privado, salida_log)
+        self.assertNotIn("clave-sintetica", salida_log)
+
     def test_clave_ausente_no_llama_a_google_ni_consumo_cupo(self):
         with (
             patch.object(ia_service.settings, "gemini_api_key", "  "),
