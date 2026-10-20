@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import httpx
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -12,11 +13,16 @@ from sqlalchemy.orm import Session
 from app.models.categoria import Categoria
 from app.models.bloqueo_cuota_gemini import BloqueoCuotaGemini
 from app.models.uso_analisis_ia import UsoAnalisisIA
-from app.services import ia_service
+from app.services import groq_service, ia_service
 
 
 class ServicioGeminiTests(unittest.TestCase):
     def setUp(self):
+        self.groq_key_patch = patch.object(
+            ia_service.settings, "groq_api_key", ""
+        )
+        self.groq_key_patch.start()
+        self.addCleanup(self.groq_key_patch.stop)
         self.engine = create_engine("sqlite+pysqlite:///:memory:")
         Categoria.__table__.create(self.engine)
         UsoAnalisisIA.__table__.create(self.engine)
@@ -131,9 +137,257 @@ class ServicioGeminiTests(unittest.TestCase):
         self.assertEqual(solicitud["config"].response_mime_type, "application/json")
         self.assertEqual(
             solicitud["config"].response_json_schema,
-            ia_service.ESQUEMA_PROPUESTA_IA,
+            ia_service.gemini_config.ESQUEMA_PROPUESTA_IA,
         )
-        self.assertEqual(solicitud["config"].max_output_tokens, 1024)
+        self.assertEqual(
+            solicitud["config"].max_output_tokens,
+            ia_service.gemini_config.MAX_OUTPUT_TOKENS_GEMINI,
+        )
+        self.assertEqual(
+            solicitud["config"].thinking_config,
+            ia_service.gemini_config.THINKING_CONFIG_GEMINI,
+        )
+
+    def test_envia_thinking_y_limite_de_tokens_configurados(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        thinking_config = ia_service.types.ThinkingConfig(
+            thinking_level="minimal"
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(
+                ia_service.gemini_config,
+                "MAX_OUTPUT_TOKENS_GEMINI",
+                2048,
+            ),
+            patch.object(
+                ia_service.gemini_config,
+                "THINKING_CONFIG_GEMINI",
+                thinking_config,
+            ),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        config = cliente.models.generate_content.call_args.kwargs["config"]
+        self.assertEqual(config.max_output_tokens, 2048)
+        self.assertEqual(
+            config.thinking_config.thinking_level,
+            ia_service.types.ThinkingLevel.MINIMAL,
+        )
+
+    def test_gemini_valido_no_llama_a_groq(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+            patch.object(groq_service, "generar_respuesta") as llamar_groq,
+        ):
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        llamar_groq.assert_not_called()
+
+    def test_error_temporal_de_gemini_usa_groq_y_conserva_el_cupo(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        error_gemini = RuntimeError("detalle privado de Gemini")
+        error_gemini.code = 503
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+            patch.object(
+                groq_service,
+                "generar_respuesta",
+                return_value=self._respuesta_valida().text,
+            ) as llamar_groq,
+        ):
+            cliente.models.generate_content.side_effect = error_gemini
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        llamar_groq.assert_called_once()
+        fecha_utc = datetime.now(timezone.utc).date()
+        self.assertEqual(
+            self.db.get(UsoAnalisisIA, (fecha_utc, "usuario", "41")).cantidad,
+            1,
+        )
+
+    def test_max_tokens_de_gemini_activa_el_respaldo(self):
+        cliente = self._cliente_falso(
+            self._respuesta_con_texto("", ia_service.types.FinishReason.MAX_TOKENS)
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+            patch.object(
+                groq_service,
+                "generar_respuesta",
+                return_value=self._respuesta_valida().text,
+            ) as llamar_groq,
+        ):
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        llamar_groq.assert_called_once()
+
+    def test_timeout_de_gemini_activa_el_respaldo(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+            patch.object(
+                groq_service,
+                "generar_respuesta",
+                return_value=self._respuesta_valida().text,
+            ) as llamar_groq,
+        ):
+            cliente.models.generate_content.side_effect = httpx.ConnectTimeout(
+                "mensaje privado de timeout"
+            )
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        llamar_groq.assert_called_once()
+
+    def test_error_permanente_de_gemini_no_activa_el_respaldo(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        error_gemini = RuntimeError("detalle privado de Gemini")
+        error_gemini.code = 400
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+            patch.object(groq_service, "generar_respuesta") as llamar_groq,
+        ):
+            cliente.models.generate_content.side_effect = error_gemini
+            with self.assertRaises(HTTPException) as error:
+                ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(error.exception.status_code, 503)
+        llamar_groq.assert_not_called()
+
+    def test_falla_controlado_si_fallan_ambos_proveedores(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        error_gemini = RuntimeError("detalle privado de Gemini")
+        error_gemini.code = 503
+        with self.assertLogs("app.services.ia_service", level="WARNING") as logs:
+            with (
+                patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+                patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+                patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+                patch.object(ia_service.genai, "Client", return_value=cliente),
+                patch.object(
+                    groq_service,
+                    "generar_respuesta",
+                    side_effect=RuntimeError("secreto interno de Groq"),
+                ),
+            ):
+                cliente.models.generate_content.side_effect = error_gemini
+                with self.assertRaises(HTTPException) as error:
+                    ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(error.exception.status_code, 503)
+        self.assertNotIn("secreto", error.exception.detail.lower())
+        self.assertNotIn("Gemini", error.exception.detail)
+        salida_log = "\n".join(logs.output)
+        self.assertNotIn("secreto interno", salida_log)
+        self.assertNotIn("detalle privado", salida_log)
+        self.assertNotIn("Contenido sintético", salida_log)
+        self.assertNotIn("clave-sintetica", salida_log)
+        self.assertNotIn("groq-sintetica", salida_log)
+        fecha_utc = datetime.now(timezone.utc).date()
+        self.assertEqual(
+            self.db.get(UsoAnalisisIA, (fecha_utc, "usuario", "41")).cantidad,
+            0,
+        )
+
+    def test_bloqueo_diario_de_google_usa_groq_sin_llamar_a_gemini(self):
+        self.db.add(
+            BloqueoCuotaGemini(
+                id="proyecto",
+                bloqueado_hasta=datetime(2099, 1, 1, tzinfo=timezone.utc),
+            )
+        )
+        self.db.commit()
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(ia_service.genai, "Client") as crear_cliente,
+            patch.object(
+                groq_service,
+                "generar_respuesta",
+                return_value=self._respuesta_valida().text,
+            ) as llamar_groq,
+        ):
+            propuesta = ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(propuesta.titulo, "Taller de ciencias")
+        crear_cliente.assert_not_called()
+        llamar_groq.assert_called_once()
+
+    def test_bloqueo_diario_google_con_error_groq_restablece_cupo_y_conserva_bloqueo(self):
+        bloqueado_hasta = datetime(2099, 1, 1, tzinfo=timezone.utc)
+        self.db.add(
+            BloqueoCuotaGemini(
+                id="proyecto",
+                bloqueado_hasta=bloqueado_hasta,
+            )
+        )
+        self.db.commit()
+
+        with self.assertLogs("app.services.ia_service", level="WARNING") as logs:
+            with (
+                patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+                patch.object(ia_service.settings, "groq_api_key", "groq-sintetica"),
+                patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+                patch.object(ia_service.genai, "Client") as crear_cliente,
+                patch.object(
+                    groq_service,
+                    "generar_respuesta",
+                    side_effect=RuntimeError("secreto interno de Groq"),
+                ) as llamar_groq,
+            ):
+                with self.assertRaises(HTTPException) as error:
+                    ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        self.assertEqual(error.exception.status_code, 429)
+        self.assertEqual(
+            error.exception.detail,
+            "Se agotó la cuota gratuita diaria de Google para la demostración. "
+            "El análisis volverá a estar disponible después del reinicio diario.",
+        )
+        for secreto in (
+            "secreto interno de Groq",
+            "groq-sintetica",
+            "clave-sintetica",
+            "Contenido sintético",
+        ):
+            self.assertNotIn(secreto, error.exception.detail)
+            self.assertNotIn(secreto, "\n".join(logs.output))
+        crear_cliente.assert_not_called()
+        llamar_groq.assert_called_once()
+
+        fecha_utc = datetime.now(timezone.utc).date()
+        uso_usuario = self.db.get(UsoAnalisisIA, (fecha_utc, "usuario", "41"))
+        self.assertIsNotNone(uso_usuario)
+        self.assertEqual(uso_usuario.cantidad, 0)
+
+        bloqueo = self.db.get(BloqueoCuotaGemini, "proyecto")
+        self.assertIsNotNone(bloqueo)
+        self.assertEqual(
+            bloqueo.bloqueado_hasta.replace(tzinfo=timezone.utc), bloqueado_hasta
+        )
 
     def test_categoria_inventada_se_descarta(self):
         cliente = self._cliente_falso(self._respuesta_valida(id_categoria=9999))
