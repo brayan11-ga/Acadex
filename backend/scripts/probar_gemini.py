@@ -1,13 +1,13 @@
 """Diagnóstico manual; no se ejecuta en pruebas automáticas ni en CI."""
 
 import argparse
-import json
 import os
 
 from google import genai
 from google.genai import types
 
 from app.services import gemini_config
+from app.services.gemini_diagnostic import crear_resumen_diagnostico
 
 
 TEXTO_EJEMPLO = "Preparar un resumen corto sobre el ciclo del agua."
@@ -47,6 +47,7 @@ def main() -> int:
         thinking_config = types.ThinkingConfig(thinking_level=args.thinking_level)
 
     respuesta = None
+    error_solicitud = None
     try:
         with genai.Client(
             api_key=api_key,
@@ -65,37 +66,13 @@ def main() -> int:
                     thinking_config=thinking_config,
                 ),
             )
-    except Exception:
-        pass
+    except Exception as error:
+        error_solicitud = error
 
-    candidatos = getattr(respuesta, "candidates", None) or []
-    finish_reason = (
-        getattr(candidatos[0], "finish_reason", None) if candidatos else None
-    )
-    finish_reason = getattr(finish_reason, "name", None) or "no_disponible"
-    texto_respuesta = getattr(respuesta, "text", None) or ""
-    uso = getattr(respuesta, "usage_metadata", None)
-    tokens_razonamiento = getattr(uso, "thoughts_token_count", None)
-    tokens_salida = getattr(uso, "candidates_token_count", None)
-
-    try:
-        json.loads(gemini_config.extraer_json_de_respuesta(texto_respuesta))
-        json_valido = "sí"
-    except (json.JSONDecodeError, TypeError):
-        json_valido = "no"
-
-    print(f"finish_reason: {finish_reason}")
-    print(f"longitud_respuesta: {len(texto_respuesta)}")
-    print(
-        "tokens_razonamiento: "
-        f"{tokens_razonamiento if tokens_razonamiento is not None else 'no_disponible'}"
-    )
-    print(
-        "tokens_salida: "
-        f"{tokens_salida if tokens_salida is not None else 'no_disponible'}"
-    )
-    print(f"json_valido: {json_valido}")
-    return 0 if respuesta is not None else 1
+    resumen = crear_resumen_diagnostico(respuesta, error_solicitud)
+    for campo, valor in resumen.items():
+        print(f"{campo}: {valor}")
+    return 1 if error_solicitud is not None else 0
 
 
 if __name__ == "__main__":
