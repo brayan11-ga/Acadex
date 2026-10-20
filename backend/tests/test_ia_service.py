@@ -131,9 +131,45 @@ class ServicioGeminiTests(unittest.TestCase):
         self.assertEqual(solicitud["config"].response_mime_type, "application/json")
         self.assertEqual(
             solicitud["config"].response_json_schema,
-            ia_service.ESQUEMA_PROPUESTA_IA,
+            ia_service.gemini_config.ESQUEMA_PROPUESTA_IA,
         )
-        self.assertEqual(solicitud["config"].max_output_tokens, 1024)
+        self.assertEqual(
+            solicitud["config"].max_output_tokens,
+            ia_service.gemini_config.MAX_OUTPUT_TOKENS_GEMINI,
+        )
+        self.assertEqual(
+            solicitud["config"].thinking_config,
+            ia_service.gemini_config.THINKING_CONFIG_GEMINI,
+        )
+
+    def test_envia_thinking_y_limite_de_tokens_configurados(self):
+        cliente = self._cliente_falso(self._respuesta_valida())
+        thinking_config = ia_service.types.ThinkingConfig(
+            thinking_level="minimal"
+        )
+        with (
+            patch.object(ia_service.settings, "gemini_api_key", "clave-sintetica"),
+            patch.object(ia_service, "extraer_texto_pdf", return_value="Contenido sintético"),
+            patch.object(
+                ia_service.gemini_config,
+                "MAX_OUTPUT_TOKENS_GEMINI",
+                2048,
+            ),
+            patch.object(
+                ia_service.gemini_config,
+                "THINKING_CONFIG_GEMINI",
+                thinking_config,
+            ),
+            patch.object(ia_service.genai, "Client", return_value=cliente),
+        ):
+            ia_service.analizar_documento_con_ia(self.db, None, 41)
+
+        config = cliente.models.generate_content.call_args.kwargs["config"]
+        self.assertEqual(config.max_output_tokens, 2048)
+        self.assertEqual(
+            config.thinking_config.thinking_level,
+            ia_service.types.ThinkingLevel.MINIMAL,
+        )
 
     def test_categoria_inventada_se_descarta(self):
         cliente = self._cliente_falso(self._respuesta_valida(id_categoria=9999))
