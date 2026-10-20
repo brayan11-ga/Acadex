@@ -150,7 +150,7 @@ docker compose ps
 
 Revisa primero las nuevas revisiones de `backend/alembic/versions/` y sigue el procedimiento de la guía de base de datos. Conserva tus cambios locales y crea un respaldo antes de modificar una base con información que necesites.
 
-### Pruebas
+### Pruebas del backend
 
 El trabajo backend del CI instala `backend/requirements.txt` y ejecuta desde `backend/`:
 
@@ -158,19 +158,39 @@ El trabajo backend del CI instala `backend/requirements.txt` y ejecuta desde `ba
 python -m pytest test tests -q
 ```
 
-Este comando no habilita el acceso PostgreSQL; por eso las pruebas que necesitan esa base quedan omitidas en ese trabajo. El trabajo PostgreSQL del CI ejecuta Alembic y, en procesos separados, las mismas suites `test` y `tests/test_postgres_integration.py` que corresponden a los servicios `api-tests` e `integration` de abajo.
+Este comando no habilita el acceso PostgreSQL; por eso las pruebas que necesitan esa base quedan omitidas en ese trabajo. El trabajo PostgreSQL del CI ejecuta Alembic y, en procesos separados, las suites que corresponden a los servicios `api-tests` e `integration` de abajo.
 
-Las pruebas unitarias de la guarda PostgreSQL no requieren una base de datos y pueden ejecutarse en el contenedor backend:
+Las pruebas unitarias de la guarda PostgreSQL no requieren una base de datos y pueden ejecutarse en el contenedor backend.
+
+Ejecuta estos comandos desde la raíz del repositorio y en este orden. El Compose de pruebas crea una base local efímera en una red interna; no usa la base de desarrollo ni servicios remotos. Las pruebas de PostgreSQL van en un proceso separado:
 
 ```sh
-docker compose exec -T backend python -m pytest tests/test_postgres_safety.py -q
+# backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# backend/test: pruebas de API.
+docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, por separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Detén y elimina contenedores y red de pruebas al terminar.
+docker compose -f docker-compose.test.yml down
 ```
 
-Las suites PostgreSQL y API usan un Compose separado con una red interna, una base `acadex_test` efímera en `tmpfs` y sin puerto publicado. El servicio `migrate` ejecuta Alembic antes de cada suite; no se conecta al volumen de la aplicación. Ejecuta una suite por proceso:
+Los valores predeterminados de credenciales de ese Compose son exclusivamente locales para la base efímera; no los reutilices en producción. Puedes cambiar el identificador del proyecto y sus credenciales con `ACADEX_TEST_COMPOSE_PROJECT`, `ACADEX_TEST_DB_USER` y `ACADEX_TEST_DB_PASSWORD`. El identificador debe ser `acadex-test-` seguido de 8 a 32 caracteres hexadecimales. Consulta [database/README.md](database/README.md) para las barreras y el alcance de estas pruebas.
 
 ```sh
-docker compose -f docker-compose.test.yml run --build --rm integration
+# backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# backend/test: pruebas de API.
 docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, por separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Detén y elimina contenedores y red de pruebas al terminar.
 docker compose -f docker-compose.test.yml down
 ```
 
@@ -253,16 +273,17 @@ Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. 
    ```sh
    cd frontend
    corepack enable
-   pnpm install --frozen-lockfile
-   pnpm dev
+   corepack pnpm --version
+   corepack pnpm install --frozen-lockfile
+   corepack pnpm dev
    ```
 
-   Desde `frontend/`, los demás comandos disponibles son:
+   `corepack pnpm --version` debe mostrar la versión fijada por `packageManager` en `frontend/package.json` (actualmente `12.11.2`). Desde `frontend/`, los demás comandos disponibles son:
 
    ```sh
-   pnpm build
-   pnpm test --run
-   pnpm lint
+   corepack pnpm build
+   corepack pnpm test --run
+   corepack pnpm lint
    ```
 
    `build` compila TypeScript y genera el sitio; `test --run` ejecuta Vitest una vez; `lint` revisa el código con Oxlint.
