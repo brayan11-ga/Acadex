@@ -29,12 +29,11 @@ def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bo
                 detail="No tienes permiso para crear tareas en este grupo.",
             )
         datos_seguridad = datos.model_copy(update={"id_usuario": None})
-        tarea=tarea_repository.crear_tarea(db, datos_seguridad, commit=False)
-        prioridad_service.asignar_prioridad_inicial(db,tarea)
-        prioridad_service.asignar_prioridad_inicial(db,tarea)
-        if commit:
-            db.commit()
-            db.refresh(tarea)
+    tarea=tarea_repository.crear_tarea(db, datos_seguridad, commit=False)
+    prioridad_service.asignar_prioridad_inicial(db,tarea)
+    if commit:
+        db.commit()
+        db.refresh(tarea)
     return tarea
 
 
@@ -231,6 +230,7 @@ def crear_tarea_grupal(
     )
     try:
         tarea = tarea_repository.crear_tarea(db, tarea_datos, commit=False)
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
 
         for integrante in integrantes:
             asignacion_tarea_repository.crear_asignacion(

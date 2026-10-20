@@ -19,7 +19,7 @@ def contar_tareas(db:Session, id_usaurio,id_grupo, excluir_id:int)->int:
 def obtener_historial(db:Session,id_categoria,id_usaurio,id_grupo,limite:int=10)->list[dict]:
     filas=(db.query(Tarea.tiempo_estimado,HistorialTarea.tiempo_real,HistorialTarea.dificultad_real)
         .join(Tarea,Tarea.id_tarea==HistorialTarea.id_tarea).filter(Tarea.id_categoria==id_categoria,HistorialTarea.tiempo_real
-        .isnot(None),*_alcance_historial(id_usaurio.id_grupo),)
+        .isnot(None),*_alcance_historial(id_usaurio,id_grupo),)
         .order_by(HistorialTarea.fechahora_fin.desc())
         .limit(limite)
         .all())

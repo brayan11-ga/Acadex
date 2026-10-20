@@ -13,17 +13,17 @@ UMBRAL_DIFICULTAD=1.0 #mas 1 punto de la dificultad
 def prioridad_por_fecha(fecha_entrega,ahora:datetime | None=None)->int:
     if not isinstance(fecha_entrega,datetime):
         fecha_entrega=datetime.combine(fecha_entrega,time.max)
-        ahora=ahora or datetime.now(fecha_entrega.tzinfo)
-        dias=(fecha_entrega-ahora).total_seconds()/86400
-        if dias<=1:
-            return 5
-        if dias<=3:
-            return 4
-        if dias<=7:
-            return 3
-        if dias <=14:
-            return 2
-        return 1
+    ahora=ahora or datetime.now(fecha_entrega.tzinfo)
+    dias=(fecha_entrega-ahora).total_seconds()/86400
+    if dias<=1:
+        return 5
+    if dias<=3:
+        return 4
+    if dias<=7:
+        return 3
+    if dias <=14:
+        return 2
+    return 1
 
 def calcular_prioridad(fecha_entrega:datetime, dificultad_estimada:int,historial:list[dict],es_primera:bool=False,)->int:
     if es_primera:
