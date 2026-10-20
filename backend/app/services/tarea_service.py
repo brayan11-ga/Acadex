@@ -9,6 +9,7 @@ from app.repositories import tarea_repository
 from app.schemas.tarea import TareaCreate, TareaUpdate
 from app.repositories import asignacion_tarea_repository, grupo_repository
 from app.repositories import archivo_repository
+from app.repositories import historial_tarea_repository, sesion_cronometro_repository
 from app.schemas.tarea import TareaGrupalCreate
 from app.config.settings import MAX_ARCHIVOS_POR_TAREA
 from app.models.usuario import Usuario
@@ -105,14 +106,32 @@ def listar_tareas(db: Session, id_usuario: int) -> List[Tarea]:
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario: int) -> Tarea:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
     cambios = datos.model_dump(exclude_unset=True)
-    if tarea.id_grupo is not None and not _es_lider(db, id_usuario, tarea.id_grupo):
-        es_asignado = asignacion_tarea_repository.usuario_tiene_asignacion(
-            db, tarea.id_tarea, id_usuario
-        )
-        if not es_asignado or not cambios or set(cambios) - {"estado"}:
+    if tarea.id_grupo is not None:
+        # En las tareas grupales solo el líder edita, y solo mientras no esté
+        # completada. El estado lo mueve únicamente "Completar mi parte".
+        if not _es_lider(db, id_usuario, tarea.id_grupo):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para modificar esta tarea.",
+            )
+        if (tarea.estado or "").lower() == "completada":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reábrila primero.",
+            )
+        if "estado" in cambios:
+            estado_nuevo = cambios["estado"]
+            if estado_nuevo is not None and estado_nuevo.lower() == "completada":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Usa Completar mi parte.",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "No puedes cambiar el estado de una tarea grupal; "
+                    "se actualiza al completar cada parte."
+                ),
             )
     if cambios.get("max_archivos") is not None:
         nuevo_max = cambios["max_archivos"]
@@ -147,7 +166,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
         # Tarea, historial y estadística se confirman en un único commit.
         id_usuario_historial = tarea_actualizada.id_usuario or id_usuario
         if (
-            estado_nuevo
+            tarea_actualizada.id_grupo is None
+            and estado_nuevo
             and estado_anterior
             and estado_nuevo.lower() == "completada"
             and estado_anterior.lower() != "completada"
@@ -183,6 +203,84 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
     except Exception:
         if db is not None:
             db.rollback()
+        raise
+
+def completar_parte_tarea(
+    db: Session, id_tarea: int, dificultad_real: int, id_usuario: int
+) -> Tarea:
+    """Registra la parte de un asignado en una tarea grupal.
+
+    El estado de la tarea se mueve solo aquí: pasa a "Completada" cuando todos
+    los asignados ya registraron su parte.
+    """
+    tarea = tarea_repository.obtener_tarea_por_id(db, id_tarea)
+    if tarea is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarea no encontrada",
+        )
+    if tarea.id_grupo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Esta tarea no es grupal; usa el flujo actual (PUT).",
+        )
+    if not asignacion_tarea_repository.usuario_tiene_asignacion(
+        db, id_tarea, id_usuario
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un integrante asignado puede completar su parte de esta tarea.",
+        )
+    if (tarea.estado or "").lower() == "completada":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La tarea ya está completada.",
+        )
+    if historial_tarea_repository.usuario_ya_completo(db, id_tarea, id_usuario):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya completaste tu parte de esta tarea.",
+        )
+    if sesion_cronometro_repository.get_sesion_activa_de_usuario(
+        db, id_tarea, id_usuario
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Pausa tu cronómetro antes de completar tu parte.",
+        )
+
+    # Tiempo real = segundos de las sesiones CERRADAS de este usuario en esta tarea.
+    tiempo_real = sesion_cronometro_repository.sumar_duracion_cerrada(
+        db, id_tarea, id_usuario
+    )
+
+    try:
+        historial_tarea_repository.upsert(
+            db,
+            id_tarea=id_tarea,
+            id_usuario=id_usuario,
+            id_grupo=tarea.id_grupo,
+            dificultad_real=dificultad_real,
+            tiempo_real=tiempo_real,
+            commit=False,
+        )
+
+        # Todos los asignados deben tener fila para marcar la tarea como completada.
+        asignados = asignacion_tarea_repository.obtener_usuarios_asignados(db, id_tarea)
+        completados = historial_tarea_repository.obtener_usuarios_completados(db, id_tarea)
+        ids_asignados = {usuario.id_usuario for usuario in asignados}
+
+        if ids_asignados and ids_asignados.issubset(completados):
+            tarea.estado = "Completada"
+        elif (tarea.estado or "").lower() == "pendiente":
+            tarea.estado = "en progreso"
+
+        db.commit()
+        db.refresh(tarea)
+        tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
+        return tarea
+    except Exception:
+        db.rollback()
         raise
 
 def eliminar_tarea(db: Session, id_tarea: int, id_usuario: int) -> None:
@@ -293,11 +391,21 @@ def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[
         db, tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
     )
 
-def listar_asignados_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[Usuario]:
+def listar_asignados_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[dict]:
     # obtener_tarea ya valida el acceso: dueño en las individuales y miembro del grupo
     # en las grupales. Cualquier miembro del grupo puede ver los asignados (RF-045).
     tarea = obtener_tarea(db, id_tarea, id_usuario)
-    return asignacion_tarea_repository.obtener_usuarios_asignados(db, tarea.id_tarea)
+    usuarios = asignacion_tarea_repository.obtener_usuarios_asignados(db, tarea.id_tarea)
+    # Una sola consulta trae quiénes ya completaron su parte (sin N+1).
+    completados = historial_tarea_repository.obtener_usuarios_completados(db, tarea.id_tarea)
+    return [
+        {
+            "id_usuario": usuario.id_usuario,
+            "correo_electronico": usuario.correo_electronico,
+            "completado": usuario.id_usuario in completados,
+        }
+        for usuario in usuarios
+    ]
 
 def verificar_permiso_tarea(
     db: Session, id_tarea: int, id_usuario: int, accion: str
