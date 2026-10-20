@@ -1,15 +1,15 @@
 // src/components/tareas/TarjetaTarea.tsx
 import { useState, useRef, useEffect } from "react";
 import type { TareaBackend } from "../../services/tareas";
-import { 
-  CalendarDays, 
-  Folder, 
-  Check, 
-  Undo2, 
-  MoreVertical, 
-  Eye, 
-  Pencil, 
-  Trash2 
+import {
+  CalendarDays,
+  Folder,
+  Check,
+  Undo2,
+  MoreVertical,
+  Eye,
+  Pencil,
+  Trash2
 } from "lucide-react";
 
 interface TarjetaTareaProps {
@@ -32,7 +32,7 @@ export const TarjetaTarea = ({
   onCambiarEstado,
 }: TarjetaTareaProps) => {
   const esCompletada = tarea.estado === "Completada";
-  
+
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +76,7 @@ export const TarjetaTarea = ({
         <span className={`pixel-estado-badge ${tarea.estado.replace(" ", "-").toLowerCase()}`}>
           {tarea.estado}
         </span>
-        
+
         <div className="pixel-tarea-botones" ref={menuRef}>
           <button
             type="button"
@@ -93,8 +93,8 @@ export const TarjetaTarea = ({
           </button>
 
           <div className="pixel-menu-kebab-container">
-            <button 
-              className="pixel-btn-kebab" 
+            <button
+              className="pixel-btn-kebab"
               onClick={() => setMenuAbierto(!menuAbierto)}
               title="Más opciones"
             >
@@ -110,9 +110,9 @@ export const TarjetaTarea = ({
                   <Pencil size={16} /> Editar Tarea
                 </button>
                 <div className="pixel-dropdown-divisor"></div>
-                <button 
-                  type="button" 
-                  className="pixel-btn-peligro-texto" 
+                <button
+                  type="button"
+                  className="pixel-btn-peligro-texto"
                   onClick={() => ejecutarAccion(() => onEliminar(tarea.id_tarea))}
                 >
                   <Trash2 size={16} /> Eliminar

@@ -1,11 +1,11 @@
 // src/components/tareas/ContenidoTareas.tsx
+import { useState } from "react";
+import { TarjetaTarea } from "./TarjetaTarea";
 import "../../styles/contenido-tareas.css";
 import type { TareaBackend } from "../../services/tareas";
 import { FiltrosTareas } from "./FiltrosTareas";
-import { TarjetaTarea } from "./TarjetaTarea";
-import { ModalDetalleTarea } from "./ModalDetalleTarea";
 import { Paginacion } from "./Paginacion";
-import { ModalConfirmacion } from "../layout/ModalConfirmacion";
+import { TarjetaCategoria } from "./TarjetaCategoria";
 import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { EmptyState } from "../ui/EmptyState";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
@@ -18,13 +18,16 @@ interface ContenidoTareaProps {
 
 function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoTareaProps) {
   // Extraemos toda la lógica desde nuestro Custom Hook
-  const {
+    const {
     cargando, error, tareaDetalle, setTareaDetalle,
     filtroActivo, setFiltroActivo, modoVista, setModoVista,
-    paginaActual, setPaginaActual, totalPaginas, tareasPaginadas, tareasPendientes,
+    paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
     totalTareas, totalTareasFiltradas,
     nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles, tareaAEliminar, solicitarEliminar, confirmarEliminar,cancelarEliminar
   } = useTareas(refreshKey);
+
+  const [categoriaAbierta, setCategoriaAbierta] = useState<number | null>(null);
+  const grupoAbierto = gruposFiltrados.find((g) => g.idCategoria === categoriaAbierta) ?? null;
 
   return (
     <main className="pixel-tareas-main">
@@ -68,66 +71,84 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       {error && <p className="pixel-error">{error}</p>}
 
       {!cargando && !error && (
-        <>
-          <section className={`pixel-tareas-lista ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}>
-            {tareasPaginadas.length === 0 ? (
-              totalTareas === 0 ? (
-                <EmptyState
-                  title="Aún no tienes tareas"
-                  description="Usa el botón «Crear tarea» para agregar tu primera actividad."
-                />
-              ) : totalTareasFiltradas === 0 ? (
-                <EmptyState
-                  title="No encontramos tareas con este filtro"
-                  description="Prueba con otro filtro o vuelve a ver todas tus tareas."
-                  action={{ label: "Ver todas las tareas", onClick: () => setFiltroActivo("todas") }}
-                />
-              ) : (
-                <EmptyState
-                  title="No hay tareas en esta página"
-                  description="Prueba otra página para continuar viendo tus tareas."
-                />
-              )
-            ) : (
-              tareasPaginadas.map((tarea) => (
-                <TarjetaTarea
-                  key={tarea.id_tarea}
-                  tarea={tarea}
-                  nombreCategoria={nombreCategoria}
-                  formatearFecha={formatearFecha}
-                  onVerDetalles={manejarVerDetalles}
-                  onEditar={onEditarTarea}
-                  onEliminar={solicitarEliminar}
-                  onCambiarEstado={manejarCambiarEstado}
-                />
-              ))
-            )}
-          </section>
+  categoriaAbierta !== null ? (
+    <>
+      <button
+        type="button"
+        className="pixel-filtro-btn"
+        style={{ marginBottom: "1.5rem" }}
+        onClick={() => setCategoriaAbierta(null)}
+      >
+        ← Volver a categorías
+      </button>
 
-          <Paginacion 
-            paginaActual={paginaActual} 
-            totalPaginas={totalPaginas} 
-            onCambiarPagina={setPaginaActual} 
-          />
-        </>
-      )}
-
-      {tareaDetalle && (
-        <ModalDetalleTarea
-          tarea={tareaDetalle}
-          nombreCategoria={nombreCategoria}
-          formatearFecha={formatearFecha}
-          onCerrar={() => setTareaDetalle(null)}
+      {grupoAbierto ? (
+        <section className="pixel-categoria-grupo">
+          <h2 className="pixel-categoria-titulo">
+            {grupoAbierto.nombre}
+            <span className="pixel-categoria-contador">{grupoAbierto.tareas.length}</span>
+          </h2>
+          <div className={`pixel-tareas-lista ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}>
+            {grupoAbierto.tareas.map((tarea) => (
+              <TarjetaTarea
+                key={tarea.id_tarea}
+                tarea={tarea}
+                nombreCategoria={nombreCategoria}
+                formatearFecha={formatearFecha}
+                onVerDetalles={manejarVerDetalles}
+                onEditar={onEditarTarea}
+                onEliminar={solicitarEliminar}
+                onCambiarEstado={manejarCambiarEstado}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <EmptyState
+          title="No hay tareas de esta categoría con este filtro"
+          description="Prueba con otro filtro o vuelve a las categorías."
+          action={{ label: "Ver todas las tareas", onClick: () => setFiltroActivo("todas") }}
         />
       )}
+    </>
+  ) : (
+    <>
+      <div className="pixel-tareas-grupos">
+        {gruposPaginados.length === 0 ? (
+          totalTareas === 0 ? (
+            <EmptyState
+              title="Aún no tienes tareas"
+              description="Usa el botón «Crear tarea» para agregar tu primera actividad."
+            />
+          ) : (
+            <EmptyState
+              title="No encontramos tareas con este filtro"
+              description="Prueba con otro filtro o vuelve a ver todas tus tareas."
+              action={{ label: "Ver todas las tareas", onClick: () => setFiltroActivo("todas") }}
+            />
+          )
+        ) : (
+          gruposPaginados.map((grupo) => (
+            <TarjetaCategoria
+              key={grupo.idCategoria}
+              nombre={grupo.nombre}
+              totalTareas={grupo.tareas.length}
+              rendimiento={grupo.rendimiento}
+              onAbrir={() => setCategoriaAbierta(grupo.idCategoria)}
+            />
+          ))
+        )}
+      </div>
 
-      <ModalConfirmacion
-        isOpen={tareaAEliminar !== null}
-        title="¿Eliminar Tarea?"
-        message="Esta acción no se puede deshacer. También se eliminarán los adjuntos de esta tarea."
-        onConfirm={confirmarEliminar}
-        onCancel={cancelarEliminar}
+      <Paginacion
+        paginaActual={paginaActual}
+        totalPaginas={totalPaginas}
+        onCambiarPagina={setPaginaActual}
       />
+    </>
+  )
+)}
+
     </main>
   );
 }

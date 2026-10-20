@@ -1,6 +1,6 @@
 # app/schemas/estadisticas_schema.py
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 # 1. Bloque: Meta Semanal (Weekly Goal)
 class MetaSemanalSchema(BaseModel):
@@ -9,36 +9,18 @@ class MetaSemanalSchema(BaseModel):
     total: int             # Ej: 50
     tendencia: str         # Ej: "+12% esta semana"
 
-# 2. Bloque: Gráfico de Tareas (Tasks Completed)
-class DiaEstadisticaSchema(BaseModel):
-    dia: str               # Ej: "MON", "TUE"
-    cantidad: int          # Cantidad de tareas completadas
-    actual: bool = False   # Para resaltar el día de hoy si lo deseas
+class RendimientoCategoriaSchema(BaseModel):
+    categoria:str
+    total_tareas:int
+    tiempo_estimado_prom:float
+    tiempo_real_prom:float
+    dificultad_estimada_prom:float
+    dificultad_real_prom:Optional[float]=None
+    estado:Literal["eficiente","deficiente","insuficiente"]
+    mejora_tiempo:Optional[Literal["mejora","estable","empeora"]]=None
+    variacion_tiempo_pct: Optional[float]=None
+    recomendacion:Literal["subir","mantener","bajar","sin_datos"]
 
-# 3. Bloque: Tarjetas pequeñas de métricas (Focus, Top Category, Avg)
-class FocusScoreSchema(BaseModel):
-    puntaje: int           # Ej: 94
-    nivel: str             # Ej: "Nivel Élite" o la flechita verde
-
-class CategoriaTopSchema(BaseModel):
-    nombre: str            # Ej: "Desarrollo Backend"
-    horas_dedicadas: float # Ej: 18.5
-
-class PromedioTiempoSchema(BaseModel):
-    minutos: int           # Ej: 42
-    tendencia: str         # Ej: "-8% (Más rápido)"
-
-# 4. Bloque: Textos de Análisis (Efficiency Insights & AI Suggestion)
-class InsightSchema(BaseModel):
-    titulo: str            # Ej: "Pico de rendimiento detectado"
-    descripcion: str       # Ej: "Tu tasa de completitud es 40% mayor en la mañana..."
-
-# 5. EL ESQUEMA PRINCIPAL (El JSON final que agrupa todo)
 class ResumenEstadisticasResponse(BaseModel):
     meta_semanal: MetaSemanalSchema
-    grafico_diario: List[DiaEstadisticaSchema]
-    focus_score: FocusScoreSchema
-    categoria_top: CategoriaTopSchema
-    promedio_tiempo: PromedioTiempoSchema
-    insights: List[InsightSchema]
-    sugerencia_ia: Optional[InsightSchema] = None # Opcional por si no hay datos para la IA
+    categorias:list[RendimientoCategoriaSchema]
