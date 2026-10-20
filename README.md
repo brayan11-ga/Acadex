@@ -1,6 +1,10 @@
 # ACADEX
 
+[![CI](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml/badge.svg)](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml)
+
 Aplicación web académica colaborativa para organizar tareas, grupos, integrantes, archivos y progreso de proyectos. Usa React, TypeScript y Vite; FastAPI y SQLAlchemy; y PostgreSQL.
+
+El CI (integración continua) ejecuta lint (revisión automatizada), build (compilación) y pruebas del frontend en cada pull request (solicitud de integración) hacia `develop` o `main`. También prueba el backend sin PostgreSQL y, en un trabajo aislado, con una base PostgreSQL desechable.
 
 ## Inicio rápido con Docker Compose
 
@@ -148,7 +152,33 @@ Revisa primero las nuevas revisiones de `backend/alembic/versions/` y sigue el p
 
 ### Pruebas del backend
 
+El trabajo backend del CI instala `backend/requirements.txt` y ejecuta desde `backend/`:
+
+```sh
+python -m pytest test tests -q
+```
+
+Este comando no habilita el acceso PostgreSQL; por eso las pruebas que necesitan esa base quedan omitidas en ese trabajo. El trabajo PostgreSQL del CI ejecuta Alembic y, en procesos separados, las suites que corresponden a los servicios `api-tests` e `integration` de abajo.
+
+Las pruebas unitarias de la guarda PostgreSQL no requieren una base de datos y pueden ejecutarse en el contenedor backend.
+
 Ejecuta estos comandos desde la raíz del repositorio y en este orden. El Compose de pruebas crea una base local efímera en una red interna; no usa la base de desarrollo ni servicios remotos. Las pruebas de PostgreSQL van en un proceso separado:
+
+```sh
+# backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# backend/test: pruebas de API.
+docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, por separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Detén y elimina contenedores y red de pruebas al terminar.
+docker compose -f docker-compose.test.yml down
+```
+
+Los valores predeterminados de credenciales de ese Compose son exclusivamente locales para la base efímera; no los reutilices en producción. Puedes cambiar el identificador del proyecto y sus credenciales con `ACADEX_TEST_COMPOSE_PROJECT`, `ACADEX_TEST_DB_USER` y `ACADEX_TEST_DB_PASSWORD`. El identificador debe ser `acadex-test-` seguido de 8 a 32 caracteres hexadecimales. Consulta [database/README.md](database/README.md) para las barreras y el alcance de estas pruebas.
 
 ```sh
 # backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.

@@ -1,3 +1,4 @@
+# Ruta: backend/tests/test_api_autorizacion.py
 import sys
 import unittest
 from datetime import date, datetime, timedelta
@@ -328,16 +329,30 @@ class AutorizacionServiciosTests(unittest.TestCase):
         self.assertEqual(historial.id_usuario, 12)
         self.assertEqual(historial.id_grupo, 7)
 
-    def test_integrante_no_asignado_no_consulta_lista_de_asignados(self):
+    def test_integrante_no_asignado_puede_ver_lista_de_asignados(self):
+        # RF-045: cualquier miembro del grupo (aunque no esté asignado) puede ver la lista.
         tarea = SimpleNamespace(id_tarea=4, id_usuario=None, id_grupo=7)
+        usuarios = [SimpleNamespace(id_usuario=12)]
         with (
             patch.object(tarea_service, "obtener_tarea", return_value=tarea),
-            patch.object(tarea_service, "_es_lider", return_value=False),
-            patch.object(tarea_service.asignacion_tarea_repository, "usuario_tiene_asignacion", return_value=False),
+            patch.object(tarea_service.asignacion_tarea_repository, "obtener_usuarios_asignados", return_value=usuarios) as listar,
+        ):
+            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 12), usuarios)
+        listar.assert_called_once()
+
+    def test_usuario_fuera_del_grupo_no_ve_lista_de_asignados(self):
+        # Un usuario que no pertenece al grupo (o no es dueño de la individual) no llega:
+        # obtener_tarea lanza 403 y no se consulta la lista.
+        with (
+            patch.object(
+                tarea_service,
+                "obtener_tarea",
+                side_effect=HTTPException(status_code=403, detail="No tienes permiso para acceder a esta tarea."),
+            ),
             patch.object(tarea_service.asignacion_tarea_repository, "obtener_usuarios_asignados") as listar,
         ):
             with self.assertRaises(HTTPException) as error:
-                tarea_service.listar_asignados_de_tarea(None, 4, 12)
+                tarea_service.listar_asignados_de_tarea(None, 4, 99)
         self.assertEqual(error.exception.status_code, 403)
         listar.assert_not_called()
 

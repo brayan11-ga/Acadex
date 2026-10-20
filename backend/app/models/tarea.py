@@ -18,6 +18,7 @@ class Tarea(Base):
     tiempo_acumulado = Column(REAL, nullable=False, default=0, server_default=text("0"))
     cronometro_activo = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     ultima_pausa = Column(TIMESTAMP, nullable=True)
+    max_archivos = Column(Integer, nullable=False, default=10, server_default=text("10"))
 
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=True)
@@ -27,6 +28,7 @@ class Tarea(Base):
         CheckConstraint("dificultad_estimada BETWEEN 1 AND 5", name="chk_dificultad_estimada"),
         CheckConstraint("tiempo_estimado > 0", name="chk_tiempo_estimado"),
         CheckConstraint("prioridad IS NULL OR prioridad > 0", name="chk_prioridad"),
+        CheckConstraint("max_archivos >= 1", name="chk_max_archivos"),
         CheckConstraint(
             "(id_usuario IS NOT NULL AND id_grupo IS NULL) OR "
             "(id_usuario IS NULL AND id_grupo IS NOT NULL)",

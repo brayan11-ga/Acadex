@@ -161,7 +161,7 @@ class PostgreSQLIntegracionTests(unittest.TestCase):
             categorias_iniciales = connection.execute(
                 text("SELECT count(*) FROM public.categorias")
             ).scalar_one()
-        self.assertEqual(revisiones, ["20261016_06"])
+        self.assertEqual(revisiones, ["20261018_01"])
         self.assertEqual(categorias_iniciales, 9)
 
         dialect = self.admin_engine.dialect
