@@ -9,9 +9,9 @@ altera ni verifica las tablas. Por eso, primero se compara el esquema completo.
 No guardes respaldos, archivos `.env`, credenciales ni datos personales dentro
 del repositorio. Usa una copia aislada para ensayar el procedimiento.
 
-## Estado comprobado del proyecto
+## Evidencia histórica y estado a verificar
 
-- La revisión `head` actual es `20261018_01` (la adopción inicial de la copia se registró en `20261016_06`).
+- Al revisar el repositorio, la revisión `head` era `20261018_01`. Confirma siempre el `head` de la rama que vayas a desplegar; este dato cambia al añadir migraciones.
 - La copia restaurada tenía las mismas 18 tablas, 110 columnas, 72
   restricciones y 43 índices que una base nueva creada con las migraciones.
 - La única diferencia textual en una restricción `CHECK` era el formato de un
@@ -83,7 +83,7 @@ alembic current
 alembic upgrade head
 ```
 
-`current` debe mostrar `20261016_06` o la revisión `head` aprobada más reciente.
+`current` debe mostrar la revisión `head` aprobada para la rama y el entorno.
 Si `upgrade head` encuentra una revisión posterior, revisa primero su SQL y el
 plan de datos; no supongas que `stamp` aplicó esas operaciones. Luego valida
 `/health/ready` y ejecuta registro, inicio de sesión y creación de tarea con
