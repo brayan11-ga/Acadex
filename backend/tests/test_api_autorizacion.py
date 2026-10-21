@@ -119,6 +119,7 @@ class AutenticacionRutasTests(unittest.TestCase):
             ("/api/v1/tareas/{id_tarea}", "GET"),
             ("/api/v1/tareas/{id_tarea}", "PUT"),
             ("/api/v1/tareas/{id_tarea}", "DELETE"),
+            ("/api/v1/tareas/{id_tarea}/completar", "POST"),
             ("/api/v1/tareas/{id_tarea}/asignados", "GET"),
             ("/api/v1/tareas/grupos/{id_grupo}", "GET"),
             ("/api/v1/perfiles/", "POST"),
@@ -261,18 +262,20 @@ class AutorizacionServiciosTests(unittest.TestCase):
 
     def test_lider_y_asignado_pueden_ver_lista_de_asignados(self):
         tarea = SimpleNamespace(id_tarea=4, id_usuario=None, id_grupo=7)
-        usuarios = [SimpleNamespace(id_usuario=12)]
+        usuarios = [SimpleNamespace(id_usuario=12, correo_electronico="a@a.com")]
+        esperado = [{"id_usuario": 12, "correo_electronico": "a@a.com", "completado": True}]
         with (
             patch.object(tarea_service, "obtener_tarea", return_value=tarea),
-            patch.object(tarea_service, "_es_lider", side_effect=[True, False]),
-            patch.object(tarea_service.asignacion_tarea_repository, "usuario_tiene_asignacion", return_value=True),
             patch.object(tarea_service.asignacion_tarea_repository, "obtener_usuarios_asignados", return_value=usuarios) as listar,
+            patch.object(tarea_service.historial_tarea_repository, "obtener_usuarios_completados", return_value={12}),
         ):
-            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 12), usuarios)
-            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 13), usuarios)
+            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 12), esperado)
+            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 13), esperado)
         self.assertEqual(listar.call_count, 2)
 
-    def test_integrante_asignado_puede_cambiar_estado_pero_no_datos_de_tarea(self):
+    def test_integrante_asignado_no_puede_modificar_tarea_grupal(self):
+        # C3: en las grupales el PUT queda reservado al líder; el estado solo
+        # se mueve con POST /tareas/{id}/completar.
         tarea = SimpleNamespace(
             id_tarea=4,
             id_usuario=None,
@@ -285,16 +288,19 @@ class AutorizacionServiciosTests(unittest.TestCase):
         with (
             patch.object(tarea_service, "obtener_tarea", return_value=tarea),
             patch.object(tarea_service, "_es_lider", return_value=False),
-            patch.object(tarea_service.asignacion_tarea_repository, "usuario_tiene_asignacion", return_value=True),
-            patch.object(tarea_service.tarea_repository, "actualizar_tarea", return_value=tarea) as actualizar,
+            patch.object(tarea_service.tarea_repository, "actualizar_tarea") as actualizar,
         ):
-            tarea_service.actualizar_tarea(None, 4, tarea_service.TareaUpdate(estado="Pendiente"), 12)
-            with self.assertRaises(HTTPException) as error:
-                tarea_service.actualizar_tarea(None, 4, tarea_service.TareaUpdate(nombre="Ajeno"), 12)
-        self.assertEqual(actualizar.call_count, 1)
-        self.assertEqual(error.exception.status_code, 403)
+            for datos in (
+                tarea_service.TareaUpdate(estado="Pendiente"),
+                tarea_service.TareaUpdate(nombre="Ajeno"),
+            ):
+                with self.assertRaises(HTTPException) as error:
+                    tarea_service.actualizar_tarea(None, 4, datos, 12)
+                self.assertEqual(error.exception.status_code, 403)
+        actualizar.assert_not_called()
 
-    def test_completar_tarea_grupal_registra_al_asignado_en_el_historial(self):
+    def test_put_no_puede_completar_tarea_grupal(self):
+        # C3: completar una tarea grupal ahora se hace con POST /completar.
         tarea = SimpleNamespace(
             id_tarea=4,
             id_usuario=None,
@@ -304,40 +310,32 @@ class AutorizacionServiciosTests(unittest.TestCase):
             dificultad_estimada=3,
             id_categoria=2,
         )
-        completada = SimpleNamespace(
-            id_tarea=4,
-            id_usuario=None,
-            id_grupo=7,
-            estado="Completada",
-            tiempo_acumulado=120,
-            dificultad_estimada=3,
-            id_categoria=2,
-        )
-        db = Mock()
-        db.query.return_value.filter.return_value.first.return_value = None
         with (
             patch.object(tarea_service, "obtener_tarea", return_value=tarea),
-            patch.object(tarea_service, "_es_lider", return_value=False),
-            patch.object(tarea_service.asignacion_tarea_repository, "usuario_tiene_asignacion", return_value=True),
-            patch.object(tarea_service.tarea_repository, "actualizar_tarea", return_value=completada),
-            patch("app.services.estadistica_service.recalcular_estadistica_categoria"),
+            patch.object(tarea_service, "_es_lider", return_value=True),
+            patch.object(tarea_service.tarea_repository, "actualizar_tarea") as actualizar,
         ):
-            tarea_service.actualizar_tarea(
-                db, 4, tarea_service.TareaUpdate(estado="Completada"), 12
-            )
-        historial = db.add.call_args.args[0]
-        self.assertEqual(historial.id_usuario, 12)
-        self.assertEqual(historial.id_grupo, 7)
+            with self.assertRaises(HTTPException) as error:
+                tarea_service.actualizar_tarea(
+                    Mock(), 4, tarea_service.TareaUpdate(estado="Completada"), 12
+                )
+        self.assertEqual(error.exception.status_code, 400)
+        self.assertEqual(error.exception.detail, "Usa Completar mi parte.")
+        actualizar.assert_not_called()
 
     def test_integrante_no_asignado_puede_ver_lista_de_asignados(self):
         # RF-045: cualquier miembro del grupo (aunque no esté asignado) puede ver la lista.
         tarea = SimpleNamespace(id_tarea=4, id_usuario=None, id_grupo=7)
-        usuarios = [SimpleNamespace(id_usuario=12)]
+        usuarios = [SimpleNamespace(id_usuario=12, correo_electronico="a@a.com")]
         with (
             patch.object(tarea_service, "obtener_tarea", return_value=tarea),
             patch.object(tarea_service.asignacion_tarea_repository, "obtener_usuarios_asignados", return_value=usuarios) as listar,
+            patch.object(tarea_service.historial_tarea_repository, "obtener_usuarios_completados", return_value=set()),
         ):
-            self.assertEqual(tarea_service.listar_asignados_de_tarea(None, 4, 12), usuarios)
+            self.assertEqual(
+                tarea_service.listar_asignados_de_tarea(None, 4, 12),
+                [{"id_usuario": 12, "correo_electronico": "a@a.com", "completado": False}],
+            )
         listar.assert_called_once()
 
     def test_usuario_fuera_del_grupo_no_ve_lista_de_asignados(self):

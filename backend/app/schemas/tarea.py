@@ -81,8 +81,12 @@ class TareaGrupalCreate(BaseModel):
         default=MAX_ARCHIVOS_POR_TAREA_DEFECTO, ge=1, le=MAX_ARCHIVOS_POR_TAREA
     )
 
+class CompletarTareaRequest(BaseModel):
+    dificultad_real: int = Field(..., ge=1, le=5)
+
 class IntegranteAsignadoResponse(BaseModel):
     id_usuario: int
     correo_electronico: str
+    completado: bool = False
 
     model_config = ConfigDict(from_attributes=True)
