@@ -8,7 +8,7 @@ import { Paginacion } from "./Paginacion";
 import { TarjetaCategoria } from "./TarjetaCategoria";
 import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { EmptyState } from "../ui/EmptyState";
-import { ModalConfirmarEliminar } from "./ModalConfirmarEliminar";
+import { ModalConfirmacion } from "../layout/ModalConfirmacion";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
 import { ModalDetalleTarea } from "./ModalDetalleTarea";
 
@@ -185,13 +185,13 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         />
       )}
 
-      {tareaAEliminar !== null &&(
-        <ModalConfirmarEliminar
-        onConfirmar={confirmarEliminar}
-        onCancelar={cancelarEliminar}
-        />
-      )}
-
+      <ModalConfirmacion
+      isOpen={tareaAEliminar !== null}
+      title="¿Eliminar Tarea?"
+      message="Esta acción no se puede deshacer. También se eliminarán los adjuntos de esta tarea."
+      onConfirm={confirmarEliminar}
+      onCancel={cancelarEliminar}
+      />
 
     </main>
   );
