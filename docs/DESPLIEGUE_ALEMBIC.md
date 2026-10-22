@@ -1,5 +1,10 @@
 # Alinear una base existente con Alembic
 
+Para instalar Acadex por primera vez, usa [Inicio con Docker](inicio-docker.md) o
+[Inicio manual](inicio-manual.md). Esta guía es para una intervención de datos
+coordinada con el responsable. Supabase es producción; sus comandos no forman
+parte del arranque local.
+
 ## Alcance
 
 Esta guía explica cómo adoptar con seguridad Alembic en una base que ya tiene
@@ -10,6 +15,10 @@ No guardes respaldos, archivos `.env`, credenciales ni datos personales dentro
 del repositorio. Usa una copia aislada para ensayar el procedimiento.
 
 ## Evidencia histórica y estado a verificar
+
+Los resultados siguientes proceden de notas anteriores. No se repitieron en la
+revisión documental y no confirman la revisión ni las políticas actuales de
+Supabase. Antes de operar, hay que verificar el destino y su estado real.
 
 - Al revisar el repositorio, la revisión `head` era `20261018_01`. Confirma siempre el `head` de la rama que vayas a desplegar; este dato cambia al añadir migraciones.
 - La copia restaurada tenía las mismas 18 tablas, 110 columnas, 72
