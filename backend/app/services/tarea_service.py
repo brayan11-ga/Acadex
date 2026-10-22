@@ -339,6 +339,17 @@ def crear_tarea_grupal(
             detail="No tienes permisos de líder sobre este grupo.",
         )
 
+    if not datos.ids_usuarios:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La tarea debe tener al menos un asignado.",
+        )
+    if len(set(datos.ids_usuarios)) != len(datos.ids_usuarios):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se permiten asignados repetidos.",
+        )
+
     integrantes = []
     for id_usuario in datos.ids_usuarios:
         integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)

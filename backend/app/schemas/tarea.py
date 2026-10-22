@@ -12,8 +12,8 @@ class TareaBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     fecha_entrega: datetime
-    dificultad_estimada: int
-    tiempo_estimado: int
+    dificultad_estimada: int = Field(..., ge=1, le=5)
+    tiempo_estimado: int = Field(..., gt=0)
     prioridad: Optional[int] = None
     id_categoria: int
 
@@ -51,8 +51,8 @@ class TareaUpdate(BaseModel):
     descripcion: Optional[str] = None
     fecha_entrega: Optional[datetime] = None
     estado: Optional[str] = None
-    dificultad_estimada: Optional[int] = None
-    tiempo_estimado: Optional[int] = None
+    dificultad_estimada: Optional[int] = Field(default=None, ge=1, le=5)
+    tiempo_estimado: Optional[int] = Field(default=None, gt=0)
     prioridad: Optional[int] = None
     id_categoria: Optional[int] = None
     max_archivos: Optional[int] = Field(default=None, ge=1)
@@ -73,8 +73,8 @@ class TareaGrupalCreate(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     fecha_entrega: datetime
-    dificultad_estimada: int
-    tiempo_estimado: int
+    dificultad_estimada: int = Field(..., ge=1, le=5)
+    tiempo_estimado: int = Field(..., gt=0)
     id_categoria: int
     ids_usuarios: List[int] = Field(default_factory=list)
     max_archivos: int = Field(

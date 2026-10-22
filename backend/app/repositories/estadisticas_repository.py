@@ -1,4 +1,4 @@
-# app/repositories/estadisticas_repository.py
+# Ruta: backend/app/repositories/estadisticas_repository.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime
@@ -19,7 +19,8 @@ class EstadisticasRepository:
             .filter(
                 HistorialTarea.id_usuario == id_usuario,
                 HistorialTarea.fechahora_fin >= fecha_inicio,
-                HistorialTarea.fechahora_fin <= fecha_fin
+                HistorialTarea.fechahora_fin <= fecha_fin,
+                HistorialTarea.id_grupo.is_(None),
             ).all()
 
     def contar_tareas_esperadas_rango(self, db: Session, id_usuario: int, fecha_inicio: datetime, fecha_fin: datetime):
