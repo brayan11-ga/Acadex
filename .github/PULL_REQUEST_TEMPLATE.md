@@ -1,33 +1,28 @@
 ## Qué cambia y por qué
 
-Describe el cambio y el problema o necesidad que resuelve.
+<!-- Explica el problema y el resultado. Añade capturas solo si ayudan a revisar. -->
 
 ## Issue relacionada
 
-Closes #N
+Refs #N
 
-## Pruebas realizadas
+<!-- PR habitual: base develop. Sustituye #N por la issue real.
+Closes #N solo cierra automáticamente al fusionar en la rama predeterminada (main).
+Para un PR a develop, comprueba el cierre manual al cumplir los criterios.
+Si no hay issue, explica la excepción. -->
 
-- Comando o comprobación:
-- Resultado:
-- No ejecuté: motivo y seguimiento, si aplica.
+## Pruebas y comprobaciones
 
-## Impacto
+- Comando o comprobación y resultado:
+- No ejecuté / queda pendiente:
 
-- [ ] Frontend
-- [ ] Backend o API
-- [ ] Base de datos o migraciones
-- [ ] Infraestructura o configuración
-- [ ] Documentación
-- [ ] No aplica
+## Puntos que necesitan revisión
 
-## Riesgos o puntos de revisión
+<!-- Solo si aplica: cambios de esquema, compatibilidad, configuración o decisiones pendientes. -->
 
-Indica compatibilidad, datos, seguridad, decisiones pendientes o archivos que deban revisarse con atención.
+## Antes de solicitar revisión
 
-## Lista breve antes de solicitar revisión
-
-- [ ] El diff se limita al objetivo de la Issue.
-- [ ] No incluí secretos, datos personales, volcados ni archivos generados ajenos al cambio.
-- [ ] Ejecuté las validaciones pertinentes o expliqué las que faltan.
-- [ ] Actualicé la documentación afectada o justifiqué por qué no aplica.
+- [ ] Revisé la rama base y el diff; el cambio corresponde a la issue.
+- [ ] No incluí secretos, datos de usuarios ni archivos ajenos al cambio.
+- [ ] Registré las comprobaciones reales y actualicé la documentación afectada.
+- [ ] Solicité revisión y actualicé la issue a `In review / QA` en el Project.
