@@ -2,6 +2,12 @@
 
 Estas migraciones documentan la historia anterior y se conservan para auditoría. La fuente vigente es Alembic en `backend/alembic/versions/`; no agregues migraciones nuevas a esta carpeta ni ejecutes sus SQL como ruta normal.
 
+Las referencias a bases migradas o pendientes describen el estado registrado en
+aquella transición. No confirman el estado actual de Supabase. Para instalar en
+local, usa [Inicio con Docker](../../docs/inicio-docker.md) o
+[Inicio manual](../../docs/inicio-manual.md); para una base existente, consulta
+[Base de datos](../../database/README.md).
+
 ## Secuencia SQL histórica convertida a revisiones Alembic
 
 1. `20261011_add_archivo_uploader.sql`: agrega `archivos.id_usuario_subida` como nullable y una FK a `usuarios.id_usuario` con `ON DELETE SET NULL`. Las filas históricas quedan sin autor conocido.

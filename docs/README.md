@@ -1,29 +1,38 @@
 # Índice de documentación
 
-Este índice indica dónde buscar y mantener cada tema. Evita copiar procedimientos completos entre documentos: cuando una regla tenga una fuente canónica, los demás documentos deben enlazarla.
+Empieza por el [README](../README.md). Para ejecutar el proyecto, elige Docker o inicio manual; para cambiarlo, sigue [CONTRIBUTING](../CONTRIBUTING.md).
 
-| Documento | Público y momento de consulta | Fuente canónica de | Cuándo actualizarlo |
-| --- | --- | --- | --- |
-| [README raíz](../README.md) | Cualquier integrante al conocer o ejecutar el proyecto | Propósito, acceso inicial, servicios locales y enlaces principales | Cambios en arranque, puertos, stack o punto de entrada |
-| [CONTRIBUTING](../CONTRIBUTING.md) | Quien propone, implementa o revisa un cambio | Issues, GitHub Project, ramas, Pull Requests, revisión, integración y actualización documental | Cambios acordados en el proceso de equipo |
-| [Arquitectura](arquitectura.md) | Desarrollo de funcionalidades e integraciones | Componentes, límites y flujos técnicos | Cambios de componentes, contratos o configuración entre servicios |
-| [Calidad y pruebas](calidad-y-pruebas.md) | Antes de abrir o revisar un Pull Request | Comandos, alcance de pruebas y CI | Cambios en scripts, suites o CI |
-| [Diseño frontend](diseno-frontend.md) | Cambios visuales o de componentes | Tokens y convenciones que existen en los estilos | Cambios en estilos globales, tokens o componentes compartidos |
-| [Guía del backend](../backend/README.md) | Desarrollo local manual de API | Preparación y ejecución local del backend | Cambios en dependencias, ejecución o variables del backend |
-| [Guía del frontend](../frontend/README.md) | Desarrollo local manual de interfaz | Preparación y ejecución local del frontend | Cambios en scripts, Vite o variables VITE |
-| [Base de datos](../database/README.md) | Cambios de esquema, administración local o pruebas PostgreSQL | Alembic, fuentes históricas y cautelas de datos | Nueva migración, cambios de seguridad o de pruebas de datos |
-| [Adopción de Alembic](DESPLIEGUE_ALEMBIC.md) | Solo para una base existente sin historial Alembic | Procedimiento excepcional de adopción | Si se valida un nuevo procedimiento de adopción |
-| [RF](RF/README.md) y [RNF](RNF/README.md) | Planificación y validación de producto | Requisitos y criterios de producto | Cambio aprobado de alcance o de criterio |
+## Qué mantiene cada archivo
 
-## Estado de requisitos
+| Documento | Responsabilidad |
+| --- | --- |
+| [README](../README.md) | Qué es Acadex, cómo clonar, elegir un método de inicio y encontrar las guías |
+| [Inicio con Docker](inicio-docker.md) | Preparar variables, levantar el stack, comprobar servicios y conservar datos al detenerlo |
+| [Inicio manual](inicio-manual.md) | PostgreSQL local, entorno Python, migraciones y terminales de backend/frontend |
+| [CONTRIBUTING](../CONTRIBUTING.md) | Issue, etiquetas, Project, ramas, commits, PR, revisión y cierre |
+| [Plantilla de PR](../.github/PULL_REQUEST_TEMPLATE.md) | Información mínima para revisar un cambio |
+| [Formularios de issues](../.github/ISSUE_TEMPLATE) | Reportar errores, proponer funcionalidades y registrar trabajo técnico; son YAML, no Markdown |
+| [Backend](../backend/README.md) | Entrada de la API, estructura y configuración de sus integraciones |
+| [Frontend](../frontend/README.md) | Variables públicas, scripts disponibles y referencias de interfaz |
+| [Base de datos](../database/README.md) | Fuente del esquema, actualización de bases existentes, administración local y guardas de pruebas |
+| [Migraciones SQL históricas](../backend/migrations/README.md) | Historia anterior a Alembic y notas técnicas de esa transición; no es una guía de inicio |
+| [Adopción de Alembic](DESPLIEGUE_ALEMBIC.md) | Procedimiento excepcional para una base con tablas e historial por reconciliar; separado del desarrollo local |
+| [Arquitectura](arquitectura.md) | Componentes, comunicación y organización del código |
+| [Calidad y pruebas](calidad-y-pruebas.md) | Comandos de validación, entorno de pruebas PostgreSQL y alcance de CI |
+| [Diseño frontend](diseno-frontend.md) | Tokens, estilos y convenciones de interfaz existentes |
+| [RF](RF/README.md) y sus 58 fichas | Requisitos funcionales, historias y escenarios |
+| [RNF](RNF/README.md) y sus 32 fichas | Requisitos no funcionales y restricciones |
+| [Decisiones sobre tareas grupales](decisiones/tareas-grupales.md) | Documento de trabajo fechado: decisiones, hallazgos y pendientes de ese momento |
 
-Los índices de RF y RNF describen requisitos, no un estado de implementación validado. El campo **Tipo de cambio** en RF clasifica cambios editoriales respecto de una versión anterior; no prueba que una capacidad esté completa.
+Las fichas RF/RNF describen objetivos, no certifican su implementación. «Tipo de cambio» en RF clasifica una edición del requisito. Para saber si está resuelto, consulta implementación, issue, PR y pruebas.
 
-No se creó una matriz de estado en esta fase porque no hay evidencia homogénea de implementación y prueba para todos los requisitos. Cuando el equipo defina quién verifica cada requisito y con qué evidencia, una matriz deberá enlazar a los RF/RNF originales en vez de duplicarlos.
+El documento de tareas grupales contiene planes fechados y referencias históricas a archivos retirados. Contrasta sus pendientes con el código y las issues antes de iniciar trabajo.
 
-## Mantenimiento editorial
+## Cómo mantener estas guías
 
-- Redacta en español y conserva rutas, comandos, variables e identificadores técnicos tal como existen en el código.
-- Usa enlaces relativos a la fuente canónica y corrígelos al mover o retirar documentos.
-- No guardes secretos, datos personales, credenciales, volcados de bases de datos ni ejemplos con valores reales.
-- Comprueba los comandos frente a la configuración antes de documentarlos. Una instrucción escrita no garantiza que una configuración administrativa de GitHub esté activa.
+1. Actualiza el documento que contiene el procedimiento; en los demás, añade o corrige el enlace.
+2. Comprueba comandos, rutas y variables contra los archivos del repositorio. Marca como pendiente lo que no puedas verificar.
+3. Conserva los nombres exactos de etiquetas y campos de GitHub. El catálogo comprobado y los ajustes administrativos pendientes están en [CONTRIBUTING](../CONTRIBUTING.md).
+4. Usa ejemplos sin secretos ni datos personales. No documentes una prueba como pasada si no se ejecutó.
+
+Las guías de inicio describen desarrollo local. Los resultados históricos de una migración o una copia restaurada no prueban el estado actual de Supabase.
