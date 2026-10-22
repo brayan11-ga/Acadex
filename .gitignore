@@ -5,6 +5,7 @@
 venv/
 .venv/
 
+
 # ==============================
 # PYTHON
 # ==============================
@@ -21,10 +22,7 @@ __pycache__/
 
 .env
 .env.*
-!.env.example
 
-# Datos y binarios privados creados localmente o durante el desarrollo.
-/backend/uploads/
 
 # ==============================
 # EDITORES
@@ -37,3 +35,11 @@ __pycache__/
 *.log
 
 node_modules/
+uploads/
+
+# Archivos de contexto y memoria de agentes IA
+AGENTS.md
+memory.md
+database.md
+backend/AGENTS.md
+frontend/AGENTS.md
