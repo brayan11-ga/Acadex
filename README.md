@@ -63,18 +63,143 @@ No subas archivos .env, claves JWT reales, tokens de Gemini o Supabase, contrase
 
 Los comandos se ejecutan desde la raíz, salvo que se indique otra ubicación.
 
-~~~sh
-# Pruebas y compilación del frontend dentro del entorno Compose
+Revisa primero las nuevas revisiones de `backend/alembic/versions/` y sigue el procedimiento de la guía de base de datos. Conserva tus cambios locales y crea un respaldo antes de modificar una base con información que necesites.
+
+### Pruebas del backend
+
+El trabajo backend del CI instala `backend/requirements.txt` y ejecuta desde `backend/`:
+
+```sh
+python -m pytest test tests -q
+```
+
+Este comando no habilita el acceso PostgreSQL; por eso las pruebas que necesitan esa base quedan omitidas en ese trabajo. El trabajo PostgreSQL del CI ejecuta Alembic y, en procesos separados, las suites que corresponden a los servicios `api-tests` e `integration` de abajo.
+
+Las pruebas unitarias de la guarda PostgreSQL no requieren una base de datos y pueden ejecutarse en el contenedor backend.
+
+Ejecuta estos comandos desde la raíz del repositorio y en este orden. El Compose de pruebas crea una base local efímera en una red interna; no usa la base de desarrollo ni servicios remotos. Las pruebas de PostgreSQL van en un proceso separado:
+
+```sh
+# backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# backend/test: pruebas de API.
+docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, por separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Detén y elimina contenedores y red de pruebas al terminar.
+docker compose -f docker-compose.test.yml down
+```
+
+Los valores predeterminados de credenciales de ese Compose son exclusivamente locales para la base efímera; no los reutilices en producción. Puedes cambiar el identificador del proyecto y sus credenciales con `ACADEX_TEST_COMPOSE_PROJECT`, `ACADEX_TEST_DB_USER` y `ACADEX_TEST_DB_PASSWORD`. El identificador debe ser `acadex-test-` seguido de 8 a 32 caracteres hexadecimales. Consulta [database/README.md](database/README.md) para las barreras y el alcance de estas pruebas.
+
+```sh
+# backend/tests: pruebas unitarias y de seguridad; PostgreSQL queda omitido aquí.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# backend/test: pruebas de API.
+docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, por separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Detén y elimina contenedores y red de pruebas al terminar.
+docker compose -f docker-compose.test.yml down
+```
+
+Los valores predeterminados de credenciales de ese Compose son exclusivamente locales para la base efímera; no los reutilices en producción. Puedes cambiar el identificador del proyecto y sus credenciales con `ACADEX_TEST_COMPOSE_PROJECT`, `ACADEX_TEST_DB_USER` y `ACADEX_TEST_DB_PASSWORD`. El identificador debe ser `acadex-test-` seguido de 8 a 32 caracteres hexadecimales. Consulta [database/README.md](database/README.md) para las barreras y el alcance de estas pruebas.
+
+Para ejecutar las pruebas frontend sin instalar Node.js/pnpm en el anfitrión, con el servicio frontend iniciado:
+
+```sh
 docker compose exec -T frontend pnpm test --run
 docker compose exec -T frontend pnpm build
+```
 
-# Pruebas aisladas con PostgreSQL efímero; ejecutar una suite a la vez
-docker compose -f docker-compose.test.yml run --build --rm integration
-docker compose -f docker-compose.test.yml run --build --rm api-tests
-docker compose -f docker-compose.test.yml down
-~~~
+### Verificar un clon limpio y aislado
 
-Para desarrollo manual, consulta [frontend/README.md](frontend/README.md) y [backend/README.md](backend/README.md). La lista de comandos, el alcance de cada prueba y lo que ejecuta CI están en [calidad y pruebas](docs/calidad-y-pruebas.md). La documentación OpenAPI en **/docs** es la referencia de endpoints disponibles en una instancia en ejecución; no se mantiene una lista duplicada aquí.
+Este procedimiento crea una base local nueva. Usa un nombre de proyecto Compose único: Compose agrega ese nombre a los contenedores y al volumen PostgreSQL, por lo que la prueba no reutiliza los datos del proyecto normal. Confirma que los puertos elegidos estén libres.
+
+En PowerShell, ejecuta esto desde el repositorio fuente. Clona la rama actual desde la ruta local y copia las plantillas. Los archivos copiados son locales y están ignorados por Git; no pegues credenciales reales:
+
+```powershell
+$source = (Get-Location).Path
+$branch = (git branch --show-current).Trim()
+git clone --branch $branch --single-branch --no-hardlinks $source Acadex-prueba
+cd Acadex-prueba
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env.local
+$project = "acadex-prueba-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+$env:ACADEX_FRONTEND_PORT = "28173"
+$env:ACADEX_API_PORT = "28180"
+$env:ACADEX_DB_PORT = "28543"
+$env:ACADEX_MAILPIT_UI_PORT = "28025"
+$env:ACADEX_MAILPIT_SMTP_PORT = "21025"
+docker compose -p $project up --build -d
+docker compose -p $project ps -a
+$migrateId = docker compose -p $project ps -aq migrate
+docker inspect $migrateId --format '{{.State.Status}} {{.State.ExitCode}}'
+Invoke-RestMethod http://localhost:28180/health/ready
+```
+
+La migración debe mostrar estado `exited` y código `0`; la verificación de salud debe responder correctamente. Abre `http://localhost:28180/docs` y usa la documentación interactiva para registrar una cuenta, iniciar sesión y crear una tarea con el token devuelto por el login. Los códigos esperados son 201 para registro, 200 para login y 201 para crear la tarea.
+
+Al terminar, elimina solo este proyecto de prueba y su volumen nuevo:
+
+```powershell
+docker compose -p $project down --volumes --remove-orphans
+```
+
+Conserva el mismo `$project` en todos los comandos. No uses el nombre del proyecto normal para esta limpieza, porque `--volumes` borra su base PostgreSQL.
+
+La validación de portabilidad de extremo a extremo también requiere comprobar la salud de los servicios y probar la persistencia tras un reinicio.
+
+## Ejecución manual sin Docker Compose
+
+Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. Requiere Node.js, pnpm, Python y una instancia PostgreSQL ya instalada y configurada; no es necesaria para el flujo recomendado con Compose.
+
+1. Copia las plantillas sin sobrescribir configuraciones existentes:
+
+   ```powershell
+   if (-not (Test-Path .\backend\.env)) { Copy-Item .\backend\.env.example .\backend\.env }
+   if (-not (Test-Path .\frontend\.env.local)) { Copy-Item .\frontend\.env.example .\frontend\.env.local }
+   ```
+
+   En macOS/Linux:
+
+   ```sh
+   test -f backend/.env || cp backend/.env.example backend/.env
+   test -f frontend/.env.local || cp frontend/.env.example frontend/.env.local
+   ```
+
+2. Configura en `backend/.env` la conexión a PostgreSQL local, la clave de desarrollo y las opciones que vayas a utilizar. Mantén `VITE_API_URL` del frontend apuntando al origen de la API.
+3. Instala dependencias e inicia backend y frontend en terminales separadas:
+
+   ```sh
+   cd backend
+   python -m venv .venv
+   # Activa el entorno virtual para tu sistema operativo.
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload
+   ```
+
+   ```sh
+   cd frontend
+   corepack enable
+   corepack pnpm --version
+   corepack pnpm install --frozen-lockfile
+   corepack pnpm dev
+   ```
+
+   `corepack pnpm --version` debe mostrar la versión fijada por `packageManager` en `frontend/package.json` (actualmente `12.11.2`). Desde `frontend/`, los demás comandos disponibles son:
+
+   ```sh
+   corepack pnpm build
+   corepack pnpm test --run
+   corepack pnpm lint
+   ```
 
 ## Documentación
 

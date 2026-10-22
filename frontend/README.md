@@ -7,7 +7,7 @@ Para levantar el sistema completo por primera vez, sigue el [README raíz](../RE
 ## Requisitos
 
 - Node.js 20.19 o superior, o 22.12 o superior.
-- pnpm 12.11.2, fijado por el campo `packageManager` de `package.json`. Corepack puede seleccionar esa versión.
+- Corepack y pnpm 12.11.2, fijado por el campo `packageManager` de `package.json`.
 
 ## Configuración local
 
@@ -36,27 +36,28 @@ Las variables `VITE_*` se incorporan al código que recibe el navegador; no guar
 
 ```sh
 corepack enable
-pnpm install --frozen-lockfile
-pnpm dev
+corepack pnpm --version
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
 ```
 
-Vite muestra la dirección local al iniciar. En otra terminal, ejecuta las verificaciones desde `frontend/`:
+`corepack pnpm --version` confirma la versión seleccionada desde `package.json`. Debe mostrar `12.11.2`. Vite muestra la dirección local al iniciar. En otra terminal, ejecuta las verificaciones desde `frontend/`:
 
 ```sh
-pnpm test --run
-pnpm lint
-pnpm build
+corepack pnpm test --run
+corepack pnpm lint
+corepack pnpm build
 ```
 
 - `test --run`: ejecuta la suite completa de Vitest y termina al finalizar.
 - `lint`: revisa el código con Oxlint.
 - `build`: comprueba TypeScript y genera el sitio optimizado en `dist/`.
-- `preview`: sirve localmente el resultado ya compilado; primero ejecuta `pnpm build`.
+- `preview`: sirve localmente el resultado ya compilado; primero ejecuta `corepack pnpm build`.
 
 Para probar el build:
 
 ```sh
-pnpm preview
+corepack pnpm preview
 ```
 
 Los tokens y convenciones visuales que existen hoy se documentan en [docs/diseno-frontend.md](../docs/diseno-frontend.md). No incluyas secretos en archivos VITE: sus valores se incorporan al código que recibe el navegador.

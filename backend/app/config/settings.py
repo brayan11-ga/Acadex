@@ -9,6 +9,7 @@ from sqlalchemy.engine import URL
 # Tope fijo del sistema para el límite de archivos por tarea. No lo define el usuario
 # ni puede superarlo, ni siquiera el líder (ver docs/decisiones/tareas-grupales.md).
 MAX_ARCHIVOS_POR_TAREA = 10
+MODELO_GROQ_POR_DEFECTO = "openai/gpt-oss-20b"
 
 # Valor por defecto del límite al crear una tarea grupal si el líder no lo envía.
 MAX_ARCHIVOS_POR_TAREA_DEFECTO = 3
@@ -27,6 +28,8 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int
     gemini_api_key: str = ""
+    groq_api_key: str = ""
+    groq_model: str = MODELO_GROQ_POR_DEFECTO
     # Defaults conservadores para el plan gratuito. Los límites efectivos se
     # acotan también en ia_usage_guard para tolerar overrides antiguos del .env.
     gemini_user_daily_limit: int = Field(default=1, ge=1, le=5)

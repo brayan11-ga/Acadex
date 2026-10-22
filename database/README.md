@@ -2,7 +2,23 @@
 
 El flujo recomendado de instalación está en el [README raíz](../README.md). Esta guía explica qué administra Compose en PostgreSQL, cómo evoluciona el esquema y cómo probar cambios sin tocar la base normal del desarrollador. El stack requiere Docker Compose v2.24.0 o superior, necesario para que `env_file.required: false` admita la ausencia de `backend/.env`.
 
-Los comandos de frontend pertenecen a [frontend/README.md](../frontend/README.md); la relación entre validaciones y CI está en [docs/calidad-y-pruebas.md](../docs/calidad-y-pruebas.md).
+Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y Corepack. El campo `packageManager` de `frontend/package.json` fija pnpm 12.11.2.
+
+## Comandos del frontend con pnpm
+
+Ejecuta estos comandos desde `frontend/`. Usa Corepack para seleccionar la versión declarada en `package.json`:
+
+```sh
+corepack enable
+corepack pnpm --version
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
+corepack pnpm build
+corepack pnpm test --run
+corepack pnpm lint
+```
+
+`dev` inicia el servidor local; `build` genera el sitio compilado; `test --run` ejecuta todas las pruebas una vez; `lint` analiza el código sin modificarlo.
 
 ## Fuente vigente y archivos históricos
 
@@ -68,8 +84,16 @@ Las suites de integración se ejecutan mediante `docker-compose.test.yml`, en pr
 Desde la raíz del repositorio:
 
 ```sh
-docker compose -f docker-compose.test.yml run --build --rm integration
+# Suite backend/tests, sin activar integración PostgreSQL.
+docker compose -f docker-compose.test.yml run --build --rm -e ACADEX_RUN_POSTGRES_TESTS=0 api-tests python -m pytest tests -q
+
+# Suite backend/test de API.
 docker compose -f docker-compose.test.yml run --build --rm api-tests
+
+# Integración PostgreSQL, en un proceso separado.
+docker compose -f docker-compose.test.yml run --build --rm integration
+
+# Limpia contenedores y red de pruebas al terminar.
 docker compose -f docker-compose.test.yml down
 ```
 
