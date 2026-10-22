@@ -123,6 +123,17 @@ def completar_parte_tarea(
     )
 
 
+@router.post("/{id_tarea}/reabrir", response_model=TareaResponse)
+def reabrir_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.reabrir_tarea_grupal(
+        db, id_tarea, usuario_actual.id_usuario
+    )
+
+
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_tarea(
     id_tarea: int,

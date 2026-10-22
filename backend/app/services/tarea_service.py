@@ -1,4 +1,5 @@
 # Ruta: backend/app/services/tarea_service.py
+import logging
 from datetime import date, datetime
 from typing import List, Optional
 from fastapi import HTTPException, UploadFile, status
@@ -10,15 +11,59 @@ from app.schemas.tarea import TareaCreate, TareaUpdate
 from app.repositories import asignacion_tarea_repository, grupo_repository
 from app.repositories import archivo_repository
 from app.repositories import historial_tarea_repository, sesion_cronometro_repository
+from app.repositories import notificacion_repository
 from app.schemas.tarea import TareaGrupalCreate
 from app.config.settings import MAX_ARCHIVOS_POR_TAREA
 from app.models.usuario import Usuario
 from app.services import archivo_service
 
+logger = logging.getLogger(__name__)
+
 
 def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:
     integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)
     return integrante is not None and integrante.rol == "lider"
+
+
+def _recortar_nombre_tarea(nombre: str, maximo: int = 35) -> str:
+    """Recorta el nombre para que quepa en el detalle de una notificación."""
+    texto = (nombre or "").strip()
+    if len(texto) <= maximo:
+        return texto
+    return texto[: maximo - 1].rstrip() + "…"
+
+
+def _notificar(
+    db: Session,
+    *,
+    titulo: str,
+    detalles: str,
+    tipo: str,
+    id_usuario: int,
+    id_tarea: int,
+) -> None:
+    """Crea una notificación sin tumbar la operación principal si falla.
+
+    Se llama después del commit de reabrir/reasignar: un fallo aquí solo se
+    registra en el log y no deshace el cambio de la tarea.
+    """
+    try:
+        notificacion_repository.crear_notificacion(
+            db,
+            titulo=titulo[:50],
+            detalles=detalles[:100],
+            tipo=tipo,
+            id_usuario=id_usuario,
+            id_tarea=id_tarea,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "No se pudo crear la notificación %s para el usuario %s",
+            tipo,
+            id_usuario,
+        )
+
 
 def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bool = True) -> Tarea:
     if datos.id_grupo is None:
@@ -282,6 +327,71 @@ def completar_parte_tarea(
     except Exception:
         db.rollback()
         raise
+
+def reabrir_tarea_grupal(db: Session, id_tarea: int, id_usuario: int) -> Tarea:
+    """Devuelve a "en progreso" una tarea grupal que estaba "Completada" (C4b).
+
+    Solo el líder puede hacerlo. Borra todo el historial de la tarea, pero
+    conserva archivos, sesiones, asignaciones y datos de la tarea. No recalcula
+    estadísticas: es una decisión explícita de C4b.
+    """
+    tarea = tarea_repository.obtener_tarea_por_id(db, id_tarea)
+    if tarea is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarea no encontrada",
+        )
+    if tarea.id_grupo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Esta tarea no es grupal; usa el flujo actual (PUT).",
+        )
+    if not _es_lider(db, id_usuario, tarea.id_grupo):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo el líder del grupo puede reabrir esta tarea.",
+        )
+    if (tarea.estado or "").lower() != "completada":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La tarea no está completada.",
+        )
+
+    try:
+        historial_tarea_repository.eliminar_por_tarea(db, id_tarea)
+        tarea.estado = "en progreso"
+        db.commit()
+        db.refresh(tarea)
+    except Exception:
+        db.rollback()
+        raise
+
+    # Las notificaciones se crean después del commit: si una falla, la tarea
+    # ya quedó reabierta y el error solo se registra en el log.
+    try:
+        nombre = _recortar_nombre_tarea(tarea.nombre)
+        asignados = asignacion_tarea_repository.obtener_usuarios_asignados(db, id_tarea)
+        for asignado in asignados:
+            if asignado.id_usuario == id_usuario:
+                continue
+            _notificar(
+                db,
+                titulo="Una tarea volvió a estar en progreso",
+                detalles=(
+                    f"El líder reabrió «{nombre}». "
+                    "Debes completar tu parte otra vez."
+                ),
+                tipo="tarea_reabierta",
+                id_usuario=asignado.id_usuario,
+                id_tarea=id_tarea,
+            )
+    except Exception:
+        db.rollback()
+        logger.exception("No se pudieron crear las notificaciones de la reapertura")
+
+    tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
+    return tarea
+
 
 def eliminar_tarea(db: Session, id_tarea: int, id_usuario: int) -> None:
     tarea = obtener_tarea(db, id_tarea, id_usuario)

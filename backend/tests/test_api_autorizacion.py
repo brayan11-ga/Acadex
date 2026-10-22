@@ -120,6 +120,7 @@ class AutenticacionRutasTests(unittest.TestCase):
             ("/api/v1/tareas/{id_tarea}", "PUT"),
             ("/api/v1/tareas/{id_tarea}", "DELETE"),
             ("/api/v1/tareas/{id_tarea}/completar", "POST"),
+            ("/api/v1/tareas/{id_tarea}/reabrir", "POST"),
             ("/api/v1/tareas/{id_tarea}/asignados", "GET"),
             ("/api/v1/tareas/grupos/{id_grupo}", "GET"),
             ("/api/v1/perfiles/", "POST"),
