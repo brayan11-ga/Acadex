@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from app.schemas.archivo import ArchivoResponse
 from app.services import archivo_service
-from app.schemas.tarea import IntegranteAsignadoResponse
+from app.schemas.tarea import CompletarTareaRequest, IntegranteAsignadoResponse
 
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
@@ -109,6 +109,18 @@ def actualizar_tarea(
     usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
     return tarea_service.actualizar_tarea(db, id_tarea, datos, usuario_actual.id_usuario)
+
+
+@router.post("/{id_tarea}/completar", response_model=TareaResponse)
+def completar_parte_tarea(
+    id_tarea: int,
+    datos: CompletarTareaRequest,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.completar_parte_tarea(
+        db, id_tarea, datos.dificultad_real, usuario_actual.id_usuario
+    )
 
 
 @router.delete("/{id_tarea}", status_code=status.HTTP_204_NO_CONTENT)

@@ -2,6 +2,8 @@
 
 Interfaz web de Acadex, construida con React, TypeScript y Vite. Se comunica con la API FastAPI del backend para gestionar cuentas, tareas, grupos, archivos y estadísticas.
 
+Para levantar el sistema completo por primera vez, sigue el [README raíz](../README.md) con Docker Compose. Esta guía cubre la ejecución manual del frontend; el mapa de componentes está en [docs/arquitectura.md](../docs/arquitectura.md) y las validaciones se describen en [docs/calidad-y-pruebas.md](../docs/calidad-y-pruebas.md).
+
 ## Requisitos
 
 - Node.js 20.19 o superior, o 22.12 o superior.
@@ -57,3 +59,5 @@ Para probar el build:
 ```sh
 corepack pnpm preview
 ```
+
+Los tokens y convenciones visuales que existen hoy se documentan en [docs/diseno-frontend.md](../docs/diseno-frontend.md). No incluyas secretos en archivos VITE: sus valores se incorporan al código que recibe el navegador.

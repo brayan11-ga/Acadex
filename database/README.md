@@ -1,6 +1,6 @@
 # PostgreSQL: inicialización, actualizaciones y pruebas
 
-El flujo recomendado de instalación está en el [README raíz](../README.md). Esta guía explica qué administra Compose en PostgreSQL y cómo probar cambios sin tocar la base normal del desarrollador. El stack requiere Docker Compose v2.24.0 o superior, necesario para que `env_file.required: false` admita la ausencia de `backend/.env`.
+El flujo recomendado de instalación está en el [README raíz](../README.md). Esta guía explica qué administra Compose en PostgreSQL, cómo evoluciona el esquema y cómo probar cambios sin tocar la base normal del desarrollador. El stack requiere Docker Compose v2.24.0 o superior, necesario para que `env_file.required: false` admita la ausencia de `backend/.env`.
 
 Para ejecutar el frontend manualmente se requiere Node.js 20.19 o superior, o 22.12 o superior, y Corepack. El campo `packageManager` de `frontend/package.json` fija pnpm 12.11.2.
 
@@ -30,16 +30,16 @@ corepack pnpm lint
 - `database/seed.sql` fue eliminado porque pertenecía a una estructura antigua y contenía una contraseña fija. No cargues administradores desde SQL.
 - `backend/app/db/init.sql`: archivo vacío que no participa en el arranque.
 
-La secuencia vigente se aplica con `alembic upgrade head`, en el orden de las siete revisiones versionadas bajo `backend/alembic/versions/`. La base PostgreSQL desechable de pruebas llega a `head` antes de ejecutar las pruebas de integración.
+La secuencia vigente se aplica con `alembic upgrade head`, en el orden de las revisiones versionadas bajo `backend/alembic/versions/`. La base PostgreSQL desechable de pruebas llega a `head` antes de ejecutar las pruebas de integración.
 
-Las bases que ya tienen tablas pero todavía no tienen `public.alembic_version` no se adoptan automáticamente. `env.py` detecta ese caso y aborta antes de ejecutar DDL. La base local persistente de Docker `acadex_dev` sí fue respaldada y comparada antes de registrar `20261016_03`; después se aplicaron las revisiones hasta `20261016_06`. Se verificaron 18 tablas funcionales, las nueve categorías originales y que `alembic check` no encontrara operaciones pendientes. Este resultado corresponde solo a Docker local; no confirma el PostgreSQL instalado en Windows ni las bases auxiliares. Supabase no se ha reconciliado ni migrado con Alembic. Antes de cualquier cambio en una base existente, confirma su identidad, compara esquema e historial y prepara un respaldo; en Supabase también se requiere una revisión separada de las políticas RLS. No ejecutes `stamp`, `upgrade` ni SQL a ciegas.
+Las bases que ya tienen tablas pero todavía no tienen `public.alembic_version` no se adoptan automáticamente. `env.py` detecta ese caso y aborta antes de ejecutar DDL. La adopción histórica de una copia local no demuestra el estado actual de ninguna base ni de Supabase. Antes de cualquier cambio en una base existente, confirma su identidad, consulta su revisión, compara esquema e historial y prepara un respaldo; en Supabase también se requiere una revisión separada de las políticas RLS. No ejecutes `stamp`, `upgrade` ni SQL a ciegas.
 
 Los SQL anteriores no se borraron. Permanecen como evidencia de la conversión y no deben recibir cambios nuevos; futuras modificaciones del esquema deben ser una revisión Alembic nueva.
 
 ## Primera instalación, reinicio y actualización
 
 - **Base local nueva:** ejecuta `docker compose up --build`. En un volumen vacío, PostgreSQL crea `acadex`; después de que PostgreSQL esté saludable, `migrate` aplica Alembic antes de que FastAPI inicie. No necesitas ejecutar SQL ni activar un perfil `schema`.
-- **Base local persistente ya existente:** `acadex_dev` fue comparada y respaldada antes de registrarla en `20261016_03`; actualmente está en `20261016_06`, con 18 tablas funcionales y nueve categorías verificadas. `alembic check` no encontró operaciones pendientes. Este estado aplica solo a esa base de Docker. Para cualquier otra base existente, identifica el servidor y la base, revisa esquema e historial y prepara un respaldo antes de considerar una actualización.
+- **Base local persistente ya existente:** identifica el servidor y la base, consulta su revisión e historial, compara el esquema y prepara un respaldo antes de considerar una actualización. Un registro histórico de una adopción local no confirma la revisión actual ni autoriza aplicar cambios en esa base.
 - **Nombre de la base existente:** cambiar `DB_NAME` no renombra una base guardada en un volumen inicializado. Para seguir usando `acadex_dev` en este equipo, establece `DB_NAME=acadex_dev` en un `.env` local de la raíz antes de iniciar Compose. `.gitignore` excluye ese archivo. `backend/.env` no sustituye `DB_NAME` declarado en `environment` de Compose. No hace falta crear el archivo para una instalación nueva.
 - **Reinicio:** `docker compose stop` seguido de `docker compose start`, o `docker compose down` y luego `docker compose up -d`, conserva el volumen. Compose inicia `migrate` antes de FastAPI; Alembic no repite revisiones ya registradas. FastAPI no ejecuta DDL por su cuenta.
 - **Actualización del esquema:** `docker compose up --build` ejecuta `migrate` automáticamente. En una base existente, confirma primero el destino, su nombre, revisión e historial; compara el esquema y prepara un respaldo verificado. Nunca ejecutes el snapshot base en una base existente. Supabase no se ha reconciliado con Alembic; revisa su esquema, historial y políticas RLS por separado antes de decidir cualquier acción. No uses `stamp`, `upgrade` ni SQL a ciegas.

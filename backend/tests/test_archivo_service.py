@@ -265,6 +265,7 @@ class FlujoAdjuntosTests(unittest.TestCase):
             with (
                 patch.object(archivo_service, "DIRECTORIO_BASE_UPLOADS", raiz),
                 patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+                patch.object(archivo_service.archivo_repository, "contar_archivos_de_tarea", return_value=0),
                 patch.object(
                     archivo_service.archivo_repository,
                     "contar_archivos_de_tarea",

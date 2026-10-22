@@ -1,152 +1,67 @@
-# ACADEX
+# Acadex
 
 [![CI](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml/badge.svg)](https://github.com/brayan11-ga/Acadex/actions/workflows/ci.yml)
 
-Aplicación web académica colaborativa para organizar tareas, grupos, integrantes, archivos y progreso de proyectos. Usa React, TypeScript y Vite; FastAPI y SQLAlchemy; y PostgreSQL.
+Acadex es una aplicación web para apoyar la organización académica individual y colaborativa. El código actual incluye cuentas y perfiles, tareas y categorías, grupos e integrantes, cronómetro, panel y calendario, estadísticas, administración y adjuntos. Algunas capacidades opcionales, como análisis con IA, almacenamiento remoto y correo, dependen de configuración adicional.
 
-El CI (integración continua) ejecuta lint (revisión automatizada), build (compilación) y pruebas del frontend en cada pull request (solicitud de integración) hacia `develop` o `main`. También prueba el backend sin PostgreSQL y, en un trabajo aislado, con una base PostgreSQL desechable.
+Este README es el punto de entrada. Los procedimientos detallados y las reglas de colaboración viven en los documentos enlazados más abajo.
+
+## Stack y arquitectura
+
+| Área | Tecnologías verificadas |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, React Router, Redux Toolkit, Vitest y Oxlint |
+| Backend | Python, FastAPI, SQLAlchemy, Pydantic, JWT y pytest |
+| Datos | PostgreSQL y Alembic |
+| Desarrollo local | Docker Compose, Mailpit, Node.js/pnpm y Python para ejecución manual |
+
+En desarrollo con Compose, el navegador consume el frontend de Vite, que llama a la API FastAPI bajo **/api/v1**. El backend usa PostgreSQL; el servicio **migrate** aplica las migraciones Alembic antes de iniciar la API. Consulta la [arquitectura](docs/arquitectura.md) para el diagrama, los directorios y las integraciones opcionales.
 
 ## Inicio rápido con Docker Compose
 
-Esta es la ruta recomendada para probar ACADEX desde un computador limpio. Solo necesitas **Git** y **Docker Desktop** con Docker Compose v2.24.0 o superior. No necesitas instalar Node.js, Python, PostgreSQL ni pnpm en el computador anfitrión.
+Esta es la ruta recomendada para un clon nuevo. Requiere Git y Docker Desktop con Docker Compose **v2.24.0 o superior**. No requiere instalar Node.js, Python ni PostgreSQL en el equipo anfitrión.
 
-Comprueba Docker Compose y que el motor esté iniciado:
-
-```sh
+~~~sh
 docker compose version
-docker info
-```
-
-Clona la rama predeterminada configurada en GitHub y entra al repositorio. El comando sigue la rama predeterminada del servidor; no requiere elegir una rama `docker`:
-
-```sh
-git clone https://github.com/brayan11-ga/Acadex.git
-cd Acadex
-```
-
-En un clon nuevo, inicia toda la aplicación con un solo comando:
-
-```sh
 docker compose up --build
-```
+~~~
 
-Compose inicia PostgreSQL (`db`), el servicio de migraciones (`migrate`), Mailpit, FastAPI y Vite. PostgreSQL crea la base `acadex` al inicializar un volumen vacío. Cuando PostgreSQL está saludable, `migrate` ejecuta `alembic upgrade head`; FastAPI espera a que termine correctamente. Si una migración falla, FastAPI no inicia. Alembic registra las revisiones aplicadas y no las repite en reinicios normales. FastAPI no ejecuta DDL por su cuenta.
+En un volumen nuevo, PostgreSQL crea la base local y **migrate** ejecuta **alembic upgrade head** antes de que FastAPI inicie. Mantén la terminal abierta para consultar los logs. Para iniciarlo en segundo plano, usa **docker compose up --build -d**.
 
-Si ya existe una base, sigue primero las comprobaciones de [database/README.md](database/README.md); no ejecutes una actualización hasta confirmar el destino y su estado.
+Servicios locales predeterminados:
 
-El comando mantiene los logs en esa terminal; déjala abierta mientras uses la aplicación. Para consultar el estado desde otra terminal, ejecuta `docker compose ps`. Si prefieres dejar el stack en segundo plano, usa `docker compose up --build -d` y consulta los logs con `docker compose logs -f`.
+| Servicio | Dirección |
+| --- | --- |
+| Aplicación web | <http://localhost:5173/> |
+| API y OpenAPI | <http://localhost:8000/docs> |
+| Salud de la API | <http://localhost:8000/health/ready> |
+| Bandeja local de Mailpit | <http://localhost:8025/> |
+| PostgreSQL para herramientas locales | localhost:5433 |
 
-El arranque normal inicia cinco servicios: PostgreSQL (`db`), migraciones (`migrate`), Mailpit (`mailpit`), FastAPI (`backend`) y Vite (`frontend`). PostgreSQL crea la base al preparar un volumen vacío; Alembic crea el esquema. No existe un perfil `schema` que debas activar. El backend espera a PostgreSQL y a que `migrate` termine con código cero. El frontend espera a que el backend esté listo.
+Los puertos se exponen únicamente en **127.0.0.1**. Se pueden ajustar con **ACADEX_FRONTEND_PORT**, **ACADEX_API_PORT**, **ACADEX_DB_PORT**, **ACADEX_MAILPIT_UI_PORT** y **ACADEX_MAILPIT_SMTP_PORT** antes de levantar Compose.
 
-Accede desde el navegador del computador anfitrión:
-
-- Aplicación: <http://localhost:5173/>
-- API y documentación interactiva: <http://localhost:8000/docs>
-- Verificación de disponibilidad del backend: <http://localhost:8000/health/ready>
-- Bandeja local de correo de prueba (Mailpit): <http://localhost:8025/>
-
-El navegador usa `http://localhost:8000` para la API. Dentro de la red de Compose, el backend llega a PostgreSQL por `db:5432`; `localhost` dentro de un contenedor se refiere a ese mismo contenedor. PostgreSQL se publica en el anfitrión como `localhost:5433` para herramientas locales, pero el backend no usa ese puerto publicado. Para pgAdmin instalado en el computador, usa host `localhost`, puerto `5433` y base `acadex`. Usa el usuario y la contraseña locales configurados para Compose; no uses credenciales de producción.
-
-### Configuración y archivos `.env`
-
-El stack Compose puede arrancar sin crear ningún archivo `.env`. Los valores predeterminados del Compose son de **desarrollo local solamente**; no son credenciales ni configuración de producción.
-
-Hay varios mecanismos distintos:
-
-1. **`.env` en la raíz:** Compose lo lee automáticamente para interpolar expresiones `${VARIABLE}` del archivo Compose. También puede recibir esas variables del entorno de la terminal. `DB_NAME` en este archivo configura el nombre de la base para PostgreSQL, Alembic y FastAPI. Este archivo no se entrega automáticamente a los contenedores; Compose solo pasa las variables declaradas bajo `environment` o las incluidas en `env_file`.
-2. **`env_file` de backend:** `backend/.env` es opcional en Compose. Sus variables se incorporan al entorno de los contenedores de backend y migraciones. Una clave declarada también bajo `environment` toma el valor de `environment`, incluso cuando `backend/.env` tenga otro valor. En particular, `backend/.env` no reemplaza `DB_NAME` declarado por Compose ni cambia el nombre de la base que PostgreSQL inicializa.
-3. **`environment`:** `docker-compose.yml` define las variables de ejecución del stack, entre ellas conexión a PostgreSQL, clave local de desarrollo, origen CORS, URL de navegador y Mailpit. Las expresiones `${VAR:-valor}` usan el valor de la terminal o del `.env` raíz y recurren al valor indicado si falta o está vacío.
-4. **Configuración de la aplicación:** Pydantic en el backend lee primero las variables del proceso y puede leer `.env` desde su directorio de trabajo cuando ese archivo existe. El contexto Docker excluye archivos `.env` personales; Compose inyecta las variables declaradas. Vite recibe `VITE_API_URL` desde Compose. `frontend/.env.local` se usa para Vite ejecutado manualmente, no es necesario para Compose.
-5. **Plantillas `.env.example`:** son guías versionadas para ejecución manual o configuración adicional. No se copian automáticamente ni contienen credenciales personales. `.gitignore` excluye `.env` y `.env.*`, pero conserva `.env.example`.
-
-Valores y funciones locales:
-
-- PostgreSQL, la clave JWT local, CORS y los puertos tienen valores predeterminados de desarrollo en Compose. Cambia la clave JWT antes de cualquier despliegue y configura producción mediante el mecanismo seguro de ese entorno.
-- Gemini es opcional para iniciar y usar las funciones básicas. Sin `GEMINI_API_KEY`, la operación de análisis con IA devuelve un error de servicio no disponible, pero no bloquea el arranque.
-- Los adjuntos están desactivados por defecto y no requieren credenciales Supabase en desarrollo. La configuración de Supabase solo corresponde a un despliegue que habilite almacenamiento remoto.
-- Mailpit está disponible para capturar correo local cuando se habilita una función que lo envía. La recuperación de contraseña está desactivada de forma predeterminada. No se requiere SMTP externo ni se envían correos a destinatarios reales.
-- Si necesitas habilitar una opción local que no esté mapeada explícitamente por Compose, puedes añadirla a `backend/.env`; no incluyas secretos en Git. En producción, usa secretos gestionados y no reutilices los valores locales.
-
-### Nombre de la base y volumen existente
-
-Una instalación nueva usa `acadex` cuando PostgreSQL prepara un volumen vacío. El recurso `pgdata` conserva su función y no se renombra ni se elimina. PostgreSQL solo usa `POSTGRES_DB` durante la inicialización inicial; cambiar `DB_NAME` no renombra una base dentro de un volumen ya inicializado.
-
-La instalación existente de este equipo conserva `acadex_dev` en el volumen Docker conocido como `acadex_pgdata`. Para seguir usando esa base después de actualizar el repositorio, configura `DB_NAME=acadex_dev` en un `.env` local en la raíz antes de iniciar Compose. `.gitignore` excluye ese archivo. No hace falta crearlo para una instalación nueva, ni debe crearse ahora. Si el nombre configurado no existe en el volumen, `migrate` no podrá conectarse y FastAPI permanecerá detenido; no se renombra ni se borra la base existente.
-
-La base local de Compose es independiente de Supabase. No copies credenciales de Supabase a los archivos locales; la configuración de producción pertenece a los paneles de los proveedores.
-
-### Puertos
-
-Los puertos publicados se ligan a `127.0.0.1`:
-
-| Servicio | Puerto local predeterminado | Variable para cambiarlo |
-| --- | ---: | --- |
-| Frontend | 5173 | `ACADEX_FRONTEND_PORT` |
-| API | 8000 | `ACADEX_API_PORT` |
-| PostgreSQL | 5433 | `ACADEX_DB_PORT` |
-| Mailpit web | 8025 | `ACADEX_MAILPIT_UI_PORT` |
-| Mailpit SMTP | 1025 | `ACADEX_MAILPIT_SMTP_PORT` |
-
-Por ejemplo, en PowerShell para cambiar el frontend:
-
-```powershell
-$env:ACADEX_FRONTEND_PORT = "5174"
-docker compose up --build -d
-```
-
-En macOS/Linux:
-
-```sh
-ACADEX_FRONTEND_PORT=5174 docker compose up --build -d
-```
-
-La URL de API del navegador sigue siendo `localhost:8000`. Compose ajusta el origen CORS y `FRONTEND_URL` al puerto del frontend. Si eliges otra URL pública, establece también `CORS_ORIGINS` y, cuando se use, `FRONTEND_URL`. Si un puerto está ocupado, cambia su variable correspondiente o detén el proceso que lo ocupa; no cambies el puerto interno de PostgreSQL (`5432`) ni la URL de API sin actualizar el cliente.
-
-### Logs, salud, reinicio y datos
-
-```sh
+~~~sh
 docker compose ps
 docker compose logs -f backend
-docker compose logs -f db
-docker compose logs -f frontend
-```
-
-`healthy` en PostgreSQL solo confirma que acepta conexiones. `healthy` en backend confirma además conexión a PostgreSQL, presencia de las migraciones obligatorias y, si se habilitó almacenamiento Supabase, disponibilidad de ese almacenamiento. Un servicio con puerto ocupado puede fallar antes de quedar saludable; revisa `docker compose ps` y sus logs.
-
-Si PostgreSQL se reinicia después del backend, SQLAlchemy comprueba las conexiones reutilizadas y descarta una conexión obsoleta al siguiente uso. Las solicitudes que coincidan con la interrupción pueden fallar; cuando PostgreSQL vuelva, las siguientes conexiones pueden recuperarse sin reiniciar manualmente toda la aplicación. El healthcheck reportará el estado no saludable mientras la base o el esquema requerido no estén disponibles. Compose no fuerza reinicios del backend ante cualquier fallo; si el proceso termina, revisa primero sus logs y reinícialo cuando la dependencia esté saludable con `docker compose restart backend`.
-
-Para detener y volver a iniciar sin borrar datos:
-
-```sh
 docker compose stop
 docker compose start
-```
+~~~
 
-`docker compose down` elimina contenedores y red, pero conserva el volumen nombrado de PostgreSQL y los archivos de adjuntos del anfitrión. Después pueden reconstruirse con `docker compose up --build -d`. **No uses `docker compose down -v` como forma de detener o reiniciar:** elimina el volumen de PostgreSQL.
+**docker compose down** conserva el volumen de PostgreSQL; no uses **docker compose down -v** para detener o actualizar el entorno, porque elimina los datos locales. Antes de usar una base ya existente o ejecutar una migración, sigue la [guía de base de datos](database/README.md).
 
-Los datos de PostgreSQL viven en el volumen `pgdata`; los adjuntos locales, si se habilitan, se guardan bajo `backend/uploads/`, montado en el backend y excluido de Git. No se incluyen datos privados en la imagen ni en el repositorio. Un computador nuevo crea su propia base local; clonar Git no copia los datos de otra máquina.
+## Configuración y secretos
 
-### Versiones y reproducibilidad
+Compose puede iniciar sin archivos **.env**: sus valores predeterminados son solo para desarrollo local. Hay tres ámbitos de configuración que no deben confundirse:
 
-Los Dockerfiles usan Node `24-alpine` y Python `3.14.8-slim`; Compose usa PostgreSQL `17.11` y Mailpit `v1.31.4`. `frontend/pnpm-lock.yaml` y `backend/requirements.txt` fijan las versiones de dependencias. Los tags versionados reducen cambios inesperados, pero no fijan el digest inmutable de cada imagen; además, las instalaciones iniciales descargan imágenes y paquetes de sus registros. El stack y el build de producción del frontend se validaron en Windows con Docker Desktop y contenedores Linux. No se han probado todas las arquitecturas de CPU ni todos los sistemas anfitriones.
+- **.env** en la raíz: Compose lo usa para interpolar variables como puertos y **DB_NAME**.
+- **backend/.env**: configuración opcional del backend y las migraciones; parte de la plantilla [backend/.env.example](backend/.env.example).
+- **frontend/.env.local**: configuración de Vite cuando se ejecuta fuera de Compose; parte de [frontend/.env.example](frontend/.env.example).
 
-### Primera instalación y actualización del esquema
+No subas archivos .env, claves JWT reales, tokens de Gemini o Supabase, contraseñas, bases de datos ni adjuntos. Las funciones de IA, almacenamiento Supabase y SMTP tienen configuración opcional y sus secretos pertenecen al entorno seguro donde se ejecuten, no al repositorio. La [guía del backend](backend/README.md) explica el alcance de las plantillas; la de [Alembic](docs/DESPLIEGUE_ALEMBIC.md) trata la adopción de una base existente.
 
-- **Fuente vigente del esquema:** las revisiones ordenadas de Alembic en `backend/alembic/versions/`. `database/init.sql` y `backend/migrations/*.sql` se conservan como historia y referencia; Compose ya no los ejecuta.
-- **Base local nueva:** ejecuta `docker compose up --build`. En un volumen vacío, PostgreSQL crea `acadex`; el servicio `migrate` aplica Alembic automáticamente antes de FastAPI. No se requiere el perfil `schema` ni SQL manual.
-- **Base existente sin historial Alembic:** el servicio `migrate` se detiene antes de DDL si encuentra tablas Acadex sin `public.alembic_version`. La base local persistente de Docker `acadex_dev` ya fue respaldada y comparada antes de registrar la revisión `20261016_03`, y luego se actualizó hasta `20261016_06`. No ejecutes `stamp`, `upgrade` ni SQL sobre otra base existente sin identificarla, revisar su esquema e historial y preparar un respaldo.
-- **Estado local verificado:** `acadex_dev`, únicamente en el entorno Docker local, está en la revisión `20261016_06`. Se comprobaron 18 tablas funcionales, las nueve categorías originales y que `alembic check` no encontrara operaciones pendientes. Esto no confirma el estado de PostgreSQL instalado en Windows ni el de las bases auxiliares.
-- **Reinicio o recreación de contenedores:** `pgdata` conserva sus datos. En el arranque normal, Compose ejecuta `migrate` antes de FastAPI; Alembic omite revisiones ya registradas. FastAPI no ejecuta Alembic por su cuenta.
-- **Actualización del esquema:** Compose ejecuta `migrate` durante `docker compose up --build`. Antes de iniciar una base existente, confirma su identidad, nombre, revisión e historial y prepara un respaldo. La base Docker `acadex_dev` de este equipo requiere la anulación local indicada arriba. Supabase es producción y no se ha reconciliado ni migrado con Alembic; revisa por separado su esquema, historial y RLS antes de cualquier cambio.
+## Comandos esenciales
 
-Al actualizar el código sin borrar datos:
-
-```sh
-git status
-git pull
-docker compose up --build -d
-docker compose ps
-```
+Los comandos se ejecutan desde la raíz, salvo que se indique otra ubicación.
 
 Revisa primero las nuevas revisiones de `backend/alembic/versions/` y sigue el procedimiento de la guía de base de datos. Conserva tus cambios locales y crea un respaldo antes de modificar una base con información que necesites.
 
@@ -286,20 +201,22 @@ Esta ruta es para desarrollo de frontend/backend directamente en el anfitrión. 
    corepack pnpm lint
    ```
 
-   `build` compila TypeScript y genera el sitio; `test --run` ejecuta Vitest una vez; `lint` revisa el código con Oxlint.
+## Documentación
 
-Para preparar el esquema manualmente, usa una base desechable o sigue los pasos de migración de [database/README.md](database/README.md). No ejecutes SQL de inicialización sobre una base existente.
+- [Índice de documentación](docs/README.md): mapa, responsables y fuentes canónicas.
+- [Arquitectura](docs/arquitectura.md): componentes, flujos y estructura del repositorio.
+- [Calidad y pruebas](docs/calidad-y-pruebas.md): comandos de lint, compilación, pruebas y CI.
+- [Diseño frontend](docs/diseno-frontend.md): tokens y convenciones verificadas en los estilos actuales.
+- [Base de datos](database/README.md): Alembic, seguridad de migraciones y pruebas PostgreSQL.
+- [Adopción de Alembic en una base existente](docs/DESPLIEGUE_ALEMBIC.md): procedimiento excepcional y cautelas.
+- [Requisitos funcionales](docs/RF/README.md) y [no funcionales](docs/RNF/README.md): fuente de alcance y criterios de producto.
 
-## Arquitectura y módulos
+## Colaborar
 
-- Frontend: React, TypeScript, Vite, Redux Toolkit y React Router.
-- Backend: FastAPI, SQLAlchemy, Pydantic y autenticación JWT.
-- Datos: PostgreSQL.
-- Servicios locales: Mailpit para correo de prueba; análisis documental con Gemini opcional.
-- Módulos: usuarios y perfiles; tareas, grupos e integrantes; cronómetro, notificaciones y estadísticas; adjuntos y análisis documental.
+La fuente central del flujo de trabajo es [CONTRIBUTING.md](CONTRIBUTING.md). Antes de comenzar una funcionalidad o una corrección, revisa la Issue asociada, los requisitos que correspondan y su tarjeta en el GitHub Project existente de Acadex. El flujo documentado cubre planificación, rama, cambios, pruebas, Pull Request, revisión, integración y actualización de la documentación.
 
-Consulta [docs/STRUCTURE.md](docs/STRUCTURE.md) para el mapa del repositorio y [database/README.md](database/README.md) para el ciclo de vida del esquema.
+Las plantillas de Issue y Pull Request facilitan ese flujo, pero no sustituyen una descripción clara ni las validaciones técnicas.
 
-## Seguridad del repositorio
+## Límites de entorno
 
-No subas archivos `.env` reales, claves, tokens, contraseñas, datos PostgreSQL, `backend/uploads/`, dependencias instaladas ni artefactos compilados. Las plantillas `.env.example` pueden versionarse; verifica que solo contengan valores ilustrativos y nunca credenciales personales.
+Esta documentación describe desarrollo local a partir de la configuración versionada. No constituye un procedimiento de despliegue ni confirma el estado de una base de producción, de Supabase o de otro proveedor externo. Cualquier cambio en datos existentes requiere identificar el destino, revisar su historial y contar con un respaldo recuperable antes de ejecutar una migración.
