@@ -11,6 +11,7 @@ from app.repositories import asignacion_tarea_repository, grupo_repository
 from app.schemas.tarea import TareaGrupalCreate
 from app.models.usuario import Usuario
 from app.services import archivo_service
+from app.services import prioridad_service
 
 
 def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:

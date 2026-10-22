@@ -1,5 +1,5 @@
 // src/components/tareas/ContenidoTareas.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TarjetaTarea } from "./TarjetaTarea";
 import "../../styles/contenido-tareas.css";
 import type { TareaBackend } from "../../services/tareas";
@@ -19,15 +19,33 @@ interface ContenidoTareaProps {
 function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoTareaProps) {
   // Extraemos toda la lógica desde nuestro Custom Hook
     const {
-    cargando, error, tareaDetalle, setTareaDetalle,
-    filtroActivo, setFiltroActivo, modoVista, setModoVista,
-    paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
-    totalTareas, totalTareasFiltradas,
-    nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles, tareaAEliminar, solicitarEliminar, confirmarEliminar,cancelarEliminar
-  } = useTareas(refreshKey);
+  cargando, error,
+  filtroActivo, setFiltroActivo, modoVista, setModoVista,
+  paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
+  totalTareas,
+  nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles, solicitarEliminar
+} = useTareas(refreshKey);
 
   const [categoriaAbierta, setCategoriaAbierta] = useState<number | null>(null);
   const grupoAbierto = gruposFiltrados.find((g) => g.idCategoria === categoriaAbierta) ?? null;
+  const [paginaTareas, setPaginaTareas]= useState(1)
+  const TAREAS_POR_PAGINA=modoVista==="cuadricula"?12:6;
+
+  useEffect(()=>{
+    setPaginaTareas(1);
+  }, [categoriaAbierta ,filtroActivo, modoVista]);
+
+  const totalPaginasTareas=Math.max(
+    1,
+    Math.ceil((grupoAbierto?.tareas.length??0)/TAREAS_POR_PAGINA)
+  );
+
+  const paginaSegura= Math.min(paginaTareas, totalPaginasTareas);
+  const tareasPaginadas =
+  grupoAbierto?.tareas.slice(
+    (paginaSegura-1)* TAREAS_POR_PAGINA,
+    paginaSegura * TAREAS_POR_PAGINA
+  )??[];
 
   return (
     <main className="pixel-tareas-main">
@@ -86,10 +104,12 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
         <section className="pixel-categoria-grupo">
           <h2 className="pixel-categoria-titulo">
             {grupoAbierto.nombre}
-            <span className="pixel-categoria-contador">{grupoAbierto.tareas.length}</span>
           </h2>
+            <p className="pixel-categoria-subtitulo">
+              Total tareas: {grupoAbierto.tareas.length}
+            </p>
           <div className={`pixel-tareas-lista ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}>
-            {grupoAbierto.tareas.map((tarea) => (
+            {tareasPaginadas.map((tarea) => (
               <TarjetaTarea
                 key={tarea.id_tarea}
                 tarea={tarea}
@@ -102,6 +122,11 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
               />
             ))}
           </div>
+          <Paginacion
+          paginaActual={paginaSegura}
+          totalPaginas={totalPaginasTareas}
+          onCambiarPagina={setPaginaTareas}
+          />
         </section>
       ) : (
         <EmptyState
@@ -113,7 +138,7 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
     </>
   ) : (
     <>
-      <div className="pixel-tareas-grupos">
+      <div className={`pixel-tareas-grupos ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}>
         {gruposPaginados.length === 0 ? (
           totalTareas === 0 ? (
             <EmptyState

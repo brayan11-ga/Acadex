@@ -24,7 +24,11 @@ export const useTareas = (refreshKey: number) => {
   const [filtroActivo, setFiltroActivo] = useState<string>("todas");
   const [modoVista, setModoVista] = useState<"lista" | "cuadricula">("lista");
   const [paginaActual, setPaginaActual] = useState<number>(1);
-  const categoriasPorPagina =3;
+  const categoriasPorPagina =modoVista==="cuadricula"?6:3;
+
+  useEffect(()=>{
+    setPaginaActual(1);
+  }, [filtroActivo, tareas.length, modoVista]);
 
   // Carga inicial de datos
   useEffect(() => {
