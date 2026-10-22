@@ -122,12 +122,13 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       )}
 
       <ModalConfirmacion
-        isOpen={tareaAEliminar !== null}
-        title="¿Eliminar Tarea?"
-        message="Esta acción no se puede deshacer. También se eliminarán los adjuntos de esta tarea."
-        onConfirm={confirmarEliminar}
-        onCancel={cancelarEliminar}
+      isOpen={tareaAEliminar !== null}
+      title="¿Eliminar Tarea?"
+      message="Esta acción no se puede deshacer. También se eliminarán los adjuntos de esta tarea."
+      onConfirm={confirmarEliminar}
+      onCancel={cancelarEliminar}
       />
+
     </main>
   );
 }
