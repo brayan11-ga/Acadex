@@ -8,7 +8,9 @@ import { Paginacion } from "./Paginacion";
 import { TarjetaCategoria } from "./TarjetaCategoria";
 import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { EmptyState } from "../ui/EmptyState";
+import { ModalConfirmarEliminar } from "./ModalConfirmarEliminar";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
+import { ModalDetalleTarea } from "./ModalDetalleTarea";
 
 interface ContenidoTareaProps {
   onNuevaTarea: () => void;
@@ -19,11 +21,12 @@ interface ContenidoTareaProps {
 function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoTareaProps) {
   // Extraemos toda la lógica desde nuestro Custom Hook
     const {
-  cargando, error,
+  cargando, error, tareaDetalle, setTareaDetalle,
   filtroActivo, setFiltroActivo, modoVista, setModoVista,
   paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
   totalTareas,
-  nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles, solicitarEliminar
+  nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles,
+  tareaAEliminar, solicitarEliminar, confirmarEliminar, cancelarEliminar
 } = useTareas(refreshKey);
 
   const [categoriaAbierta, setCategoriaAbierta] = useState<number | null>(null);
@@ -173,6 +176,22 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
     </>
   )
 )}
+      {tareaDetalle && (
+        <ModalDetalleTarea
+          tarea={tareaDetalle}
+          nombreCategoria={nombreCategoria}
+          formatearFecha={formatearFecha}
+          onCerrar={() => setTareaDetalle(null)}
+        />
+      )}
+
+      {tareaAEliminar !== null &&(
+        <ModalConfirmarEliminar
+        onConfirmar={confirmarEliminar}
+        onCancelar={cancelarEliminar}
+        />
+      )}
+
 
     </main>
   );
