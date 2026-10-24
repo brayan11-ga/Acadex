@@ -1,5 +1,7 @@
 // src/hooks/useTareas.ts
 import { useState, useEffect } from "react";
+import { obtenerEstadisticas } from "../services/estadisticasService";
+import type { RendimientoCategoria } from "../types/estadisticas";
 import {
   listarTareas,
   obtenerTarea,
@@ -16,22 +18,32 @@ export const useTareas = (refreshKey: number) => {
   const [error, setError] = useState<string | null>(null);
   const [tareaDetalle, setTareaDetalle] = useState<TareaBackend | null>(null);
   const [tareaAEliminar, setTareaAEliminar] = useState<number | null>(null);
-
+  
   // Estados de vista y filtros
+  const [rendimiento, setRendimiento] = useState<RendimientoCategoria[]>([]);
   const [filtroActivo, setFiltroActivo] = useState<string>("todas");
   const [modoVista, setModoVista] = useState<"lista" | "cuadricula">("lista");
   const [paginaActual, setPaginaActual] = useState<number>(1);
-  const tareasPorPagina = 6;
+  const categoriasPorPagina =modoVista==="cuadricula"?6:3;
+
+  useEffect(()=>{
+    setPaginaActual(1);
+  }, [filtroActivo, tareas.length, modoVista]);
 
   // Carga inicial de datos
   useEffect(() => {
     setCargando(true);
-    Promise.all([listarTareas(), listarCategorias()])
-      .then(([datosTareas, datosCategorias]) => {
-        setTareas(datosTareas);
-        setCategorias(datosCategorias);
-        setError(null);
-      })
+    Promise.all([
+  listarTareas(),
+  listarCategorias(),
+  obtenerEstadisticas().catch(() => null), // si falla, las tarjetas quedan "Sin clasificar"
+])
+  .then(([datosTareas, datosCategorias, datosEstadisticas]) => {
+    setTareas(datosTareas);
+    setCategorias(datosCategorias);
+    setRendimiento(datosEstadisticas?.categorias ?? []);
+    setError(null);
+  })
       .catch(() => setError("No se pudieron cargar las tareas"))
       .finally(() => setCargando(false));
   }, [refreshKey]);
@@ -57,10 +69,28 @@ export const useTareas = (refreshKey: number) => {
     return true;
   });
 
-  const indiceUltimaTarea = paginaActual * tareasPorPagina;
-  const indicePrimeraTarea = indiceUltimaTarea - tareasPorPagina;
-  const tareasPaginadas = tareasFiltradas.slice(indicePrimeraTarea, indiceUltimaTarea);
-  const totalPaginas = Math.ceil(tareasFiltradas.length / tareasPorPagina);
+  const gruposFiltrados = Array.from(
+    tareasFiltradas.reduce((mapa, tarea)=>{
+      const lista=mapa.get(tarea.id_categoria)??[];
+      lista.push(tarea);
+      mapa.set(tarea.id_categoria, lista);
+      return mapa;
+    }, new Map<number, TareaBackend[]>())
+  )
+  .map(([idCategoria, tareasGrupo]) => {
+  const nombre = nombreCategoria(idCategoria);
+  return {
+    idCategoria,
+    nombre,
+    tareas: tareasGrupo,
+    rendimiento: rendimiento.find((r) => r.categoria === nombre) ?? null,
+  };
+})
+  .sort((a, b)=>a.nombre.localeCompare(b.nombre,"es"));
+
+  const inicio = (paginaActual-1) * categoriasPorPagina;
+  const gruposPaginados = gruposFiltrados.slice(inicio, inicio + categoriasPorPagina);
+  const totalPaginas = Math.ceil(gruposFiltrados.length / categoriasPorPagina);
 
   // Acciones (Handlers)
   const solicitarEliminar = (id: number) => {
@@ -103,9 +133,10 @@ const cancelarEliminar = () => {
   };
 
   return {
+    
     cargando, error, tareaDetalle, setTareaDetalle,
     filtroActivo, setFiltroActivo, modoVista, setModoVista,
-    paginaActual, setPaginaActual, totalPaginas, tareasPaginadas, tareasPendientes,
+    paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
     totalTareas: tareas.length,
     totalTareasFiltradas: tareasFiltradas.length,
     nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles,
