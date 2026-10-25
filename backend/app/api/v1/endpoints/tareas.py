@@ -4,7 +4,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from app.schemas.archivo import ArchivoResponse
 from app.services import archivo_service
-from app.schemas.tarea import CompletarTareaRequest, IntegranteAsignadoResponse
+from app.schemas.tarea import (
+    CompletarTareaRequest,
+    IntegranteAsignadoResponse,
+    ReasignarAsignadosRequest,
+)
 
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
@@ -260,3 +264,15 @@ def listar_asignados(
     usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
     return tarea_service.listar_asignados_de_tarea(db, id_tarea, usuario_actual.id_usuario)
+
+
+@router.put("/{id_tarea}/asignados", response_model=TareaResponse)
+def reasignar_asignados(
+    id_tarea: int,
+    datos: ReasignarAsignadosRequest,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    return tarea_service.reasignar_asignados_tarea(
+        db, id_tarea, datos.ids_usuarios, usuario_actual.id_usuario
+    )

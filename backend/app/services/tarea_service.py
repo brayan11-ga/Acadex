@@ -33,6 +33,40 @@ def _recortar_nombre_tarea(nombre: str, maximo: int = 35) -> str:
     return texto[: maximo - 1].rstrip() + "…"
 
 
+_MESES_CORTOS = {
+    1: "ene.",
+    2: "feb.",
+    3: "mar.",
+    4: "abr.",
+    5: "may.",
+    6: "jun.",
+    7: "jul.",
+    8: "ago.",
+    9: "sep.",
+    10: "oct.",
+    11: "nov.",
+    12: "dic.",
+}
+
+
+def _formatear_fecha_corta(fecha: Optional[datetime]) -> str:
+    """Devuelve una fecha breve en español, por ejemplo "30 oct."."""
+    if fecha is None:
+        return ""
+    return f"{fecha.day} {_MESES_CORTOS.get(fecha.month, '')}".strip()
+
+
+def _calcular_estado_grupal(
+    tarea: Tarea, ids_asignados: set[int], ids_completados: set[int]
+) -> str:
+    """Regla de C3: completada solo si todos los asignados tienen historial."""
+    if ids_asignados and ids_asignados.issubset(ids_completados):
+        return "Completada"
+    if (tarea.estado or "").lower() == "pendiente":
+        return "en progreso"
+    return tarea.estado
+
+
 def _notificar(
     db: Session,
     *,
@@ -314,11 +348,7 @@ def completar_parte_tarea(
         asignados = asignacion_tarea_repository.obtener_usuarios_asignados(db, id_tarea)
         completados = historial_tarea_repository.obtener_usuarios_completados(db, id_tarea)
         ids_asignados = {usuario.id_usuario for usuario in asignados}
-
-        if ids_asignados and ids_asignados.issubset(completados):
-            tarea.estado = "Completada"
-        elif (tarea.estado or "").lower() == "pendiente":
-            tarea.estado = "en progreso"
+        tarea.estado = _calcular_estado_grupal(tarea, ids_asignados, completados)
 
         db.commit()
         db.refresh(tarea)
@@ -388,6 +418,179 @@ def reabrir_tarea_grupal(db: Session, id_tarea: int, id_usuario: int) -> Tarea:
     except Exception:
         db.rollback()
         logger.exception("No se pudieron crear las notificaciones de la reapertura")
+
+    tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
+    return tarea
+
+
+def reasignar_asignados_tarea(
+    db: Session, id_tarea: int, ids_usuarios: List[int], id_usuario: int
+) -> Tarea:
+    """Reemplaza el conjunto completo de asignados de una tarea grupal (C4c).
+
+    Solo el líder puede hacerlo mientras la tarea no esté completada. Al quitar
+    a alguien se borra solo su avance en esa tarea (archivos propios, sesiones,
+    historial y asignación). No recalcula estadísticas.
+    """
+    tarea = tarea_repository.obtener_tarea_por_id(db, id_tarea)
+    if tarea is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarea no encontrada",
+        )
+    if tarea.id_grupo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Esta tarea no es grupal; usa el flujo actual (PUT).",
+        )
+    if not _es_lider(db, id_usuario, tarea.id_grupo):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo el líder del grupo puede reasignar esta tarea.",
+        )
+    if (tarea.estado or "").lower() == "completada":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Reábrela primero.",
+        )
+    if not ids_usuarios:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La tarea debe tener al menos un asignado.",
+        )
+    if len(set(ids_usuarios)) != len(ids_usuarios):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se permiten asignados repetidos.",
+        )
+
+    integrantes_por_usuario = {}
+    for id_destino in ids_usuarios:
+        integrante = grupo_repository.obtener_integrante(
+            db, id_destino, tarea.id_grupo
+        )
+        if integrante is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Todos los asignados deben pertenecer a este grupo.",
+            )
+        integrantes_por_usuario[id_destino] = integrante
+
+    actuales = asignacion_tarea_repository.obtener_usuarios_asignados(db, id_tarea)
+    ids_actuales = {usuario.id_usuario for usuario in actuales}
+    ids_nuevos = set(ids_usuarios)
+    if ids_actuales == ids_nuevos:
+        # Mismo conjunto: 200 sin cambios ni notificaciones.
+        tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(
+            db, id_tarea
+        )
+        return tarea
+
+    ids_quitados = sorted(ids_actuales - ids_nuevos)
+    ids_agregados = sorted(ids_nuevos - ids_actuales)
+
+    # Se calcula antes de borrar para decidir el texto de la notificación.
+    trabajo_por_usuario = {}
+    for id_quitado in ids_quitados:
+        tiene_archivos = bool(
+            archivo_repository.obtener_archivos_de_usuarios_en_tarea(
+                db, id_tarea, [id_quitado]
+            )
+        )
+        sesiones = sesion_cronometro_repository.obtener_sesiones_de_usuario_en_tarea(
+            db, id_tarea, id_quitado
+        )
+        tiene_tiempo = any(
+            (sesion.duracion or 0) > 0 or sesion.fecha_fin is None
+            for sesion in sesiones
+        )
+        tiene_historial = (
+            historial_tarea_repository.obtener_fila(db, id_quitado, id_tarea)
+            is not None
+        )
+        trabajo_por_usuario[id_quitado] = (
+            tiene_archivos or tiene_tiempo or tiene_historial
+        )
+
+    nombre = _recortar_nombre_tarea(tarea.nombre)
+    fecha = _formatear_fecha_corta(tarea.fecha_entrega)
+    id_grupo = tarea.id_grupo
+
+    try:
+        with archivo_service.preparar_eliminacion_archivos_usuarios_tarea(
+            db, id_tarea, ids_quitados
+        ):
+            archivo_repository.eliminar_archivos_de_usuarios_en_tarea(
+                db, id_tarea, ids_quitados
+            )
+            for id_quitado in ids_quitados:
+                sesion_cronometro_repository.eliminar_sesiones_de_usuario_en_tarea(
+                    db, id_tarea, id_quitado
+                )
+                historial_tarea_repository.eliminar_por_usuario_y_tarea(
+                    db, id_tarea, id_quitado
+                )
+                integrante_quitado = grupo_repository.obtener_integrante(
+                    db, id_quitado, id_grupo
+                )
+                if integrante_quitado is not None:
+                    asignacion_tarea_repository.eliminar_por_tarea_e_integrante(
+                        db, id_tarea, integrante_quitado.id_integrante
+                    )
+
+            for id_agregado in ids_agregados:
+                asignacion_tarea_repository.crear_asignacion(
+                    db,
+                    id_tarea,
+                    integrantes_por_usuario[id_agregado].id_integrante,
+                    commit=False,
+                )
+
+            # La regla de estado es la misma de "Completar mi parte" (C3).
+            asignados = asignacion_tarea_repository.obtener_usuarios_asignados(
+                db, id_tarea
+            )
+            completados = historial_tarea_repository.obtener_usuarios_completados(
+                db, id_tarea
+            )
+            ids_asignados = {usuario.id_usuario for usuario in asignados}
+            tarea.estado = _calcular_estado_grupal(
+                tarea, ids_asignados, completados
+            )
+
+            db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    db.refresh(tarea)
+
+    # Notificaciones después del commit: un fallo no deshace la reasignación.
+    for id_agregado in ids_agregados:
+        _notificar(
+            db,
+            titulo="Tienes una tarea nueva",
+            detalles=f"El líder te asignó «{nombre}». Entrega: {fecha}",
+            tipo="tarea_asignada",
+            id_usuario=id_agregado,
+            id_tarea=id_tarea,
+        )
+    for id_quitado in ids_quitados:
+        if trabajo_por_usuario[id_quitado]:
+            detalle = (
+                f"El líder te quitó de «{nombre}». "
+                "Se borraron tus archivos y tu tiempo."
+            )
+        else:
+            detalle = f"El líder te quitó de «{nombre}»."
+        _notificar(
+            db,
+            titulo="Ya no estás asignado a una tarea",
+            detalles=detalle,
+            tipo="tarea_retirada",
+            id_usuario=id_quitado,
+            id_tarea=id_tarea,
+        )
 
     tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
     return tarea
@@ -480,6 +683,11 @@ def crear_tarea_grupal(
         id_usuario=None,
         id_grupo=id_grupo,
     )
+    # Se captura antes del commit: después, los Integrante quedan expirados.
+    destinatarios = [
+        (integrante.id_usuario, integrante.rol) for integrante in integrantes
+    ]
+
     try:
         tarea = tarea_repository.crear_tarea(
             db, tarea_datos, commit=False, max_archivos=datos.max_archivos
@@ -492,10 +700,26 @@ def crear_tarea_grupal(
 
         db.commit()
         db.refresh(tarea)
-        return tarea
     except Exception:
         db.rollback()
         raise
+
+    # Aviso a los asignados, excepto al líder del grupo.
+    nombre = _recortar_nombre_tarea(tarea.nombre)
+    fecha = _formatear_fecha_corta(tarea.fecha_entrega)
+    for id_destinatario, rol in destinatarios:
+        if rol == "lider":
+            continue
+        _notificar(
+            db,
+            titulo="Tienes una tarea nueva",
+            detalles=f"El líder te asignó «{nombre}». Entrega: {fecha}",
+            tipo="tarea_asignada",
+            id_usuario=id_destinatario,
+            id_tarea=tarea.id_tarea,
+        )
+
+    return tarea
 
 def listar_tareas_asignadas(db: Session, id_usuario: int) -> List[Tarea]:
     return _adjuntar_total_archivos(

@@ -41,6 +41,31 @@ def sumar_duracion_cerrada(db: Session, id_tarea: int, id_usuario: int) -> float
     )
     return float(total or 0)
 
+
+def obtener_sesiones_de_usuario_en_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> list[SesionCronometro]:
+    """Todas las sesiones del usuario en la tarea, cerradas y abiertas (C4c)."""
+    return (
+        db.query(SesionCronometro)
+        .filter(
+            SesionCronometro.id_tarea == id_tarea,
+            SesionCronometro.id_usuario == id_usuario,
+        )
+        .all()
+    )
+
+
+def eliminar_sesiones_de_usuario_en_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> int:
+    """Borra todas las sesiones del usuario en la tarea (sin commit)."""
+    sesiones = obtener_sesiones_de_usuario_en_tarea(db, id_tarea, id_usuario)
+    for sesion in sesiones:
+        db.delete(sesion)
+    db.flush()
+    return len(sesiones)
+
 def create_sesion(db: Session, data: dict) -> SesionCronometro:
     sesion = SesionCronometro(**data)
     db.add(sesion)

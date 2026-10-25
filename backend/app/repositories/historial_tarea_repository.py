@@ -49,6 +49,24 @@ def eliminar_por_tarea(db: Session, id_tarea: int) -> int:
     return len(filas)
 
 
+def eliminar_por_usuario_y_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> int:
+    """Borra todo el historial del usuario en una tarea (C4c), sin commit."""
+    filas = (
+        db.query(HistorialTarea)
+        .filter(
+            HistorialTarea.id_tarea == id_tarea,
+            HistorialTarea.id_usuario == id_usuario,
+        )
+        .all()
+    )
+    for fila in filas:
+        db.delete(fila)
+    db.flush()
+    return len(filas)
+
+
 def obtener_usuarios_completados(db: Session, id_tarea: int) -> set[int]:
     """IDs de usuarios que ya tienen al menos una fila de historial en la tarea."""
     filas = (

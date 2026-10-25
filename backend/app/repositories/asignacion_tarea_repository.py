@@ -22,6 +22,24 @@ def obtener_asignaciones_de_tarea(db: Session, id_tarea: int) -> List[Asignacion
     return db.query(AsignacionTarea).filter(AsignacionTarea.id_tarea == id_tarea).all()
 
 
+def eliminar_por_tarea_e_integrante(
+    db: Session, id_tarea: int, id_integrante: int
+) -> int:
+    """Borra la asignación de un integrante en una tarea (C4c), sin commit."""
+    filas = (
+        db.query(AsignacionTarea)
+        .filter(
+            AsignacionTarea.id_tarea == id_tarea,
+            AsignacionTarea.id_integrante == id_integrante,
+        )
+        .all()
+    )
+    for fila in filas:
+        db.delete(fila)
+    db.flush()
+    return len(filas)
+
+
 def obtener_tareas_asignadas_a_usuario(db: Session, id_usuario: int) -> List[Tarea]:
     return (
         db.query(Tarea)

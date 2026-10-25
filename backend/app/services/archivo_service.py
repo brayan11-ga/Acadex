@@ -608,3 +608,84 @@ def preparar_eliminacion_archivos_tarea(db: Session, id_tarea: int) -> Iterator[
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="El almacenamiento no está disponible.",
         ) from error
+
+
+@contextmanager
+def preparar_eliminacion_archivos_usuarios_tarea(
+    db: Session, id_tarea: int, ids_usuarios: list[int]
+) -> Iterator[None]:
+    """Cuarentena tolerante de los adjuntos de varios usuarios (C4c).
+
+    A diferencia de preparar_eliminacion_archivos_tarea, un fallo del
+    almacenamiento no lanza: se registra en el log y la reasignación continúa.
+    Si falla la transacción de PostgreSQL, los binarios locales movidos se
+    restauran para no perderlos.
+    """
+    adjuntos = archivo_repository.obtener_archivos_de_usuarios_en_tarea(
+        db, id_tarea, ids_usuarios
+    )
+    rutas: list[Path] = []
+    objetos: list[tuple[str, str, str]] = []
+    for adjunto in adjuntos:
+        if archivo_repository.existe_referencia_fuera_de_tarea(
+            db, adjunto.ruta, id_tarea
+        ):
+            continue
+        try:
+            referencia = _referencia_supabase(adjunto.ruta, id_tarea)
+            if referencia is not None:
+                objetos.append((*referencia, TIPOS_MIME[adjunto.tipo]))
+            else:
+                rutas.append(_resolver_ruta(adjunto.ruta, id_tarea))
+        except (ValueError, OSError):
+            logger.exception(
+                "No se pudo preparar el adjunto %s para eliminarlo al reasignar",
+                adjunto.id_archivo,
+            )
+
+    movidos: list[tuple[Path, Path]] = []
+    for ruta in {ruta.resolve() for ruta in rutas}:
+        try:
+            if not ruta.exists():
+                continue
+            if not ruta.is_file():
+                logger.warning(
+                    "La ruta %s no es un archivo; se omite al reasignar", ruta
+                )
+                continue
+            temporal = ruta.with_name(f".{ruta.name}.{uuid.uuid4().hex}.deleting")
+            os.replace(ruta, temporal)
+            movidos.append((ruta, temporal))
+        except OSError:
+            logger.exception(
+                "No se pudo mover a cuarentena el adjunto %s al reasignar", ruta
+            )
+
+    try:
+        yield
+    except BaseException:
+        for original, temporal in reversed(movidos):
+            try:
+                if temporal.exists():
+                    os.replace(temporal, original)
+            except OSError:
+                logger.exception(
+                    "No se pudo restaurar un adjunto tras fallar la reasignación"
+                )
+        raise
+    else:
+        for _, temporal in movidos:
+            try:
+                temporal.unlink(missing_ok=True)
+            except OSError:
+                logger.exception("No se pudo retirar el binario en cuarentena")
+        for bucket, object_key, _content_type in dict.fromkeys(objetos):
+            try:
+                supabase_storage.eliminar(bucket, object_key)
+            except Exception:
+                # La reasignación ya está confirmada: cualquier fallo de Storage
+                # se registra y no se propaga.
+                logger.exception(
+                    "No se pudo borrar un objeto privado tras reasignar la tarea %s",
+                    id_tarea,
+                )

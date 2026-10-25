@@ -84,6 +84,11 @@ class TareaGrupalCreate(BaseModel):
 class CompletarTareaRequest(BaseModel):
     dificultad_real: int = Field(..., ge=1, le=5)
 
+class ReasignarAsignadosRequest(BaseModel):
+    # La lista es el conjunto completo nuevo; el service valida vacía/repetidos
+    # para devolver 400 con el mensaje de negocio, no 422.
+    ids_usuarios: List[int] = Field(default_factory=list)
+
 class IntegranteAsignadoResponse(BaseModel):
     id_usuario: int
     correo_electronico: str
