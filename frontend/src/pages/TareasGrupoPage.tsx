@@ -378,6 +378,15 @@ function TareasGrupoPage() {
                   <div className="tareas-grupo-tarjeta-pie">
                     <button
                       type="button"
+                      className="tareas-grupo-boton tareas-grupo-boton--primario tareas-grupo-boton--pequeno"
+                      onClick={() =>
+                        navigate(`/grupos/${id}/tareas/${tarea.id_tarea}`)
+                      }
+                    >
+                      Ver
+                    </button>
+                    <button
+                      type="button"
                       className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
                       aria-expanded={abierto}
                       aria-controls={idPanel}

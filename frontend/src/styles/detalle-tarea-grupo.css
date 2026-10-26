@@ -1,0 +1,956 @@
+/* Ruta: frontend/src/styles/detalle-tarea-grupo.css */
+
+/* ---------- Página ---------- */
+.detalle-tarea-pagina {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, var(--pixel-bg-start), var(--pixel-bg-end));
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.detalle-tarea-pagina *,
+.detalle-tarea-pagina *::before,
+.detalle-tarea-pagina *::after {
+  box-sizing: border-box;
+}
+
+.detalle-tarea-contenedor {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Encabezado ---------- */
+.detalle-tarea-volver {
+  align-self: flex-start;
+  color: var(--pixel-accent-soft);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.detalle-tarea-volver:hover {
+  text-decoration: underline;
+}
+
+.detalle-tarea-volver:focus-visible,
+.detalle-tarea-boton:focus-visible,
+.detalle-tarea-opcion:focus-within {
+  outline: 2px solid var(--pixel-accent-soft);
+  outline-offset: 2px;
+}
+
+.detalle-tarea-encabezado {
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-tarea-encabezado.detalle-tarea-vencida {
+  border-color: color-mix(in srgb, var(--pixel-nivel-5) 60%, transparent);
+  border-left: 4px solid var(--pixel-nivel-5);
+}
+
+.detalle-tarea-encabezado-fila {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detalle-tarea-encabezado-nombre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.detalle-tarea-titulo {
+  margin: 0;
+  font-family: var(--pixel-font-display);
+  font-size: clamp(15px, 3.6vw, 22px);
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--pixel-ink);
+  overflow-wrap: anywhere;
+}
+
+.detalle-tarea-icono-pendiente {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px dashed var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+}
+
+.detalle-tarea-insignias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detalle-tarea-insignia {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--pixel-radius-sm);
+  font-family: var(--pixel-font-display);
+  font-size: 8px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+.detalle-tarea-insignia-nivel {
+  font-family: var(--pixel-font-body);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: var(--detalle-tarea-color-nivel);
+  border: 1px solid var(--detalle-tarea-color-nivel);
+  background: color-mix(in srgb, var(--detalle-tarea-color-nivel) 12%, transparent);
+}
+
+.detalle-tarea-insignia-tuya {
+  background: var(--pixel-accent);
+  color: var(--pixel-on-accent);
+}
+
+.detalle-tarea-insignia-vencida {
+  color: var(--pixel-nivel-5);
+  border: 1px solid var(--pixel-nivel-5);
+}
+
+.detalle-tarea-nivel-1 { --detalle-tarea-color-nivel: var(--pixel-nivel-1); }
+.detalle-tarea-nivel-2 { --detalle-tarea-color-nivel: var(--pixel-nivel-2); }
+.detalle-tarea-nivel-3 { --detalle-tarea-color-nivel: var(--pixel-nivel-3); }
+.detalle-tarea-nivel-4 { --detalle-tarea-color-nivel: var(--pixel-nivel-4); }
+.detalle-tarea-nivel-5 { --detalle-tarea-color-nivel: var(--pixel-nivel-5); }
+
+.detalle-tarea-pildora {
+  flex-shrink: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--pixel-border-strong);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pixel-ink-soft);
+  white-space: nowrap;
+}
+
+.detalle-tarea-pildora-en-progreso {
+  color: var(--pixel-accent-soft);
+  border-color: color-mix(in srgb, var(--pixel-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--pixel-accent) 12%, transparent);
+}
+
+.detalle-tarea-pildora-completada {
+  color: var(--pixel-baja);
+  border-color: color-mix(in srgb, var(--pixel-baja) 60%, transparent);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+}
+
+.detalle-tarea-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--pixel-radius);
+  border: 1px solid color-mix(in srgb, var(--pixel-baja) 50%, transparent);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, var(--pixel-panel));
+  color: var(--pixel-baja);
+  font-family: var(--pixel-font-display);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.detalle-tarea-banner-marca,
+.detalle-tarea-check {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  clip-path: polygon(0 50%, 17% 33%, 42% 58%, 83% 17%, 100% 33%, 42% 92%);
+}
+
+.detalle-tarea-solo-lectura {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--pixel-radius-sm);
+  border: 1px dashed var(--pixel-border-strong);
+  color: var(--pixel-ink-soft);
+  font-size: 14px;
+}
+
+/* ---------- Cuadrícula ---------- */
+.detalle-tarea-cuadricula {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.detalle-tarea-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .detalle-tarea-contenedor {
+    padding: 28px 24px 72px;
+  }
+
+  .detalle-tarea-cuadricula {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* ---------- Tarjetas ---------- */
+.detalle-tarea-tarjeta {
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detalle-tarea-tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pixel-border);
+}
+
+.detalle-tarea-tarjeta-titulo,
+.detalle-tarea-etiqueta {
+  margin: 0;
+  font-family: var(--pixel-font-display);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pixel-ink-soft);
+}
+
+.detalle-tarea-contador {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--pixel-border-strong);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pixel-ink-soft);
+  white-space: nowrap;
+}
+
+.detalle-tarea-etiqueta-personal {
+  padding: 2px 8px;
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel-alt);
+  color: var(--pixel-accent-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.detalle-tarea-descripcion {
+  margin: 0;
+  color: var(--pixel-ink);
+}
+
+.detalle-tarea-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.detalle-tarea-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-panel-alt) 55%, var(--pixel-panel));
+}
+
+.detalle-tarea-dato dt {
+  font-size: 12px;
+  color: var(--pixel-ink-faint);
+}
+
+.detalle-tarea-dato dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--pixel-ink-soft);
+}
+
+.detalle-tarea-dato-dificultad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detalle-tarea-mini-carita {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+}
+
+.detalle-tarea-texto-peligro {
+  color: var(--pixel-nivel-5) !important;
+}
+
+.detalle-tarea-prioridad {
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.detalle-tarea-prioridad-baja { color: var(--pixel-baja); }
+.detalle-tarea-prioridad-media { color: var(--pixel-media); }
+.detalle-tarea-prioridad-alta { color: var(--pixel-alta); }
+.detalle-tarea-prioridad-sin { color: var(--pixel-ink-faint); }
+
+/* ---------- Progreso ---------- */
+.detalle-tarea-progreso-texto {
+  margin: 0;
+  color: var(--pixel-ink-soft);
+}
+
+.detalle-tarea-progreso-texto strong {
+  color: var(--pixel-ink);
+}
+
+.detalle-tarea-barra {
+  height: 14px;
+  padding: 2px;
+  border: 2px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-bg-end);
+}
+
+.detalle-tarea-barra-relleno {
+  height: 100%;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-accent) 0 8px,
+    var(--pixel-accent-soft) 8px 10px
+  );
+  transition: width 0.3s steps(6);
+}
+
+/* ---------- Listas ---------- */
+.detalle-tarea-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detalle-tarea-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-bg-end) 40%, var(--pixel-panel));
+  border: 1px solid var(--pixel-border);
+  min-width: 0;
+}
+
+.detalle-tarea-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--pixel-panel-alt);
+  border: 1px solid var(--pixel-accent);
+  color: var(--pixel-ink);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.detalle-tarea-correo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.detalle-tarea-etiqueta-tu {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pixel-accent) 30%, transparent);
+  color: var(--pixel-accent-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.detalle-tarea-insignia-estado {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid;
+}
+
+.detalle-tarea-insignia-completo {
+  color: var(--pixel-baja);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+}
+
+.detalle-tarea-insignia-pendiente {
+  color: var(--pixel-ink-faint);
+  border-color: var(--pixel-border-strong);
+}
+
+.detalle-tarea-tiempo {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--pixel-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.detalle-tarea-tiempo-vacio {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--pixel-ink-faint);
+}
+
+/* ---------- Cronómetro ---------- */
+.detalle-tarea-cronometro {
+  border-color: color-mix(in srgb, var(--pixel-accent) 45%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pixel-accent) 10%, var(--pixel-panel)), var(--pixel-panel));
+}
+
+.detalle-tarea-crono-tiempo {
+  margin: 0;
+  text-align: center;
+  font-family: var(--pixel-font-display);
+  font-size: clamp(24px, 7vw, 34px);
+  color: var(--pixel-ink);
+  font-variant-numeric: tabular-nums;
+  padding: 14px 0 4px;
+}
+
+.detalle-tarea-crono-estado {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--pixel-ink-faint);
+}
+
+.detalle-tarea-crono-punto {
+  width: 8px;
+  height: 8px;
+  background: var(--pixel-ink-faint);
+}
+
+.detalle-tarea-crono-activo {
+  color: var(--pixel-baja);
+}
+
+.detalle-tarea-crono-activo .detalle-tarea-crono-punto {
+  background: var(--pixel-baja);
+  animation: detalle-tarea-parpadeo 1s steps(2) infinite;
+}
+
+@keyframes detalle-tarea-parpadeo {
+  50% { opacity: 0.2; }
+}
+
+.detalle-tarea-crono-botones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.detalle-tarea-nota {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pixel-ink-faint);
+}
+
+.detalle-tarea-cronometro .detalle-tarea-nota {
+  text-align: center;
+}
+
+/* ---------- Botones ---------- */
+.detalle-tarea-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 8px 18px;
+  border-radius: var(--pixel-radius-sm);
+  border: 2px solid transparent;
+  font: inherit;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.08s, background-color 0.15s, border-color 0.15s;
+}
+
+.detalle-tarea-boton:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.detalle-tarea-boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.detalle-tarea-boton-primario {
+  background: var(--pixel-accent);
+  color: var(--pixel-on-accent);
+  box-shadow: 0 4px 0 var(--pixel-accent-strong);
+}
+
+.detalle-tarea-boton-primario:hover:not(:disabled) {
+  background: var(--pixel-accent-strong);
+}
+
+.detalle-tarea-boton-primario:active:not(:disabled) {
+  box-shadow: 0 2px 0 var(--pixel-accent-strong);
+}
+
+.detalle-tarea-boton-secundario {
+  background: transparent;
+  color: var(--pixel-ink);
+  border-color: var(--pixel-border-strong);
+}
+
+.detalle-tarea-boton-secundario:hover:not(:disabled) {
+  border-color: var(--pixel-accent);
+}
+
+.detalle-tarea-boton-peligro {
+  background: var(--pixel-nivel-5);
+  color: var(--pixel-on-accent);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--pixel-nivel-5) 60%, var(--pixel-bg-end));
+}
+
+.detalle-tarea-boton-peligro:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pixel-nivel-5) 85%, var(--pixel-bg-end));
+}
+
+.detalle-tarea-boton-peligro-borde {
+  background: transparent;
+  color: var(--pixel-nivel-5);
+  border-color: color-mix(in srgb, var(--pixel-nivel-5) 60%, transparent);
+}
+
+.detalle-tarea-boton-peligro-borde:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pixel-nivel-5) 12%, transparent);
+}
+
+.detalle-tarea-boton-chico {
+  min-height: 34px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.detalle-tarea-boton-grande {
+  width: 100%;
+  min-height: 52px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.detalle-tarea-completar {
+  display: flex;
+}
+
+.detalle-tarea-completado-ok {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--pixel-radius);
+  border: 2px dashed color-mix(in srgb, var(--pixel-baja) 60%, transparent);
+  color: var(--pixel-baja);
+  font-weight: 700;
+}
+
+.detalle-tarea-acciones-lider {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Archivos ---------- */
+.detalle-tarea-vacio {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  border-radius: var(--pixel-radius-sm);
+  border: 1px dashed var(--pixel-border-strong);
+  color: var(--pixel-ink-faint);
+  font-size: 14px;
+}
+
+.detalle-tarea-archivo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 10px 12px;
+  border-radius: var(--pixel-radius-sm);
+  background: color-mix(in srgb, var(--pixel-bg-end) 40%, var(--pixel-panel));
+  border: 1px solid var(--pixel-border);
+}
+
+.detalle-tarea-tipo {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--pixel-radius-sm);
+  font-family: var(--pixel-font-display);
+  font-size: 8px;
+  color: var(--detalle-tarea-color-tipo);
+  border: 2px solid var(--detalle-tarea-color-tipo);
+  background: color-mix(in srgb, var(--detalle-tarea-color-tipo) 12%, transparent);
+}
+
+.detalle-tarea-tipo-pdf { --detalle-tarea-color-tipo: var(--pixel-nivel-5); }
+.detalle-tarea-tipo-docx { --detalle-tarea-color-tipo: var(--pixel-nivel-1); }
+.detalle-tarea-tipo-jpg { --detalle-tarea-color-tipo: var(--pixel-nivel-4); }
+.detalle-tarea-tipo-png { --detalle-tarea-color-tipo: var(--pixel-nivel-2); }
+
+.detalle-tarea-archivo-info {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detalle-tarea-archivo-nombre {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detalle-tarea-archivo-meta {
+  font-size: 12px;
+  color: var(--pixel-ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.detalle-tarea-archivo-acciones {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.detalle-tarea-subida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--pixel-radius-sm);
+  border: 2px dashed var(--pixel-border-strong);
+}
+
+.detalle-tarea-subida-deshabilitada .detalle-tarea-nota {
+  color: var(--pixel-nivel-4);
+  font-weight: 600;
+}
+
+.detalle-tarea-oculto {
+  display: none;
+}
+
+.detalle-tarea-oculto-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.detalle-tarea-error,
+.detalle-tarea-aviso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--pixel-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.detalle-tarea-error {
+  color: var(--pixel-nivel-5);
+  border: 1px solid color-mix(in srgb, var(--pixel-nivel-5) 50%, transparent);
+  background: color-mix(in srgb, var(--pixel-nivel-5) 10%, transparent);
+}
+
+.detalle-tarea-aviso {
+  color: var(--pixel-nivel-4);
+  border: 1px solid color-mix(in srgb, var(--pixel-nivel-4) 50%, transparent);
+  background: color-mix(in srgb, var(--pixel-nivel-4) 10%, transparent);
+}
+
+/* ---------- Modales ---------- */
+.detalle-tarea-modal {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: var(--pixel-radius);
+  background: var(--pixel-panel);
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font-body);
+  box-shadow: 0 6px 0 var(--pixel-bg-end);
+}
+
+.detalle-tarea-modal-pequeno {
+  width: min(400px, calc(100vw - 24px));
+}
+
+.detalle-tarea-modal::backdrop {
+  background: color-mix(in srgb, var(--pixel-bg-end) 75%, transparent);
+}
+
+.detalle-tarea-modal-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+}
+
+.detalle-tarea-modal-titulo {
+  margin: 0;
+  font-family: var(--pixel-font-display);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.detalle-tarea-modal-subtitulo {
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: var(--pixel-ink-faint);
+}
+
+.detalle-tarea-modal-texto {
+  color: var(--pixel-ink-soft);
+}
+
+.detalle-tarea-modal-texto p {
+  margin: 0 0 8px;
+}
+
+.detalle-tarea-modal-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.detalle-tarea-tiempo-registrado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-panel-alt);
+}
+
+.detalle-tarea-tiempo-registrado output {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* ---------- Selector de dificultad ---------- */
+.detalle-tarea-selector {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detalle-tarea-selector .detalle-tarea-etiqueta {
+  padding: 0;
+  margin-bottom: 10px;
+}
+
+.detalle-tarea-selector-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.detalle-tarea-opcion {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 7px;
+  border-radius: var(--pixel-radius-sm);
+  border: 2px solid var(--pixel-border-strong);
+  background: var(--pixel-panel-alt);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.08s;
+}
+
+.detalle-tarea-opcion:hover {
+  border-color: var(--detalle-tarea-color-nivel);
+}
+
+.detalle-tarea-opcion-activa {
+  border-color: var(--detalle-tarea-color-nivel);
+  background: color-mix(in srgb, var(--detalle-tarea-color-nivel) 20%, var(--pixel-panel-alt));
+  transform: translateY(-2px);
+}
+
+.detalle-tarea-selector-nombre {
+  padding: 6px 10px;
+  border: 2px solid var(--detalle-tarea-color-nivel);
+  border-radius: var(--pixel-radius-sm);
+  color: var(--detalle-tarea-color-nivel);
+  font-family: var(--pixel-font-display);
+  font-size: 9px;
+}
+
+.detalle-tarea-carita {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.detalle-tarea-carita-piel {
+  fill: var(--detalle-tarea-color-nivel);
+}
+
+.detalle-tarea-carita-rasgo {
+  fill: var(--pixel-bg-end);
+}
+
+/* ---------- Estados de datos ---------- */
+.detalle-tarea-mensaje-central {
+  margin: 48px auto 0;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
+}
+
+.detalle-tarea-mensaje-central p {
+  margin: 0;
+  color: var(--pixel-ink-soft);
+}
+
+.detalle-tarea-mensaje-central .detalle-tarea-volver {
+  align-self: center;
+}
+
+.detalle-tarea-mensaje-titulo {
+  margin: 0;
+  font-family: var(--pixel-font-display);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.detalle-tarea-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalle-tarea-esq-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.detalle-tarea-esq-bloque {
+  border-radius: var(--pixel-radius);
+  background: linear-gradient(90deg, var(--pixel-panel) 0%, var(--pixel-panel-alt) 50%, var(--pixel-panel) 100%);
+  background-size: 200% 100%;
+  animation: detalle-tarea-brillo 1.4s steps(8) infinite;
+}
+
+.detalle-tarea-esq-titulo { height: 36px; width: min(420px, 80%); }
+.detalle-tarea-esq-chip { height: 22px; width: 72px; border-radius: 999px; }
+.detalle-tarea-esq-tarjeta { height: 200px; }
+.detalle-tarea-esq-tarjeta-baja { height: 96px; }
+
+@keyframes detalle-tarea-brillo {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detalle-tarea-esq-bloque,
+  .detalle-tarea-crono-activo .detalle-tarea-crono-punto {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .detalle-tarea-encabezado-fila {
+    flex-direction: column;
+  }
+  .detalle-tarea-archivo-acciones {
+    width: 100%;
+  }
+  .detalle-tarea-archivo-acciones .detalle-tarea-boton {
+    flex: 1;
+  }
+  .detalle-tarea-modal-acciones .detalle-tarea-boton {
+    flex: 1;
+  }
+}

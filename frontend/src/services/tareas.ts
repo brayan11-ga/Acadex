@@ -13,6 +13,10 @@ export interface TareaBackend {
   id_categoria: number;
   id_usuario: number | null;
   id_grupo: number | null;
+  max_archivos: number;
+  total_archivos: number;
+  cronometro_activo: boolean;
+  tiempo_acumulado: number;
 }
 
 export interface NuevaTareaPayload {
@@ -154,6 +158,7 @@ export interface TareaGrupalCreatePayload {
 export interface IntegranteAsignadoBackend {
   id_usuario: number;
   correo_electronico: string;
+  completado: boolean;
 }
 
 export function listarTareasDeGrupo(idGrupo: number): Promise<TareaBackend[]> {
