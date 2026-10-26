@@ -286,6 +286,16 @@ def _autorizacion_tarea(db: Session, id_tarea: int, id_usuario: int):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes acceso a esta tarea.")
     return tarea
 
+def _autorizacion_lectura_tarea(db: Session, id_tarea: int, id_usuario: int):
+    """Permiso para VER y DESCARGAR adjuntos: dueño (individual) o miembro del grupo (grupal)."""
+    # Import local para evitar un posible import circular con tarea_service.
+    from app.services import tarea_service
+
+    # Devuelve el modelo Tarea. Lanza 404 si no existe y 403 si no eres
+    # dueño ni miembro del grupo: la misma regla que usa /asignados, definida
+    # en un solo lugar para que no vuelva a quedar una copia desactualizada.
+    return tarea_service.obtener_tarea(db, id_tarea, id_usuario)
+
 
 def _respuesta_archivo(archivo: Archivo, tarea, id_usuario: int) -> dict:
     return {
@@ -474,7 +484,7 @@ def subir_archivo_tarea(
 
 def listar_archivos_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[dict]:
     _exigir_adjuntos_habilitados()
-    tarea = _autorizacion_tarea(db, id_tarea, id_usuario)
+    tarea = _autorizacion_lectura_tarea(db, id_tarea, id_usuario)  # antes: _autorizacion_tarea
     return [
         _respuesta_archivo(archivo, tarea, id_usuario)
         for archivo in archivo_repository.obtener_archivos_de_tarea(db, id_tarea)
@@ -485,7 +495,7 @@ def obtener_archivo_para_descarga(
     db: Session, id_tarea: int, id_archivo: int, id_usuario: int
 ) -> tuple[Archivo, Path | bytes]:
     _exigir_adjuntos_habilitados()
-    _autorizacion_tarea(db, id_tarea, id_usuario)
+    _autorizacion_lectura_tarea(db, id_tarea, id_usuario)
     archivo = archivo_repository.obtener_archivo_de_tarea(db, id_tarea, id_archivo)
     if archivo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Archivo no encontrado")
