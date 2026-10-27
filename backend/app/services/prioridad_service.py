@@ -30,7 +30,7 @@ def calcular_prioridad(fecha_entrega:datetime, dificultad_estimada:int,historial
         return 5
 
     base=prioridad_por_fecha(fecha_entrega)
-    historial=[h for h in historial[:VENTANA] if h["tiempo_estimado"]]
+    historial=[h for h in historial[:VENTANA] if h["tiempo_estimado"] and h["tiempo_estimado"] is not None]
     n = len(historial)
     if n<MIN_HISTORIAL:
         return base
