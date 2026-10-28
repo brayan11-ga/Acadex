@@ -37,3 +37,19 @@ def listar_sesiones(
     usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
     return service.listar_sesiones_usuario(db, id_usuario, usuario_actual.id_usuario)
+
+@router.patch("/{id_sesion}/pausar", response_model=SesionCronometroOut)
+def pausar_sesion(
+    id_sesion:int,
+    db:Session=Depends(get_db),
+    usuario_actual:Usuario=Depends(get_usuario_actual),
+):
+    return service.pausar_sesion(db, id_sesion, usuario_actual.id_usuario)
+
+@router.post("/tarea/{id_tarea}/reiniciar", status_code=204)
+def reiniciar_tarea(
+    id_tarea:int,
+    db:Session=Depends(get_db),
+    usuario_actual:Usuario=Depends(get_usuario_actual),
+):
+    service.reiniciar_tarea(db,id_tarea, usuario_actual.id_usuario)

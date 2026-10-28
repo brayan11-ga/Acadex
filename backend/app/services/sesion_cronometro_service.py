@@ -37,14 +37,9 @@ def listar_sesiones_usuario(
     return repo.get_sesiones_by_usuario(db, id_usuario)
 
 
-def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCronometro:
+def _obtener_sesion_abierta(db: Session, id_sesion: int, id_usuario: int) -> SesionCronometro:
     sesion = repo.get_sesion_by_id(db, id_sesion)
-    if not sesion:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sesión no encontrada",
-        )
-    if sesion.id_usuario != id_usuario:
+    if not sesion or sesion.id_usuario !=id_usuario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sesión no encontrada",
@@ -52,14 +47,29 @@ def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCron
     if sesion.fecha_fin is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La sesión ya fue finalizada",
+            detail="La sesión ya fue cerrada",
         )
+    return sesion
 
-    fecha_fin = datetime.now(timezone.utc).replace(tzinfo=None)
-    duracion = (fecha_fin - sesion.fecha_inicio).total_seconds()
-    tarea=tarea_repository.obtener_tarea_por_id(db,sesion.id_tarea)
+def _cerrar_sesion(db:Session,sesion:SesionCronometro)->SesionCronometro:
+    fecha_fin=datetime.now(timezone.utc).replace(tzinfo=None)
+    duracion=(fecha_fin-sesion.fecha_inicio).total_seconds()
+    tarea=tarea_repository.obtener_tarea_por_id(db, sesion.id_tarea)
     if tarea is not None:
-        tarea.tiempo_acumulado=(tarea.tiempo_acumulado or 0) + duracion /60 #tiempo acumulado se guarda en min
+        tarea.tiempo_acumulado=(tarea.tiempo_acumulado or 0)+ duracion /60 #min
         tarea.cronometro_activo=False
         tarea.ultima_pausa=fecha_fin
-    return repo.update_sesion(db, sesion, {"fecha_fin": fecha_fin, "duracion": duracion})
+        return repo.update_sesion(db, sesion, {"fecha_fin":fecha_fin,"duracuin":duracion})
+
+def pausar_sesion(db:Session, id_sesion:int, id_usuario:int)->SesionCronometro:
+    return _cerrar_sesion(db, _obtener_sesion_abierta(db, id_sesion, id_usuario))
+
+def finalizar_sesion(db:Session, id_sesion:int, id_usuario:int)->SesionCronometro:
+    return _cerrar_sesion(db, _obtener_sesion_abierta(db, id_sesion, id_usuario))
+
+def reiniciar_tarea(db:Session, id_tarea:int, id_usuario:int)->None:
+    tarea = tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
+    tarea.tiempo_acumulado=0
+    tarea.cronometro_activo=False
+    tarea.ultima_pausa=None
+    repo.delete_sesiones_by_tarea(db, id_tarea)

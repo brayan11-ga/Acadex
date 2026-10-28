@@ -1,3 +1,4 @@
+# models/Perfil
 from sqlalchemy import Column, Boolean, CheckConstraint, ForeignKey, Identity, Integer, String, Text, text
 from app.db.base import Base
 

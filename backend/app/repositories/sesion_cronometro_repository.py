@@ -1,3 +1,4 @@
+# repositories/SesionCronometro
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.sesion_cronometro import SesionCronometro
@@ -27,3 +28,9 @@ def update_sesion(db: Session, sesion: SesionCronometro, data: dict) -> SesionCr
     db.commit()
     db.refresh(sesion)
     return sesion
+
+def delete_sesiones_by_tarea(db:Session, id_tarea:int) ->None:
+    db.query(SesionCronometro).filter(
+        SesionCronometro.id_tarea==id_tarea
+    ).delete(synchronize_session=False)
+    db.commit()

@@ -1,3 +1,4 @@
+# models/SesionCronometro
 from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Identity, Index, Integer, REAL, text
 from app.db.base import Base
 
