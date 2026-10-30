@@ -1,3 +1,4 @@
+# models/Tarea
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, ForeignKey, Identity, Index, Integer,
     REAL, String, Text, TIMESTAMP, text

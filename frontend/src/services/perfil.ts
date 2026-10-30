@@ -19,7 +19,7 @@ export interface ActualizarPerfilPayload {
   foto_perfil?: string;
   descripcion?: string;
   notif_activas?: boolean;
-  limite_cronometro?: number;
+  limite_cronometro?: number | null;
 }
 
 export function obtenerMiPerfil(): Promise<PerfilBackend> {
