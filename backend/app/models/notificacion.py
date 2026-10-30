@@ -1,3 +1,4 @@
+# models/Notificacion
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Identity, Index, Integer, String, func, text
 from app.db.base import Base
 

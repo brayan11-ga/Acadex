@@ -1,3 +1,4 @@
+# service/Perfil_service
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.perfil import Perfil
@@ -37,8 +38,8 @@ def obtener_perfil_por_usuario(
     return perfil
 
 def actualizar_perfil(
-    db: Session, id_usuario: int, data: dict, id_usuario_actual: int
-) -> Perfil:
+    db: Session, id_usuario: int, data: dict, id_usuario_actual: int) -> Perfil:
     perfil = obtener_perfil_por_usuario(db, id_usuario, id_usuario_actual)
-    data_limpia = {k: v for k, v in data.items() if v is not None}
+    data_limpia = {k: v for k, v in data.items() 
+        if v is not None or k =="limite_cronometro"}
     return repo.update_perfil(db, perfil, data_limpia)

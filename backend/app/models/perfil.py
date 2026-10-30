@@ -11,7 +11,7 @@ class Perfil(Base):
     foto_perfil = Column(String(255))
     descripcion = Column(Text)
     notif_activas = Column(Boolean, nullable=False, default=True, server_default=text("true"))
-    limite_cronometro = Column(Integer)
+    limite_cronometro = Column(Integer,nullable=False, server_default="30")
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, unique=True)
 
     __table_args__ = (

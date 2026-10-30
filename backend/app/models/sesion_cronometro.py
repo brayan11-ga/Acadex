@@ -9,6 +9,8 @@ class SesionCronometro(Base):
     fecha_inicio = Column(DateTime, nullable=False)
     fecha_fin = Column(DateTime)
     duracion = Column(REAL)
+    fecha_aviso= Column(DateTime)
+    fecha_confirmacion= Column (DateTime)
     id_tarea = Column(Integer, ForeignKey("tareas.id_tarea", ondelete="CASCADE"), nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
 
