@@ -1,3 +1,4 @@
+# Ruta: backend/tests/test_archivo_service.py
 import io
 import tempfile
 import unittest
@@ -258,10 +259,18 @@ class FlujoAdjuntosTests(unittest.TestCase):
     def test_subida_personal_guarda_autor_y_no_expone_ruta(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
             raiz = Path(directorio)
-            tarea = SimpleNamespace(id_usuario=12, id_grupo=None, nombre="Lectura")
+            tarea = SimpleNamespace(
+                id_usuario=12, id_grupo=None, nombre="Lectura", max_archivos=10
+            )
             with (
                 patch.object(archivo_service, "DIRECTORIO_BASE_UPLOADS", raiz),
                 patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+                patch.object(archivo_service.archivo_repository, "contar_archivos_de_tarea", return_value=0),
+                patch.object(
+                    archivo_service.archivo_repository,
+                    "contar_archivos_de_tarea",
+                    return_value=0,
+                ) as contar,
                 patch.object(
                     archivo_service.archivo_repository,
                     "crear_archivo",
@@ -277,6 +286,7 @@ class FlujoAdjuntosTests(unittest.TestCase):
                     12,
                 )
 
+            contar.assert_called_once_with(None, 4)
             self.assertEqual(crear.call_args.kwargs["id_usuario_subida"], 12)
             ruta_guardada = crear.call_args.kwargs["ruta"]
             self.assertTrue((raiz / ruta_guardada).is_file())
@@ -284,14 +294,58 @@ class FlujoAdjuntosTests(unittest.TestCase):
             self.assertTrue(respuesta["puede_eliminar"])
             self.assertNotIn("ruta", respuesta)
 
+    def test_rechaza_subida_cuando_alcanza_maximo_de_archivos(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
+            raiz = Path(directorio)
+            tarea = SimpleNamespace(
+                id_usuario=12, id_grupo=None, nombre="Lectura", max_archivos=2
+            )
+            db = Mock()
+            with (
+                patch.object(archivo_service, "DIRECTORIO_BASE_UPLOADS", raiz),
+                patch.object(
+                    archivo_service.tarea_repository,
+                    "obtener_tarea_por_id",
+                    return_value=tarea,
+                ),
+                patch.object(
+                    archivo_service.archivo_repository,
+                    "contar_archivos_de_tarea",
+                    return_value=2,
+                ) as contar,
+                patch.object(
+                    archivo_service.archivo_repository, "crear_archivo"
+                ) as crear,
+            ):
+                with self.assertRaises(HTTPException) as error:
+                    archivo_service.subir_archivo_tarea(
+                        db,
+                        4,
+                        crear_upload("guia.pdf", b"%PDF-1.7 test", "application/pdf"),
+                        12,
+                    )
+
+            self.assertEqual(error.exception.status_code, 409)
+            self.assertIn("máximo de 2 archivos", error.exception.detail)
+            contar.assert_called_once_with(db, 4)
+            crear.assert_not_called()
+            self.assertEqual(list(raiz.rglob("*.pdf")), [])
+
     def test_fallo_al_guardar_metadatos_compensa_el_binario(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directorio:
             raiz = Path(directorio)
-            tarea = SimpleNamespace(id_usuario=12, id_grupo=None, nombre="Lectura")
+            tarea = SimpleNamespace(
+                id_usuario=12, id_grupo=None, nombre="Lectura", max_archivos=10
+            )
             db = Mock()
             with (
                 patch.object(archivo_service, "DIRECTORIO_BASE_UPLOADS", raiz),
                 patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+                patch.object(
+                    archivo_service.archivo_repository,
+                    "contar_archivos_de_tarea",
+                    return_value=0,
+                ),
                 patch.object(archivo_service.archivo_repository, "crear_archivo", side_effect=RuntimeError("db")),
             ):
                 with patch.object(archivo_service.logger, "exception"):
@@ -308,7 +362,9 @@ class FlujoAdjuntosTests(unittest.TestCase):
             db.rollback.assert_called_once()
 
     def test_subida_supabase_registra_referencia_privada_y_compensa_si_falla_bd(self):
-        tarea = SimpleNamespace(id_usuario=12, id_grupo=None, nombre="Lectura")
+        tarea = SimpleNamespace(
+            id_usuario=12, id_grupo=None, nombre="Lectura", max_archivos=10
+        )
         configuracion = SimpleNamespace(
             attachments_enabled=True,
             attachments_storage_backend="supabase",
@@ -318,6 +374,11 @@ class FlujoAdjuntosTests(unittest.TestCase):
         with (
             patch.object(archivo_service, "settings", configuracion),
             patch.object(archivo_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(
+                archivo_service.archivo_repository,
+                "contar_archivos_de_tarea",
+                return_value=0,
+            ),
             patch.object(archivo_service.supabase_storage, "subir") as subir,
             patch.object(archivo_service.supabase_storage, "eliminar") as eliminar,
             patch.object(archivo_service.archivo_repository, "crear_archivo", side_effect=RuntimeError("db")),

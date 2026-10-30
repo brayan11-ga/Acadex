@@ -20,6 +20,7 @@ google-api-python-client==2.200.0
 google-auth==2.58.0
 google-auth-httplib2==0.4.2
 google-genai==2.29.0
+groq==1.7.0
 tzdata==2026.5
 googleapis-common-protos==1.75.0
 greenlet==3.5.5

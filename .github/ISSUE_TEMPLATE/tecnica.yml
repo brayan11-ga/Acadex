@@ -1,0 +1,52 @@
+name: Tarea técnica, investigación o documentación
+description: Registra deuda técnica, refactorización, infraestructura, investigación o documentación.
+title: "[Técnica]: "
+body:
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de trabajo
+      options:
+        - Refactorización o deuda técnica
+        - Infraestructura o configuración
+        - Documentación
+        - Investigación o decisión técnica
+        - Mantenimiento
+    validations:
+      required: true
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema o motivación
+      description: Qué riesgo, coste o incertidumbre existe hoy.
+    validations:
+      required: true
+  - type: textarea
+    id: resultado
+    attributes:
+      label: Resultado esperado y alcance
+      description: Define qué cambiará y qué queda explícitamente fuera.
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Áreas afectadas
+      options:
+        - label: Frontend
+        - label: Backend o API
+        - label: Base de datos o migraciones
+        - label: Infraestructura o configuración
+        - label: Documentación
+  - type: textarea
+    id: riesgos
+    attributes:
+      label: Riesgos, dependencias o decisiones pendientes
+      description: Incluye compatibilidad, datos, seguridad, permisos o trabajo externo.
+  - type: textarea
+    id: verificacion
+    attributes:
+      label: Cómo se verificará
+      description: Comandos, revisión, evidencia o resultado esperado de la investigación.
+    validations:
+      required: true

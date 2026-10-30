@@ -1,58 +1,32 @@
 # Frontend de Acadex
 
-Interfaz web de Acadex, construida con React, TypeScript y Vite. Se comunica con la API FastAPI del backend para gestionar cuentas, tareas, grupos, archivos y estadísticas.
+Interfaz React, TypeScript y Vite. Usa la API FastAPI para cuentas, tareas, grupos, archivos y estadísticas.
 
-## Requisitos
+Para instalar dependencias y ejecutar la interfaz junto con la API, sigue [Inicio manual](../docs/inicio-manual.md). La alternativa completa en contenedores está en [Inicio con Docker](../docs/inicio-docker.md).
 
-- Node.js 20.19 o superior, o 22.12 o superior.
-- pnpm 12.11.2, fijado por el campo `packageManager` de `package.json`. Corepack puede seleccionar esa versión.
+## Configuración pública
 
-## Configuración local
-
-Desde esta carpeta, copia `.env.example` a `.env.local` y ajusta la dirección de la API según el entorno:
-
-```sh
-cp .env.example .env.local
-```
-
-En PowerShell:
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-Variables disponibles:
+Para el inicio manual, copia [.env.example](.env.example) a `.env.local` sin sobrescribir una configuración existente. La guía manual contiene los comandos de copia. Docker entrega el origen de la API mediante Compose.
 
 | Variable | Uso |
 | --- | --- |
-| `VITE_API_URL` | Origen HTTP de la API FastAPI, por ejemplo `http://localhost:8000`. |
-| `VITE_ATTACHMENTS_ENABLED` | Activa la interfaz de adjuntos cuando el backend también los tiene configurados. Usa `false` para desarrollo local sin almacenamiento remoto. |
+| `VITE_API_URL` | Origen de la API, por ejemplo `http://localhost:8000`. El cliente añade `/api/v1`. |
+| `VITE_ATTACHMENTS_ENABLED` | Habilita la interfaz de adjuntos. El backend debe habilitarlos también. Para el primer arranque conserva `false`. |
 
-Las variables `VITE_*` se incorporan al código que recibe el navegador; no guardes contraseñas, tokens ni claves privadas en ellas.
+Las variables `VITE_*` se incluyen en el código del navegador: nunca contienen claves privadas. Reinicia Vite después de cambiar `.env.local`.
 
-## Instalar, desarrollar y verificar
+## Scripts disponibles
 
-```sh
-corepack enable
-pnpm install --frozen-lockfile
-pnpm dev
-```
+[package.json](package.json) fija pnpm 12.11.2. Ejecuta sus scripts desde `frontend/` con `corepack pnpm`:
 
-Vite muestra la dirección local al iniciar. En otra terminal, ejecuta las verificaciones desde `frontend/`:
+| Script | Qué hace |
+| --- | --- |
+| `dev` | Inicia Vite para desarrollo |
+| `build` | Comprueba TypeScript y genera `dist/` |
+| `lint` | Analiza el código con Oxlint |
+| `test --run` | Ejecuta Vitest una vez |
+| `preview` | Sirve el build local; primero ejecuta `build` |
 
-```sh
-pnpm test --run
-pnpm lint
-pnpm build
-```
+La secuencia de comprobaciones está en [Calidad y pruebas](../docs/calidad-y-pruebas.md). El workflow usa Node.js 22; el Dockerfile usa Node.js 24. La guía manual toma Node.js 24 como referencia.
 
-- `test --run`: ejecuta la suite completa de Vitest y termina al finalizar.
-- `lint`: revisa el código con Oxlint.
-- `build`: comprueba TypeScript y genera el sitio optimizado en `dist/`.
-- `preview`: sirve localmente el resultado ya compilado; primero ejecuta `pnpm build`.
-
-Para probar el build:
-
-```sh
-pnpm preview
-```
+El mapa de componentes está en [Arquitectura](../docs/arquitectura.md). Para estilos compartidos y tokens, consulta [Diseño frontend](../docs/diseno-frontend.md).
