@@ -84,6 +84,22 @@ export function actualizarTarea(
   });
 }
 
+export function completarParteTarea(
+  idTarea: number,
+  dificultadReal: number
+): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/completar`, {
+    method: "POST",
+    body: JSON.stringify({ dificultad_real: dificultadReal }),
+  });
+}
+
+export function reabrirTarea(idTarea: number): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/reabrir`, {
+    method: "POST",
+  });
+}
+
 export function eliminarTarea(idTarea: number): Promise<void> {
   return apiFetch<void>(`/tareas/${idTarea}`, {
     method: "DELETE",

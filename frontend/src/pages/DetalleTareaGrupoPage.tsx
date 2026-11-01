@@ -11,10 +11,14 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { listarCategorias, type Categoria } from "../services/categorias";
 import { listarMisGrupos } from "../services/grupos";
 import {
+  completarParteTarea,
   descargarArchivoTarea,
+  eliminarArchivoTarea,
   listarArchivosTarea,
   listarAsignadosTarea,
   obtenerTarea,
+  reabrirTarea,
+  subirArchivoTarea,
   type ArchivoTarea,
   type IntegranteAsignadoBackend,
   type TareaBackend,
@@ -172,6 +176,21 @@ function obtenerInicial(correo: string): string {
   return correo.charAt(0).toUpperCase() || "?";
 }
 
+function esErrorDePermiso(error: unknown): boolean {
+  const mensaje = (error instanceof Error ? error.message : "").toLowerCase();
+  return (
+    mensaje.includes("permiso") ||
+    mensaje.includes("403") ||
+    mensaje.includes("forbidden")
+  );
+}
+
+function mensajeDeError(error: unknown, respaldo: string): string {
+  return error instanceof Error && error.message.trim()
+    ? error.message
+    : respaldo;
+}
+
 function CaritaPixel({ nivel }: { nivel: number }) {
   return (
     <svg
@@ -311,6 +330,7 @@ function DialogoConfirmacion({
   textoConfirmar,
   peligro = false,
   deshabilitado = false,
+  cargando = false,
   onConfirmar,
   onCancelar,
 }: {
@@ -320,6 +340,7 @@ function DialogoConfirmacion({
   textoConfirmar: string;
   peligro?: boolean;
   deshabilitado?: boolean;
+  cargando?: boolean;
   onConfirmar: () => void;
   onCancelar: () => void;
 }) {
@@ -331,6 +352,7 @@ function DialogoConfirmacion({
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
           onClick={onCancelar}
+          disabled={cargando}
         >
           Cancelar
         </button>
@@ -338,10 +360,10 @@ function DialogoConfirmacion({
           type="button"
           className={`detalle-tarea-boton ${peligro ? "detalle-tarea-boton-peligro" : "detalle-tarea-boton-primario"}`}
           onClick={onConfirmar}
-          disabled={deshabilitado}
+          disabled={deshabilitado || cargando}
           title={deshabilitado ? "Próximamente" : undefined}
         >
-          {textoConfirmar}
+          {cargando ? "Procesando…" : textoConfirmar}
         </button>
       </div>
     </Modal>
@@ -637,7 +659,9 @@ function Archivos({
   maximo,
   puedeSubir,
   descargandoId,
-  errorDescarga,
+  eliminandoId,
+  subiendo,
+  errorArchivos,
   onSubir,
   onEliminar,
   onDescargar,
@@ -646,8 +670,10 @@ function Archivos({
   maximo: number;
   puedeSubir: boolean;
   descargandoId: number | null;
-  errorDescarga: string | null;
-  onSubir: () => void;
+  eliminandoId: number | null;
+  subiendo: boolean;
+  errorArchivos: string | null;
+  onSubir: (archivo: File) => void;
   onEliminar: (archivo: ArchivoTarea) => void;
   onDescargar: (archivo: ArchivoTarea) => void;
 }) {
@@ -702,10 +728,11 @@ function Archivos({
                     type="button"
                     className="detalle-tarea-boton detalle-tarea-boton-peligro-borde detalle-tarea-boton-chico"
                     onClick={() => onEliminar(archivo)}
-                    disabled
-                    title="Próximamente"
+                    disabled={eliminandoId === archivo.id_archivo}
                   >
-                    Eliminar
+                    {eliminandoId === archivo.id_archivo
+                      ? "Eliminando…"
+                      : "Eliminar"}
                   </button>
                 )}
               </div>
@@ -714,9 +741,9 @@ function Archivos({
         </ul>
       )}
 
-      {errorDescarga && (
+      {errorArchivos && (
         <p className="detalle-tarea-error" role="alert">
-          {errorDescarga}
+          {errorArchivos}
         </p>
       )}
 
@@ -729,8 +756,12 @@ function Archivos({
             type="file"
             className="detalle-tarea-oculto"
             accept=".pdf,.docx,.jpg,.jpeg,.png"
-            onChange={onSubir}
-            disabled
+            onChange={(evento) => {
+              const archivo = evento.target.files?.[0];
+              evento.target.value = "";
+              if (archivo) onSubir(archivo);
+            }}
+            disabled={limite || subiendo}
             tabIndex={-1}
             aria-hidden="true"
           />
@@ -738,11 +769,10 @@ function Archivos({
             type="button"
             className="detalle-tarea-boton detalle-tarea-boton-primario"
             onClick={() => inputRef.current?.click()}
-            disabled
-            title="Próximamente"
+            disabled={limite || subiendo}
             aria-describedby="detalle-tarea-aviso-subida"
           >
-            Subir archivo
+            {subiendo ? "Subiendo…" : "Subir archivo"}
           </button>
           <p id="detalle-tarea-aviso-subida" className="detalle-tarea-nota">
             {limite
@@ -804,7 +834,8 @@ function ModalCompletar({
   segundos,
   enCurso,
   sinArchivos,
-  deshabilitado = false,
+  enviando = false,
+  error = null,
   onEntregar,
   onCerrar,
 }: {
@@ -812,7 +843,8 @@ function ModalCompletar({
   segundos: number;
   enCurso: boolean;
   sinArchivos: boolean;
-  deshabilitado?: boolean;
+  enviando?: boolean;
+  error?: string | null;
   onEntregar: (dificultad: number) => void;
   onCerrar: () => void;
 }) {
@@ -850,22 +882,32 @@ function ModalCompletar({
         </p>
       )}
 
+      {error && (
+        <p className="detalle-tarea-error" role="alert">
+          {error}
+        </p>
+      )}
+
       <div className="detalle-tarea-modal-acciones">
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
           onClick={onCerrar}
+          disabled={enviando}
         >
           Volver
         </button>
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-primario"
-          disabled={enCurso || deshabilitado}
-          title={deshabilitado ? "Próximamente" : undefined}
+          disabled={enviando}
           onClick={() => onEntregar(dificultad)}
         >
-          {sinArchivos ? "Entregar sin archivos" : "Entregar"}
+          {enviando
+            ? "Entregando…"
+            : sinArchivos
+              ? "Entregar sin archivos"
+              : "Entregar"}
         </button>
       </div>
     </Modal>
@@ -905,8 +947,6 @@ function AccionesLider({
           <button
             type="button"
             className="detalle-tarea-boton detalle-tarea-boton-primario"
-            disabled
-            title="Próximamente"
             onClick={onReabrir}
           >
             Reabrir tarea
@@ -991,10 +1031,16 @@ function DetalleTareaGrupoPage() {
   >(null);
   const [estado, setEstado] = useState<EstadoPantalla>("cargando");
   const [descargandoId, setDescargandoId] = useState<number | null>(null);
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<number | null>(null);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [errorArchivos, setErrorArchivos] = useState<string | null>(null);
+  const [completando, setCompletando] = useState(false);
+  const [errorCompletar, setErrorCompletar] = useState<string | null>(null);
   const [modalCompletar, setModalCompletar] = useState(false);
   const [confirmarEliminarTarea, setConfirmarEliminarTarea] = useState(false);
   const [confirmarReabrir, setConfirmarReabrir] = useState(false);
+  const [reabriendo, setReabriendo] = useState(false);
+  const [errorReabrir, setErrorReabrir] = useState<string | null>(null);
   const [archivoPorEliminar, setArchivoPorEliminar] =
     useState<ArchivoTarea | null>(null);
 
@@ -1013,8 +1059,8 @@ function DetalleTareaGrupoPage() {
     );
   }, [categorias, tarea]);
 
-  const cargar = useCallback(async () => {
-    setEstado("cargando");
+  const cargar = useCallback(async (opciones?: { silencioso?: boolean }) => {
+    if (!opciones?.silencioso) setEstado("cargando");
     try {
       const misGrupos = await listarMisGrupos();
       const grupoEncontrado =
@@ -1061,20 +1107,18 @@ function DetalleTareaGrupoPage() {
       );
       setEstado("lista");
     } catch (err) {
-      const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
-      if (
-        mensaje.includes("permiso") ||
-        mensaje.includes("403") ||
-        mensaje.includes("forbidden")
-      ) {
+      if (esErrorDePermiso(err)) {
         setEstado("sin-permisos");
-      } else if (
-        mensaje.includes("no encontrada") ||
-        mensaje.includes("404")
-      ) {
-        setEstado("no-encontrada");
       } else {
-        setEstado("error");
+        const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
+        if (
+          mensaje.includes("no encontrada") ||
+          mensaje.includes("404")
+        ) {
+          setEstado("no-encontrada");
+        } else {
+          setEstado("error");
+        }
       }
     }
   }, [idG, idT, idUsuarioActual]);
@@ -1084,7 +1128,7 @@ function DetalleTareaGrupoPage() {
   }, [cargar, idG, idT]);
 
   async function descargar(archivo: ArchivoTarea) {
-    setErrorDescarga(null);
+    setErrorArchivos(null);
     setDescargandoId(archivo.id_archivo);
     try {
       const blob = await descargarArchivoTarea(idT, archivo.id_archivo);
@@ -1097,16 +1141,92 @@ function DetalleTareaGrupoPage() {
       enlace.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (err) {
-      const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
-      setErrorDescarga(
-        mensaje.includes("permiso") ||
-          mensaje.includes("403") ||
-          mensaje.includes("forbidden")
+      setErrorArchivos(
+        esErrorDePermiso(err)
           ? "No tienes permiso para descargar este archivo."
           : "No se pudo descargar el archivo.",
       );
     } finally {
       setDescargandoId(null);
+    }
+  }
+
+  async function subirArchivo(archivo: File) {
+    setErrorArchivos(null);
+    setSubiendoArchivo(true);
+    try {
+      await subirArchivoTarea(idT, archivo);
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setEstado("sin-permisos");
+      } else {
+        setErrorArchivos(mensajeDeError(err, "No se pudo subir el archivo."));
+      }
+    } finally {
+      setSubiendoArchivo(false);
+    }
+  }
+
+  async function eliminarArchivo(archivo: ArchivoTarea) {
+    setArchivoPorEliminar(null);
+    setErrorArchivos(null);
+    setEliminandoId(archivo.id_archivo);
+    try {
+      await eliminarArchivoTarea(idT, archivo.id_archivo);
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setEstado("sin-permisos");
+      } else {
+        setErrorArchivos(
+          mensajeDeError(err, "No se pudo eliminar el archivo."),
+        );
+      }
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
+  async function completarParte(dificultad: number) {
+    setErrorCompletar(null);
+    setCompletando(true);
+    try {
+      await completarParteTarea(idT, dificultad);
+      setModalCompletar(false);
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setModalCompletar(false);
+        setEstado("sin-permisos");
+      } else {
+        setErrorCompletar(
+          mensajeDeError(err, "No se pudo completar tu parte."),
+        );
+      }
+    } finally {
+      setCompletando(false);
+    }
+  }
+
+  async function reabrir() {
+    setErrorReabrir(null);
+    setReabriendo(true);
+    try {
+      await reabrirTarea(idT);
+      setConfirmarReabrir(false);
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setConfirmarReabrir(false);
+        setEstado("sin-permisos");
+      } else {
+        setErrorReabrir(
+          mensajeDeError(err, "No se pudo reabrir la tarea."),
+        );
+      }
+    } finally {
+      setReabriendo(false);
     }
   }
 
@@ -1247,9 +1367,10 @@ function DetalleTareaGrupoPage() {
                   <button
                     type="button"
                     className="detalle-tarea-boton detalle-tarea-boton-primario detalle-tarea-boton-grande"
-                    disabled
-                    title="Próximamente"
-                    onClick={() => setModalCompletar(true)}
+                    onClick={() => {
+                      setErrorCompletar(null);
+                      setModalCompletar(true);
+                    }}
                   >
                     Completar mi parte
                   </button>
@@ -1262,8 +1383,10 @@ function DetalleTareaGrupoPage() {
               maximo={tarea.max_archivos}
               puedeSubir={puedeTrabajar}
               descargandoId={descargandoId}
-              errorDescarga={errorDescarga}
-              onSubir={() => {}}
+              eliminandoId={eliminandoId}
+              subiendo={subiendoArchivo}
+              errorArchivos={errorArchivos}
+              onSubir={(archivo) => void subirArchivo(archivo)}
               onEliminar={(archivo) => setArchivoPorEliminar(archivo)}
               onDescargar={(archivo) => void descargar(archivo)}
             />
@@ -1273,7 +1396,10 @@ function DetalleTareaGrupoPage() {
                 completada={completada}
                 onEditar={() => {}}
                 onEliminar={() => setConfirmarEliminarTarea(true)}
-                onReabrir={() => setConfirmarReabrir(true)}
+                onReabrir={() => {
+                  setErrorReabrir(null);
+                  setConfirmarReabrir(true);
+                }}
               />
             )}
           </aside>
@@ -1281,12 +1407,16 @@ function DetalleTareaGrupoPage() {
 
         <ModalCompletar
           abierto={modalCompletar && puedeTrabajar}
-          segundos={0}
+          segundos={tiempoPropioSegundos ?? 0}
           enCurso={false}
           sinArchivos={sinArchivosPropios}
-          deshabilitado
-          onEntregar={() => {}}
-          onCerrar={() => setModalCompletar(false)}
+          enviando={completando}
+          error={errorCompletar}
+          onEntregar={(dificultad) => void completarParte(dificultad)}
+          onCerrar={() => {
+            setModalCompletar(false);
+            setErrorCompletar(null);
+          }}
         />
 
         <DialogoConfirmacion
@@ -1314,16 +1444,26 @@ function DetalleTareaGrupoPage() {
           abierto={confirmarReabrir}
           titulo="Reabrir tarea"
           textoConfirmar="Reabrir"
-          deshabilitado
+          cargando={reabriendo}
           mensaje={
-            <p>
-              ¿Reabrir esta tarea? Se borrarán las entregas de todos los
-              asignados (dificultad y tiempo registrados) y tendrán que
-              completar su parte otra vez. Los archivos se conservan.
-            </p>
+            <>
+              <p>
+                ¿Reabrir esta tarea? Se borrarán las entregas de todos los
+                asignados (dificultad y tiempo registrados) y tendrán que
+                completar su parte otra vez. Los archivos se conservan.
+              </p>
+              {errorReabrir && (
+                <p className="detalle-tarea-error" role="alert">
+                  {errorReabrir}
+                </p>
+              )}
+            </>
           }
-          onConfirmar={() => setConfirmarReabrir(false)}
-          onCancelar={() => setConfirmarReabrir(false)}
+          onConfirmar={() => void reabrir()}
+          onCancelar={() => {
+            setConfirmarReabrir(false);
+            setErrorReabrir(null);
+          }}
         />
 
         <DialogoConfirmacion
@@ -1331,9 +1471,14 @@ function DetalleTareaGrupoPage() {
           titulo="Eliminar archivo"
           peligro
           textoConfirmar="Eliminar"
-          deshabilitado
-          mensaje={<p>¿Eliminar este archivo? No se puede deshacer.</p>}
-          onConfirmar={() => setArchivoPorEliminar(null)}
+          mensaje={
+            <p>
+              ¿Eliminar «{archivoPorEliminar?.nombre}»? No se puede deshacer.
+            </p>
+          }
+          onConfirmar={() => {
+            if (archivoPorEliminar) void eliminarArchivo(archivoPorEliminar);
+          }}
           onCancelar={() => setArchivoPorEliminar(null)}
         />
       </div>
