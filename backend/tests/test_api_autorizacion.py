@@ -235,6 +235,7 @@ class AutorizacionServiciosTests(unittest.TestCase):
             id_categoria=1,
             id_usuario=13,
         )
+        db=Mock()
         actor = SimpleNamespace(id_usuario=12, es_admin=False)
         creada = SimpleNamespace(id_usuario=12)
         with (
