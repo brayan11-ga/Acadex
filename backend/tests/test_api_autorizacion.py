@@ -242,7 +242,7 @@ class AutorizacionServiciosTests(unittest.TestCase):
             patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=creada) as crear,
             patch.object(tarea_service.prioridad_service, "asignar_prioridad_inicial"),
         ):
-            self.assertIs(tarea_service.crear_tarea(None, datos, actor), creada)
+            self.assertIs(tarea_service.crear_tarea(db, datos, actor), creada)
         self.assertEqual(crear.call_args.args[1].id_usuario, 12)
 
     def test_usuario_no_lider_no_crea_tarea_en_grupo_por_ruta_general(self):
