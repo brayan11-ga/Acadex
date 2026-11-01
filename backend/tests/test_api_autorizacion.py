@@ -237,7 +237,10 @@ class AutorizacionServiciosTests(unittest.TestCase):
         )
         actor = SimpleNamespace(id_usuario=12, es_admin=False)
         creada = SimpleNamespace(id_usuario=12)
-        with patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=creada) as crear:
+        with (
+            patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=creada) as crear,
+            patch.object(tarea_service.prioridad_service, "asignar_prioridad_inicial"),
+        ):
             self.assertIs(tarea_service.crear_tarea(None, datos, actor), creada)
         self.assertEqual(crear.call_args.args[1].id_usuario, 12)
 
@@ -444,10 +447,11 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
 
     def test_propietario_puede_finalizar_y_listar_sus_sesiones(self):
         inicio = datetime.utcnow() - timedelta(minutes=5)
-        sesion = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=None)
+        sesion = SimpleNamespace(id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=None)
         finalizada = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=datetime.utcnow())
         with (
             patch.object(sesion_cronometro_service.repo, "get_sesion_by_id", return_value=sesion),
+            patch.object(sesion_cronometro_service.tarea_repository, "obtener_tarea_por_id", return_value=None),
             patch.object(sesion_cronometro_service.repo, "update_sesion", return_value=finalizada) as actualizar,
             patch.object(sesion_cronometro_service.repo, "get_sesiones_by_usuario", return_value=[finalizada]) as listar,
         ):
