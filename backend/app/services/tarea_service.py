@@ -373,6 +373,8 @@ def crear_tarea_grupal(
         tarea = tarea_repository.crear_tarea(
             db, tarea_datos, commit=False, max_archivos=datos.max_archivos
         )
+        tarea = tarea_repository.crear_tarea(db, tarea_datos, commit=False)
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
 
         for integrante in integrantes:
             asignacion_tarea_repository.crear_asignacion(
