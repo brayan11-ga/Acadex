@@ -1,126 +1,101 @@
-# app/services/estadisticas_service.py
-from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime,timedelta
 from sqlalchemy.orm import Session
-
 from app.repositories.estadisticas_repository import estadisticas_repository
-from app.schemas.estadisticas_schema import (
-    ResumenEstadisticasResponse,
-    MetaSemanalSchema,
-    DiaEstadisticaSchema,
-    FocusScoreSchema,
-    CategoriaTopSchema,
-    PromedioTiempoSchema,
-    InsightSchema
-)
+from app.schemas.estadisticas_schema import (MetaSemanalSchema, RendimientoCategoriaSchema, ResumenEstadisticasResponse,)
+MUESTRA_POR_CATEGORIA = 10   # RF-022
+MIN_TAREAS_CATEGORIA = 3     # RF-024
+UMBRAL_MEJORA = 0.10         # variación del 10 % para hablar de mejora o empeora
+ORDEN_ESTADO = {"deficiente": 0, "eficiente": 1, "insuficiente": 2}
 
-def obtener_resumen_estadisticas(db: Session, id_usuario: int) -> ResumenEstadisticasResponse:
-    # 1. Definimos la ventana de tiempo (últimos 7 días)
+
+def _promedio(valores):
+    validos = [v for v in valores if v is not None]
+    return sum(validos) / len(validos) if validos else None
+
+
+def _meta_semanal(db: Session, id_usuario: int) -> MetaSemanalSchema:
     fecha_fin = datetime.now()
     fecha_inicio = fecha_fin - timedelta(days=7)
 
-    # 2. Obtenemos datos crudos
     historial = estadisticas_repository.obtener_historial_rango(db, id_usuario, fecha_inicio, fecha_fin)
     total_esperadas = estadisticas_repository.contar_tareas_esperadas_rango(db, id_usuario, fecha_inicio, fecha_fin)
 
-    # Variables auxiliares para los cálculos dinámicos
-    nombres_dias = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"]
-    conteo_dias = {i: 0 for i in range(7)}
-    
-    total_tiempo_real = 0
-    tareas_a_tiempo = 0
-    conteo_categorias = defaultdict(float) # Para sumar horas por categoría
-    conteo_horas_dia = defaultdict(int)    # Para saber a qué hora trabaja más
-
-    # 3. Procesamiento central (Un solo ciclo for recorre todo)
-    for reg_historial, reg_tarea, reg_categoria in historial:
-        # Gráfico diario
-        dia_idx = reg_historial.fechahora_fin.weekday()
-        conteo_dias[dia_idx] += 1
-        
-        # Pico de rendimiento (Insights)
-        hora = reg_historial.fechahora_fin.hour
-        conteo_horas_dia[hora] += 1
-
-        # Tiempos (Usamos el tiempo real de la sesión, o el estimado si no usó cronómetro)
-        tiempo_real = reg_historial.tiempo_real or reg_tarea.tiempo_estimado or 0
-        tiempo_estimado = reg_tarea.tiempo_estimado or 0
-
-        total_tiempo_real += tiempo_real
-
-        # Focus Score (Gana puntos si terminó más rápido o igual al tiempo estimado)
-        if tiempo_real <= tiempo_estimado:
-            tareas_a_tiempo += 1
-
-        # Sumar horas a la categoría correspondiente
-        conteo_categorias[reg_categoria.nombre_categoria] += (tiempo_real / 60)
-
-    # 4. Cálculo de Meta Semanal
     completadas = len(historial)
-    total_meta = total_esperadas if total_esperadas > completadas else completadas
-    porcentaje = int((completadas / total_meta) * 100) if total_meta > 0 else 0
+    total = max(total_esperadas, completadas)
+    porcentaje = int((completadas / total) * 100) if total > 0 else 0
 
-    # 5. Formateo del Gráfico
-    dia_actual_idx = fecha_fin.weekday()
-    grafico_diario = [
-        DiaEstadisticaSchema(
-            dia=nombres_dias[i],
-            cantidad=conteo_dias[i],
-            actual=(i == dia_actual_idx)
-        ) for i in range(7)
-    ]
+    return MetaSemanalSchema(
+        porcentaje=porcentaje,
+        completadas=completadas,
+        total=total,
+        tendencia="En buen camino" if porcentaje >= 50 else "Necesita atención",
+    )
 
-    # 6. Cálculo de Top Category
-    categoria_top_nombre = "Sin datos"
-    categoria_top_horas = 0.0
-    if conteo_categorias:
-        categoria_top_nombre = max(conteo_categorias, key=conteo_categorias.get)
-        categoria_top_horas = round(conteo_categorias[categoria_top_nombre], 1)
 
-    # 7. Promedios y Focus Score
-    promedio_minutos = int(total_tiempo_real / completadas) if completadas > 0 else 0
-    focus_score = int((tareas_a_tiempo / completadas) * 100) if completadas > 0 else 0
-    # Dar un bono de gracia mínimo para que no se vea en 0 al iniciar
-    focus_score = max(60, focus_score) if completadas > 0 else 0
+def _evaluar_categoria(nombre: str, filas: list) -> RendimientoCategoriaSchema:
+    # `filas` viene ordenada de la más reciente a la más antigua: [(historial, tarea), ...]
+    tiempos_reales = [h.tiempo_real for h, _ in filas]
+    tiempo_real = _promedio(tiempos_reales)
+    tiempo_est = _promedio([t.tiempo_estimado for _, t in filas])
+    dif_est = _promedio([t.dificultad_estimada for _, t in filas])
+    dif_real = _promedio([h.dificultad_real for h, _ in filas])
 
-    # 8. Generación del Insight (El texto dinámico de eficiencia)
-    insights = []
-    if conteo_horas_dia:
-        hora_pico = max(conteo_horas_dia, key=conteo_horas_dia.get)
-        insights.append(InsightSchema(
-            titulo="Pico de Rendimiento Detectado",
-            descripcion=f"Tu tasa de completitud es mayor alrededor de las {hora_pico}:00. ¡Agenda tus tareas más difíciles en este horario!"
-        ))
+    base = dict(
+        categoria=nombre,
+        total_tareas=len(filas),
+        tiempo_estimado_prom=round(tiempo_est, 1),
+        tiempo_real_prom=round(tiempo_real, 1),
+        dificultad_estimada_prom=round(dif_est, 1),
+        dificultad_real_prom=round(dif_real, 1) if dif_real is not None else None,
+    )
+
+    if len(filas) < MIN_TAREAS_CATEGORIA:
+        return RendimientoCategoriaSchema(**base, estado="insuficiente", recomendacion="sin_datos")
+
+    eficiente = tiempo_real <= tiempo_est and (dif_real is None or dif_real <= dif_est)
+
+    # Mejora de tiempo: mitad más reciente vs. mitad anterior de la muestra
+    mitad = len(tiempos_reales) // 2
+    recientes = _promedio(tiempos_reales[:mitad])
+    anteriores = _promedio(tiempos_reales[mitad:])
+    mejora, variacion = None, None
+    if recientes is not None and anteriores:
+        variacion = (recientes - anteriores) / anteriores
+        if variacion <= -UMBRAL_MEJORA:
+            mejora = "mejora"
+        elif variacion >= UMBRAL_MEJORA:
+            mejora = "empeora"
+        else:
+            mejora = "estable"
+
+    if eficiente and mejora != "empeora":
+        recomendacion = "subir"
+    elif not eficiente and mejora != "mejora":
+        recomendacion = "bajar"
     else:
-        insights.append(InsightSchema(
-            titulo="Eficiencia en Análisis",
-            descripcion="Completa más tareas con el cronómetro para descubrir tus mejores horarios."
-        ))
+        recomendacion = "mantener"
 
-    # 9. Construir y retornar el JSON final validado por Pydantic
+    return RendimientoCategoriaSchema(
+        **base,
+        estado="eficiente" if eficiente else "deficiente",
+        mejora_tiempo=mejora,
+        variacion_tiempo_pct=round(variacion * 100, 1) if variacion is not None else None,
+        recomendacion=recomendacion,
+    )
+
+
+def obtener_resumen_estadisticas(db: Session, id_usuario: int) -> ResumenEstadisticasResponse:
+    filas = estadisticas_repository.obtener_ultimas_por_categoria(db, id_usuario, MUESTRA_POR_CATEGORIA)
+
+    por_categoria = defaultdict(list)
+    for historial, tarea, categoria in filas:
+        por_categoria[categoria.nombre_categoria].append((historial, tarea))
+
+    categorias = [_evaluar_categoria(nombre, f) for nombre, f in por_categoria.items()]
+    categorias.sort(key=lambda c: (ORDEN_ESTADO[c.estado], c.categoria))
+
     return ResumenEstadisticasResponse(
-        meta_semanal=MetaSemanalSchema(
-            porcentaje=porcentaje,
-            completadas=completadas,
-            total=total_meta,
-            tendencia="En buen camino" if porcentaje >= 50 else "Necesita atención"
-        ),
-        grafico_diario=grafico_diario,
-        focus_score=FocusScoreSchema(
-            puntaje=focus_score,
-            nivel="Nivel Élite" if focus_score >= 90 else "Nivel Óptimo" if focus_score >= 70 else "Nivel Base"
-        ),
-        categoria_top=CategoriaTopSchema(
-            nombre=categoria_top_nombre,
-            horas_dedicadas=categoria_top_horas
-        ),
-        promedio_tiempo=PromedioTiempoSchema(
-            minutos=promedio_minutos,
-            tendencia="Basado en los últimos 7 días"
-        ),
-        insights=insights,
-        sugerencia_ia=InsightSchema(
-            titulo="Sugerencia de IA (Fase 2)",
-            descripcion="Aplica la técnica Pomodoro en tus ciclos de desarrollo para mantener la concentración constante y reducir la fatiga."
-        )
+        meta_semanal=_meta_semanal(db, id_usuario),
+        categorias=categorias,
     )
