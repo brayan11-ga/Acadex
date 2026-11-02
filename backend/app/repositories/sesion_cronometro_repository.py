@@ -79,3 +79,9 @@ def update_sesion(db: Session, sesion: SesionCronometro, data: dict) -> SesionCr
     db.commit()
     db.refresh(sesion)
     return sesion
+
+
+def delete_sesion(db: Session, sesion: SesionCronometro) -> None:
+    """Elimina una sesión; el service ya validó dueño y que esté abierta."""
+    db.delete(sesion)
+    db.commit()

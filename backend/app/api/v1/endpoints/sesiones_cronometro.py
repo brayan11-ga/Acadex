@@ -30,6 +30,14 @@ def finalizar_sesion(
 ):
     return service.finalizar_sesion(db, id_sesion, usuario_actual.id_usuario)
 
+@router.delete("/{id_sesion}/descartar", status_code=status.HTTP_204_NO_CONTENT)
+def descartar_sesion(
+    id_sesion: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    service.descartar_sesion(db, id_sesion, usuario_actual.id_usuario)
+
 @router.get("/usuario/{id_usuario}", response_model=list[SesionCronometroOut])
 def listar_sesiones(
     id_usuario: int,

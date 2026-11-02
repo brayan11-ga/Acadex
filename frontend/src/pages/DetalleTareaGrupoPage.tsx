@@ -7,13 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
 import { listarCategorias, type Categoria } from "../services/categorias";
 import { listarMisGrupos } from "../services/grupos";
 import {
   completarParteTarea,
   descargarArchivoTarea,
   eliminarArchivoTarea,
+  eliminarTarea,
   listarArchivosTarea,
   listarAsignadosTarea,
   obtenerTarea,
@@ -46,6 +48,8 @@ const NIVELES = [
   "Difícil",
   "Muy difícil",
 ] as const;
+
+const FORM_EDITAR_ID = "formulario-editar-tarea-grupal";
 
 const formateadorFecha = new Intl.DateTimeFormat("es-CO", {
   day: "numeric",
@@ -934,8 +938,7 @@ function AccionesLider({
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
-          disabled
-          title="Próximamente"
+          disabled={completada}
           onClick={onEditar}
           aria-describedby={
             completada ? "detalle-tarea-nota-editar" : undefined
@@ -955,8 +958,6 @@ function AccionesLider({
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-peligro"
-          disabled
-          title="Próximamente"
           onClick={onEliminar}
         >
           Eliminar tarea
@@ -968,6 +969,64 @@ function AccionesLider({
         </p>
       )}
     </Tarjeta>
+  );
+}
+
+function ModalEditarTarea({
+  abierto,
+  tarea,
+  idGrupo,
+  usuarioActualId,
+  onCerrar,
+  onGuardada,
+}: {
+  abierto: boolean;
+  tarea: TareaBackend;
+  idGrupo: number;
+  usuarioActualId: number | null;
+  onCerrar: () => void;
+  onGuardada: () => void;
+}) {
+  const [enviando, setEnviando] = useState(false);
+  const cerrar = () => {
+    if (!enviando) onCerrar();
+  };
+
+  return (
+    <Modal abierto={abierto} onCerrar={cerrar} titulo="Editar tarea">
+      <fieldset className="detalle-tarea-fieldset">
+        <FormularioNuevaTarea
+          formId={FORM_EDITAR_ID}
+          modo="grupal"
+          idGrupo={idGrupo}
+          integrantes={[]}
+          usuarioActualId={usuarioActualId}
+          tareaAEditar={tarea}
+          embebidoEnModal
+          onDescartar={cerrar}
+          onTareaCreada={onGuardada}
+          onEstadoEnvioChange={setEnviando}
+        />
+      </fieldset>
+      <div className="detalle-tarea-modal-acciones">
+        <button
+          type="button"
+          className="detalle-tarea-boton detalle-tarea-boton-secundario"
+          onClick={cerrar}
+          disabled={enviando}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          form={FORM_EDITAR_ID}
+          className="detalle-tarea-boton detalle-tarea-boton-primario"
+          disabled={enviando}
+        >
+          {enviando ? "Guardando…" : "Guardar"}
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -1017,6 +1076,7 @@ function MensajeCentral({
 
 function DetalleTareaGrupoPage() {
   const { idGrupo, idTarea } = useParams();
+  const navigate = useNavigate();
   const idG = Number(idGrupo);
   const idT = Number(idTarea);
   const idUsuarioActual = obtenerIdUsuarioActual();
@@ -1038,6 +1098,9 @@ function DetalleTareaGrupoPage() {
   const [errorCompletar, setErrorCompletar] = useState<string | null>(null);
   const [modalCompletar, setModalCompletar] = useState(false);
   const [confirmarEliminarTarea, setConfirmarEliminarTarea] = useState(false);
+  const [modalEditar, setModalEditar] = useState(false);
+  const [eliminandoTarea, setEliminandoTarea] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
   const [confirmarReabrir, setConfirmarReabrir] = useState(false);
   const [reabriendo, setReabriendo] = useState(false);
   const [errorReabrir, setErrorReabrir] = useState<string | null>(null);
@@ -1230,6 +1293,33 @@ function DetalleTareaGrupoPage() {
     }
   }
 
+  async function eliminarTareaConfirmada() {
+    setErrorEliminar(null);
+    setEliminandoTarea(true);
+    try {
+      await eliminarTarea(idT);
+      setConfirmarEliminarTarea(false);
+      navigate(`/grupos/${idG}/tareas`, { replace: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setConfirmarEliminarTarea(false);
+        setEstado("sin-permisos");
+      } else {
+        const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
+        if (mensaje.includes("no encontrada") || mensaje.includes("404")) {
+          setConfirmarEliminarTarea(false);
+          setEstado("no-encontrada");
+        } else {
+          setErrorEliminar(
+            mensajeDeError(err, "No se pudo eliminar la tarea."),
+          );
+        }
+      }
+    } finally {
+      setEliminandoTarea(false);
+    }
+  }
+
   if (Number.isNaN(idG) || Number.isNaN(idT)) {
     return <Navigate to="/grupos" replace />;
   }
@@ -1394,8 +1484,11 @@ function DetalleTareaGrupoPage() {
             {esLider && (
               <AccionesLider
                 completada={completada}
-                onEditar={() => {}}
-                onEliminar={() => setConfirmarEliminarTarea(true)}
+                onEditar={() => setModalEditar(true)}
+                onEliminar={() => {
+                  setErrorEliminar(null);
+                  setConfirmarEliminarTarea(true);
+                }}
                 onReabrir={() => {
                   setErrorReabrir(null);
                   setConfirmarReabrir(true);
@@ -1419,12 +1512,24 @@ function DetalleTareaGrupoPage() {
           }}
         />
 
+        <ModalEditarTarea
+          abierto={modalEditar}
+          tarea={tarea}
+          idGrupo={idG}
+          usuarioActualId={idUsuarioActual}
+          onCerrar={() => setModalEditar(false)}
+          onGuardada={() => {
+            setModalEditar(false);
+            void cargar({ silencioso: true });
+          }}
+        />
+
         <DialogoConfirmacion
           abierto={confirmarEliminarTarea}
           titulo="Eliminar tarea"
           peligro
           textoConfirmar="Eliminar"
-          deshabilitado
+          cargando={eliminandoTarea}
           mensaje={
             <>
               <p>
@@ -1434,10 +1539,18 @@ function DetalleTareaGrupoPage() {
               {completada && (
                 <p>Como está completada, también saldrá del historial.</p>
               )}
+              {errorEliminar && (
+                <p className="detalle-tarea-error" role="alert">
+                  {errorEliminar}
+                </p>
+              )}
             </>
           }
-          onConfirmar={() => setConfirmarEliminarTarea(false)}
-          onCancelar={() => setConfirmarEliminarTarea(false)}
+          onConfirmar={() => void eliminarTareaConfirmada()}
+          onCancelar={() => {
+            setConfirmarEliminarTarea(false);
+            setErrorEliminar(null);
+          }}
         />
 
         <DialogoConfirmacion

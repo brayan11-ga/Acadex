@@ -47,6 +47,27 @@ def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCron
     duracion = (fecha_fin - sesion.fecha_inicio).total_seconds()
     return repo.update_sesion(db, sesion, {"fecha_fin": fecha_fin, "duracion": duracion})
 
+
+def descartar_sesion(db: Session, id_sesion: int, id_usuario: int) -> None:
+    """Borra una sesión abierta sin guardar su duración.
+
+    Solo el dueño puede descartarla y solo si sigue en curso. Así se corrige
+    el caso de un cronómetro que quedó corriendo por olvido.
+    """
+    sesion = repo.get_sesion_by_id(db, id_sesion)
+    if not sesion or sesion.id_usuario != id_usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sesión no encontrada",
+        )
+    if sesion.fecha_fin is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La sesión ya fue finalizada",
+        )
+    repo.delete_sesion(db, sesion)
+
+
 def listar_sesiones_usuario(
     db: Session, id_usuario: int, id_usuario_actual: int
 ) -> List[SesionCronometro]:

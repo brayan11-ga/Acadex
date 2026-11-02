@@ -129,6 +129,7 @@ class AutenticacionRutasTests(unittest.TestCase):
             ("/api/v1/perfiles/usuario/{id_usuario}", "PATCH"),
             ("/api/v1/sesiones-cronometro/iniciar", "POST"),
             ("/api/v1/sesiones-cronometro/{id_sesion}/finalizar", "PATCH"),
+            ("/api/v1/sesiones-cronometro/{id_sesion}/descartar", "DELETE"),
             ("/api/v1/sesiones-cronometro/usuario/{id_usuario}", "GET"),
         }
         for ruta, metodo in rutas_privadas:

@@ -757,6 +757,25 @@
   flex-direction: column;
   gap: 16px;
   padding: 22px;
+  overflow-y: auto;
+}
+
+.detalle-tarea-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.detalle-tarea-fieldset .pixel-panel {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .detalle-tarea-modal-titulo {

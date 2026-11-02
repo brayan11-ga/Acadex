@@ -269,7 +269,7 @@ function FormularioNuevaTarea({
       return;
     }
 
-    if (esGrupal) {
+    if (esGrupal && !tareaAEditar) {
       const errorAsignacion = validarAsignados(asignados);
       if (errorAsignacion) {
         setErrorAsignados(errorAsignacion);
@@ -283,7 +283,7 @@ function FormularioNuevaTarea({
 
     marcarEnviando(true);
     try {
-      if (esGrupal && idGrupo != null) {
+      if (esGrupal && idGrupo != null && !tareaAEditar) {
         await crearTareaGrupal(idGrupo, {
           nombre: titulo,
           descripcion,
@@ -493,7 +493,7 @@ function FormularioNuevaTarea({
         />
       </label>
 
-      {esGrupal && (
+      {esGrupal && !tareaAEditar && (
         <AsignarIntegrantes
           integrantes={integrantes}
           seleccionados={asignados}
