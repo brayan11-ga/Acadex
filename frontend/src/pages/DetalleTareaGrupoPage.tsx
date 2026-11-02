@@ -26,6 +26,9 @@ import {
   type TareaBackend,
 } from "../services/tareas";
 import {
+  descartarSesionCronometro,
+  finalizarSesionCronometro,
+  iniciarSesionCronometro,
   listarSesionesUsuario,
   type SesionCronometroBackend,
 } from "../services/sesionesCronometro";
@@ -146,6 +149,22 @@ function formatearCronometro(totalSegundos: number): string {
   return [horas, minutos, segundos]
     .map((numero) => String(numero).padStart(2, "0"))
     .join(":");
+}
+
+// El backend guarda las fechas sin zona horaria, en UTC. Si el ISO no trae
+// zona, le agregamos "Z" para que el navegador no lo interprete como hora local.
+function parseFechaSesion(fechaIso: string): number {
+  const tieneZona = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(fechaIso);
+  return new Date(tieneZona ? fechaIso : `${fechaIso}Z`).getTime();
+}
+
+function segundosTranscurridos(
+  sesion: SesionCronometroBackend | null,
+): number {
+  if (!sesion) return 0;
+  const inicio = parseFechaSesion(sesion.fecha_inicio);
+  if (Number.isNaN(inicio)) return 0;
+  return Math.max(0, Math.floor((Date.now() - inicio) / 1000));
 }
 
 function formatearTamano(bytes: number | null): string {
@@ -611,7 +630,51 @@ function TiemposIntegrantes({
   );
 }
 
-function MiCronometro() {
+function MiCronometro({
+  segundosGuardados,
+  tiempoBaseSegundos,
+  sesionActiva,
+  iniciando,
+  pausando,
+  reiniciando,
+  error,
+  onIniciar,
+  onPausar,
+  onReiniciar,
+}: {
+  segundosGuardados: number;
+  tiempoBaseSegundos: number;
+  sesionActiva: SesionCronometroBackend | null;
+  iniciando: boolean;
+  pausando: boolean;
+  reiniciando: boolean;
+  error: string | null;
+  onIniciar: () => void;
+  onPausar: () => void;
+  onReiniciar: () => void;
+}) {
+  const [ahora, setAhora] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!sesionActiva) return;
+    const intervalo = window.setInterval(() => setAhora(Date.now()), 1000);
+    return () => window.clearInterval(intervalo);
+  }, [sesionActiva]);
+
+  const enCurso = sesionActiva !== null;
+  const transcurrido = enCurso
+    ? Math.max(
+        0,
+        Math.floor((ahora - parseFechaSesion(sesionActiva.fecha_inicio)) / 1000),
+      )
+    : 0;
+  // El reloj muestra solo lo posterior al último reinicio: al reiniciar se
+  // oculta el total guardado anterior y el contador vuelve a cero.
+  const total =
+    Math.max(0, Math.floor(segundosGuardados - tiempoBaseSegundos)) +
+    transcurrido;
+  const ocupado = iniciando || pausando || reiniciando;
+
   return (
     <Tarjeta
       titulo="Mi cronómetro"
@@ -621,38 +684,46 @@ function MiCronometro() {
       }
     >
       <p className="detalle-tarea-crono-tiempo" aria-live="off">
-        {formatearCronometro(0)}
+        {formatearCronometro(total)}
       </p>
-      <p className="detalle-tarea-crono-estado" role="status">
+      <p
+        className={`detalle-tarea-crono-estado ${enCurso ? "detalle-tarea-crono-activo" : ""}`}
+        role="status"
+      >
         <span className="detalle-tarea-crono-punto" aria-hidden="true" />
-        Cronómetro detenido
+        {enCurso ? "Cronómetro corriendo" : "Cronómetro detenido"}
       </p>
       <div className="detalle-tarea-crono-botones">
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-primario"
-          disabled
-          title="Próximamente"
+          disabled={enCurso || ocupado}
+          onClick={onIniciar}
         >
-          Iniciar
+          {iniciando ? "Iniciando…" : "Iniciar"}
         </button>
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
-          disabled
-          title="Próximamente"
+          disabled={!enCurso || ocupado}
+          onClick={onPausar}
         >
-          Pausar
+          {pausando ? "Guardando…" : "Pausar"}
         </button>
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
-          disabled
-          title="Próximamente"
+          disabled={!enCurso || ocupado}
+          onClick={onReiniciar}
         >
-          Reiniciar
+          {reiniciando ? "Descartando…" : "Reiniciar"}
         </button>
       </div>
+      {error && (
+        <p className="detalle-tarea-error" role="alert">
+          {error}
+        </p>
+      )}
       <p className="detalle-tarea-nota">Solo tú ves y manejas este cronómetro.</p>
     </Tarjeta>
   );
@@ -1106,6 +1177,21 @@ function DetalleTareaGrupoPage() {
   const [errorReabrir, setErrorReabrir] = useState<string | null>(null);
   const [archivoPorEliminar, setArchivoPorEliminar] =
     useState<ArchivoTarea | null>(null);
+  const [sesionActiva, setSesionActiva] =
+    useState<SesionCronometroBackend | null>(null);
+  const [iniciandoCrono, setIniciandoCrono] = useState(false);
+  const [pausandoCrono, setPausandoCrono] = useState(false);
+  const [reiniciandoCrono, setReiniciandoCrono] = useState(false);
+  const [errorCrono, setErrorCrono] = useState<string | null>(null);
+  const [confirmarReiniciarCrono, setConfirmarReiniciarCrono] = useState(false);
+  const [segundosDescartar, setSegundosDescartar] = useState(0);
+  const [tiempoBase, setTiempoBase] = useState<{
+    idTarea: number;
+    segundos: number;
+  }>({ idTarea: idT, segundos: 0 });
+  // La base solo vale para la tarea en la que se reinició; al cambiar de tarea
+  // vuelve a 0 sin necesidad de un efecto.
+  const tiempoBaseSegundos = tiempoBase.idTarea === idT ? tiempoBase.segundos : 0;
 
   const esLider = grupo?.rol === "lider";
   const yo = asignados.find((asignado) => asignado.id_usuario === idUsuarioActual) ?? null;
@@ -1151,17 +1237,23 @@ function DetalleTareaGrupoPage() {
         return;
       }
 
+      const sesionesDeLaTarea =
+        sesiones?.filter((sesion) => sesion.id_tarea === idT) ?? [];
+
       setTarea(tareaDatos);
       setAsignados(asignadosDatos);
       setArchivos(archivosDatos);
       setCategorias(categoriasDatos);
+      setSesionActiva(
+        sesiones
+          ? (sesionesDeLaTarea.find((sesion) => sesion.fecha_fin == null) ??
+              null)
+          : null,
+      );
       setTiempoPropioSegundos(
         sesiones
-          ? sesiones
-              .filter(
-                (sesion) =>
-                  sesion.id_tarea === idT && sesion.duracion != null,
-              )
+          ? sesionesDeLaTarea
+              .filter((sesion) => sesion.duracion != null)
               .reduce(
                 (total, sesion) => total + (sesion.duracion ?? 0),
                 0,
@@ -1269,6 +1361,79 @@ function DetalleTareaGrupoPage() {
       }
     } finally {
       setCompletando(false);
+    }
+  }
+
+  async function iniciarCronometro() {
+    if (idUsuarioActual == null || sesionActiva) return;
+    setErrorCrono(null);
+    setIniciandoCrono(true);
+    try {
+      const sesion = await iniciarSesionCronometro(idUsuarioActual, idT);
+      setSesionActiva(sesion);
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setEstado("sin-permisos");
+      } else {
+        setErrorCrono(
+          mensajeDeError(err, "No se pudo iniciar el cronómetro."),
+        );
+      }
+    } finally {
+      setIniciandoCrono(false);
+    }
+  }
+
+  async function pausarCronometro() {
+    if (!sesionActiva) return;
+    setErrorCrono(null);
+    setPausandoCrono(true);
+    try {
+      const finalizada = await finalizarSesionCronometro(
+        sesionActiva.id_sesion,
+      );
+      setSesionActiva(null);
+      setTiempoPropioSegundos(
+        (total) => (total ?? 0) + (finalizada.duracion ?? 0),
+      );
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setEstado("sin-permisos");
+      } else {
+        setErrorCrono(
+          mensajeDeError(err, "No se pudo guardar el tiempo del cronómetro."),
+        );
+      }
+    } finally {
+      setPausandoCrono(false);
+    }
+  }
+
+  async function reiniciarCronometro() {
+    if (!sesionActiva) return;
+    setErrorCrono(null);
+    setReiniciandoCrono(true);
+    try {
+      await descartarSesionCronometro(sesionActiva.id_sesion);
+      setTiempoBase({ idTarea: idT, segundos: tiempoPropioSegundos ?? 0 });
+      setSesionActiva(null);
+      setConfirmarReiniciarCrono(false);
+      await cargar({ silencioso: true });
+    } catch (err) {
+      if (esErrorDePermiso(err)) {
+        setConfirmarReiniciarCrono(false);
+        setEstado("sin-permisos");
+      } else {
+        setErrorCrono(
+          mensajeDeError(
+            err,
+            "No se pudo descartar la sesión del cronómetro.",
+          ),
+        );
+      }
+    } finally {
+      setReiniciandoCrono(false);
     }
   }
 
@@ -1441,7 +1606,31 @@ function DetalleTareaGrupoPage() {
           </div>
 
           <aside className="detalle-tarea-columna" aria-label="Acciones">
-            {puedeTrabajar && <MiCronometro />}
+            {puedeTrabajar && (
+              <MiCronometro
+                segundosGuardados={tiempoPropioSegundos ?? 0}
+                tiempoBaseSegundos={tiempoBaseSegundos}
+                sesionActiva={sesionActiva}
+                iniciando={iniciandoCrono}
+                pausando={pausandoCrono}
+                reiniciando={reiniciandoCrono}
+                error={errorCrono}
+                onIniciar={() => void iniciarCronometro()}
+                onPausar={() => void pausarCronometro()}
+                onReiniciar={() => {
+                  setErrorCrono(null);
+                  setSegundosDescartar(
+                    Math.max(
+                      0,
+                      Math.floor(
+                        (tiempoPropioSegundos ?? 0) - tiempoBaseSegundos,
+                      ),
+                    ) + segundosTranscurridos(sesionActiva),
+                  );
+                  setConfirmarReiniciarCrono(true);
+                }}
+              />
+            )}
 
             {esAsignado && !completada && (
               <div className="detalle-tarea-completar">
@@ -1454,16 +1643,29 @@ function DetalleTareaGrupoPage() {
                     Tu parte está completada
                   </p>
                 ) : (
-                  <button
-                    type="button"
-                    className="detalle-tarea-boton detalle-tarea-boton-primario detalle-tarea-boton-grande"
-                    onClick={() => {
-                      setErrorCompletar(null);
-                      setModalCompletar(true);
-                    }}
-                  >
-                    Completar mi parte
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="detalle-tarea-boton detalle-tarea-boton-primario detalle-tarea-boton-grande"
+                      disabled={sesionActiva !== null}
+                      title={
+                        sesionActiva !== null
+                          ? "Pausa tu cronómetro antes de completar tu parte."
+                          : undefined
+                      }
+                      onClick={() => {
+                        setErrorCompletar(null);
+                        setModalCompletar(true);
+                      }}
+                    >
+                      Completar mi parte
+                    </button>
+                    {sesionActiva !== null && (
+                      <p className="detalle-tarea-nota">
+                        Pausa tu cronómetro antes de completar tu parte.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -1501,7 +1703,7 @@ function DetalleTareaGrupoPage() {
         <ModalCompletar
           abierto={modalCompletar && puedeTrabajar}
           segundos={tiempoPropioSegundos ?? 0}
-          enCurso={false}
+          enCurso={sesionActiva !== null}
           sinArchivos={sinArchivosPropios}
           enviando={completando}
           error={errorCompletar}
@@ -1576,6 +1778,35 @@ function DetalleTareaGrupoPage() {
           onCancelar={() => {
             setConfirmarReabrir(false);
             setErrorReabrir(null);
+          }}
+        />
+
+        <DialogoConfirmacion
+          abierto={confirmarReiniciarCrono}
+          titulo="Reiniciar cronómetro"
+          peligro
+          textoConfirmar="Reiniciar"
+          cargando={reiniciandoCrono}
+          mensaje={
+            <>
+              <p>
+                El reloj volverá a <strong>00:00:00</strong> y se dejarán de
+                mostrar{" "}
+                <strong>{formatearCronometro(segundosDescartar)}</strong> del
+                contador.
+              </p>
+              <p>Esta acción no guarda el tiempo que estaba corriendo.</p>
+              {errorCrono && (
+                <p className="detalle-tarea-error" role="alert">
+                  {errorCrono}
+                </p>
+              )}
+            </>
+          }
+          onConfirmar={() => void reiniciarCronometro()}
+          onCancelar={() => {
+            setConfirmarReiniciarCrono(false);
+            setErrorCrono(null);
           }}
         />
 
