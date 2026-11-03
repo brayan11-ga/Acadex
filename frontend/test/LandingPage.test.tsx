@@ -20,7 +20,7 @@ describe('CP-1 - Página de inicio de Acadex', () => {
     renderLandingPage();
 
     expect(
-      screen.getByText(/Organiza tus tareas, coordina tu equipo/i)
+      screen.getByRole('heading', { level: 1, name: /Tu mundo, en orden\./i })
     ).toBeInTheDocument();
   });
 
@@ -52,6 +52,8 @@ describe('CP-1 - Página de inicio de Acadex', () => {
     await user.click(themeToggle);
 
     expect(themeToggle.checked).toBe(!initialState);
+    expect(document.documentElement.classList.contains('light-mode')).toBe(!initialState);
+    expect(localStorage.getItem('acadex_dark_mode')).toBe(JSON.stringify(initialState));
   });
 
   test('debe permitir navegar a las diferentes secciones de la página', async () => {

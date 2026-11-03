@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -9,8 +9,11 @@ import Workflow from '../components/landing/Workflow';
 import Benefits from '../components/landing/Benefits';
 import CtaSection from '../components/landing/CtaSection';
 import Footer from '../components/landing/Footer';
+import '../styles/landing.css';
 
 export const LandingPage = () => {
+  const landingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     AOS.init({
       once: true,
@@ -25,7 +28,7 @@ export const LandingPage = () => {
       });
     }, { threshold: 0.1 });
 
-    document.querySelectorAll('[data-reveal]').forEach((el) => {
+    landingRef.current?.querySelectorAll('[data-reveal]').forEach((el) => {
       observer.observe(el);
     });
 
@@ -33,7 +36,7 @@ export const LandingPage = () => {
   }, []);
 
   return (
-    <div className="landing-container">
+    <div className="landing-container" ref={landingRef}>
       <Header />
       <main>
         <Hero />
