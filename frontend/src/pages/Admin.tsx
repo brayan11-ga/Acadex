@@ -6,6 +6,7 @@ import { Resumen } from '../components/admin/Resumen';
 import { Sidebar} from '../components/admin/Sidebar';
 import { TABS_ADMIN } from '../services/entidadesConfig';
 import { usePerfilActual } from '../hooks/usePerfilActual';
+import { GruposAdmin } from '../components/admin/GruposAdmin';
 import '../styles/admin.css';
 
 const TAB_RESUMEN = { clave: 'resumen', titulo: 'Resumen' };
@@ -22,7 +23,7 @@ export const Admin = () => {
     const configActual = esTabResumen ? null : TABS_ADMIN.find((t) => t.clave === tabActivo)!;
 
     const cargarDatos = useCallback(async () => {
-    if (!configActual) return;
+    if (!configActual || configActual.clave=== 'grupos') return;
     setCargando(true);
     setErrorCarga(null);
     setError(null);
@@ -56,39 +57,42 @@ const restablecerPassword = async (fila: any) => {
     if (resultado === null) {
     setError('No se pudo restablecer la contraseña.');
     return;
-    }
-
-    window.prompt(
-        `Token temporal de recuperación. Vence: ${new Date(resultado.fecha_expiracion).toLocaleString()}. Envíalo solo al usuario por un canal seguro.`,
-        resultado.valor_token,
-    );
+}
+window.prompt(
+    `Token temporal de recuperación. Vence: ${new Date(resultado.fecha_expiracion).toLocaleString()}. Envíalo solo al usuario por un canal seguro.`,
+    resultado.valor_token,
+);
 };
+const cambiarTab=(clave:string)=>{
+    setTabActivo(clave);
+    setError(null);
+    setCargando(clave !==TAB_RESUMEN.clave);
+    };
 
     return (
         <div className="admin-page">
         <Sidebar
             tabs={TODAS_LAS_TABS}
             tabActivo={tabActivo}
-            onCambiarTab={(clave) => {
-                setTabActivo(clave);
-                setErrorCarga(null);
-                setCargando(clave !== TAB_RESUMEN.clave);
-            }}
+            onCambiarTab={cambiarTab}
         />
 
-        <main className="admin-content">
+        <main className='admin-content'>
+        {!esTabResumen &&(
+            <>
             <h1>Panel de Administración — Acadex</h1>
             <p className="admin-welcome">
-                {'¡Te damos la bienvenida a Acadex' +
-                  (perfil?.nombre_usuario?.trim() ? ', ' + perfil.nombre_usuario.trim() : '') +
-                  '!'}
+                {'¡Te damos la bienvenida a Acadex' + (perfil?.nombre_usuario.trim()?', ' + perfil.nombre_usuario.trim() : '') +'!'}
             </p>
-
+            </>
+        )}
             {error && <p className="error-msg">{error}</p>}
 
             {esTabResumen ? (
-            <Resumen />
-            ) : (
+                <Resumen onIrA={cambiarTab}/>
+            ) : configActual!.clave==='grupos'? (
+                <GruposAdmin/>
+            ):(
             <>
                 {errorCarga ? (
                     <div className="error-msg" role="alert">
@@ -99,20 +103,19 @@ const restablecerPassword = async (fila: any) => {
                     </div>
                 ) : (
                     <GenericTable
+                    key={configActual!.clave}
                     columnas={configActual!.columnas}
                     filas={filas}
                     cargando={cargando}
                     soloLectura={configActual!.soloLectura}
                     emptyState={configActual!.emptyState}
                     onEliminar={configActual!.clave === 'usuarios' ? eliminar : undefined}
-                    accionesExtra={
-                        configActual!.clave === 'usuarios'
+                    accionesExtra={configActual!.clave === 'usuarios'
                         ? [{ etiqueta: 'Restablecer contraseña', onClick: restablecerPassword, claseCss: 'btn btn-secundario' }]
                         : []
                     }
                     />
                 )}
-
             </>
             )}
         </main>
