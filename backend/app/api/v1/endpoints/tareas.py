@@ -5,10 +5,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from app.schemas.archivo import ArchivoResponse
 from app.services import archivo_service
 from app.schemas.tarea import CompletarTareaRequest, IntegranteAsignadoResponse
-
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
-
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual
 from app.models.usuario import Usuario

@@ -103,11 +103,12 @@ def _adjuntar_total_archivos(db: Session, tareas: List[Tarea]) -> List[Tarea]:
         tarea.total_archivos = conteos.get(tarea.id_tarea, 0)
     return tareas
 
-
 def listar_tareas(db: Session, id_usuario: int) -> List[Tarea]:
-    return _adjuntar_total_archivos(
-        db, tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
-    )
+    tareas=tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    prioridad_service.recalcular_visibles(db, tareas)
+    db.commit()
+    tareas= tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(db, tareas)
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario: int) -> Tarea:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
@@ -167,6 +168,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
         tarea_actualizada = tarea_repository.actualizar_tarea(
             db, tarea, datos, commit=False
         )
+        if {"fecha_entrega","dificultad_estimada", "tiempo_estimado"} & cambios.keys():
+            prioridad_service.recaulcular_tarea(db, tarea_actualizada)
         estado_nuevo = tarea_actualizada.estado
 
         # Tarea, historial y estadística se confirman en un único commit.
@@ -185,7 +188,7 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                     id_grupo=tarea_actualizada.id_grupo,
                     fechahora_fin=datetime.now(),
                     tiempo_real=tarea_actualizada.tiempo_acumulado,
-                    dificultad_real=tarea_actualizada.dificultad_estimada,
+                    dificultad_real=prioridad_service.calcular_dificultad_real(tarea_actualizada.dificultad_estimada,tarea_actualizada.tiempo_estimado,tarea_actualizada.tiempo_acumulado,),
                 )
             )
             if db is not None:
@@ -282,6 +285,8 @@ def completar_parte_tarea(
 
         if ids_asignados and ids_asignados.issubset(completados):
             tarea.estado = "Completada"
+            db.flush()
+            prioridad_service.recalcular_pendientes(db, tarea.id_categoria, None, tarea.id_grupo)
         elif (tarea.estado or "").lower() == "pendiente":
             tarea.estado = "en progreso"
 
@@ -373,7 +378,6 @@ def crear_tarea_grupal(
         tarea = tarea_repository.crear_tarea(
             db, tarea_datos, commit=False, max_archivos=datos.max_archivos
         )
-        tarea = tarea_repository.crear_tarea(db, tarea_datos, commit=False)
         prioridad_service.asignar_prioridad_inicial(db,tarea)
 
         for integrante in integrantes:
