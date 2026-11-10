@@ -17,6 +17,7 @@ class SesionCronometro(Base):
         Index(
             "uq_sesiones_tarea_activa",
             "id_tarea",
+            "id_usuario",
             unique=True,
             postgresql_where=text("fecha_fin IS NULL"),
             sqlite_where=text("fecha_fin IS NULL"),

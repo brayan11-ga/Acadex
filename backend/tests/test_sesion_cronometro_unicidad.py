@@ -13,7 +13,7 @@ from app.services import sesion_cronometro_service
 
 
 class UnicidadSesionActivaTests(unittest.TestCase):
-    def test_indice_parcial_impide_dos_sesiones_activas_para_la_misma_tarea(self):
+    def test_indice_parcial_impide_dos_sesiones_activas_del_mismo_usuario(self):
         engine = create_engine("sqlite+pysqlite:///:memory:")
         SesionCronometro.__table__.create(engine)
         try:
@@ -27,11 +27,35 @@ class UnicidadSesionActivaTests(unittest.TestCase):
                 db.add(SesionCronometro(
                     fecha_inicio=datetime(2026, 10, 12, 11),
                     id_tarea=4,
-                    id_usuario=9,
+                    id_usuario=8,
                 ))
                 with self.assertRaises(IntegrityError):
                     db.commit()
                 db.rollback()
+        finally:
+            engine.dispose()
+
+    def test_indice_parcial_permite_un_cronometro_por_usuario_en_la_misma_tarea(self):
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        SesionCronometro.__table__.create(engine)
+        try:
+            with Session(engine) as db:
+                db.add(SesionCronometro(
+                    fecha_inicio=datetime(2026, 10, 12, 10),
+                    id_tarea=4,
+                    id_usuario=8,
+                ))
+                db.add(SesionCronometro(
+                    fecha_inicio=datetime(2026, 10, 12, 11),
+                    id_tarea=4,
+                    id_usuario=9,
+                ))
+                db.commit()
+                activas = db.query(SesionCronometro).filter(
+                    SesionCronometro.id_tarea == 4,
+                    SesionCronometro.fecha_fin.is_(None),
+                ).all()
+                self.assertEqual(len(activas), 2)
         finally:
             engine.dispose()
 
@@ -42,7 +66,7 @@ class UnicidadSesionActivaTests(unittest.TestCase):
 
         with (
             patch.object(sesion_cronometro_service, "tarea_service", tarea),
-            patch.object(sesion_cronometro_service.repo, "get_sesion_activa", return_value=None),
+            patch.object(sesion_cronometro_service.repo, "get_sesion_activa_de_usuario", return_value=None),
             patch.object(sesion_cronometro_service.repo, "create_sesion", side_effect=conflicto),
         ):
             with self.assertRaises(HTTPException) as error:

@@ -9,10 +9,10 @@ from app.services import tarea_service
 
 def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronometro:
     tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
-    if repo.get_sesion_activa(db, id_tarea):
+    if repo.get_sesion_activa_de_usuario(db, id_tarea, id_usuario):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya hay una sesión activa para esta tarea",
+            detail="Ya tienes una sesión activa en esta tarea",
         )
     ahora = datetime.now(timezone.utc).replace(tzinfo=None)
     data = {"fecha_inicio": ahora, "id_usuario": id_usuario, "id_tarea": id_tarea}
@@ -22,7 +22,7 @@ def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronome
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ya hay una sesión activa para esta tarea",
+            detail="Ya tienes una sesión activa en esta tarea",
         ) from None
 
 def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCronometro:

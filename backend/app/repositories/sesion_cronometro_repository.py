@@ -10,13 +10,6 @@ def get_sesion_by_id(db: Session, id_sesion: int) -> Optional[SesionCronometro]:
 def get_sesiones_by_usuario(db: Session, id_usuario: int) -> list[SesionCronometro]:
     return db.query(SesionCronometro).filter(SesionCronometro.id_usuario == id_usuario).all()
 
-def get_sesion_activa(db: Session, id_tarea: int) -> Optional[SesionCronometro]:
-    return db.query(SesionCronometro).filter(
-        SesionCronometro.id_tarea == id_tarea,
-        SesionCronometro.fecha_fin.is_(None)
-    ).first()
-
-
 def get_sesion_activa_de_usuario(
     db: Session, id_tarea: int, id_usuario: int
 ) -> Optional[SesionCronometro]:

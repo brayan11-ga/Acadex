@@ -421,7 +421,7 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
         sesion = SimpleNamespace(id_usuario=12, id_tarea=4)
         with (
             patch.object(tarea_service, "verificar_permiso_tarea") as verificar,
-            patch.object(sesion_cronometro_service.repo, "get_sesion_activa", return_value=None),
+            patch.object(sesion_cronometro_service.repo, "get_sesion_activa_de_usuario", return_value=None),
             patch.object(sesion_cronometro_service.repo, "create_sesion", return_value=sesion) as crear,
         ):
             resultado = sesion_cronometro_service.iniciar_sesion(None, 12, 4)

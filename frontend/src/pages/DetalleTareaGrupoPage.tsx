@@ -1246,8 +1246,11 @@ function DetalleTareaGrupoPage() {
       setCategorias(categoriasDatos);
       setSesionActiva(
         sesiones
-          ? (sesionesDeLaTarea.find((sesion) => sesion.fecha_fin == null) ??
-              null)
+          ? (sesionesDeLaTarea.find(
+              (sesion) =>
+                sesion.id_usuario === idUsuarioActual &&
+                sesion.fecha_fin == null,
+            ) ?? null)
           : null,
       );
       setTiempoPropioSegundos(
