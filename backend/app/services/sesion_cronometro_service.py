@@ -84,7 +84,7 @@ def obtener_estado_tarea(db:Session, id_tarea:int, id_usuario:int)-> dict:
     if sesion is not None and sesion.id_usuario !=id_usuario:
         sesion=None
     en_curso=int((_ahora()-sesion.fecha_inicio).total_seconds()) if sesion else 0
-    inicio=(Session.fecha_confirmacion or Session.fecha_inicio) if sesion else None
+    inicio=(sesion.fecha_confirmacion or sesion.fecha_inicio) if sesion else None
     ventana=int((_ahora()-inicio).total_seconds()) if inicio else 0
     return {"segundos_acumulados": int(round((tarea.tiempo_acumulado or 0) * 60)),
         "segundos_sesion_actual": max(0, en_curso),

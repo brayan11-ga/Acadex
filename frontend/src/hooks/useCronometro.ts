@@ -152,6 +152,7 @@ export function useCronometro(idTarea: number) {
     ejecutar(async () => {
       if (idSesion === null) return;
       await pausarSesion(idSesion);
+      sonarAlarma();
       setSegundosGracia(null);
       avisoSonado.current = false;
       await cargar(); // sincroniza con lo que guardó el backend
