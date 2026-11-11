@@ -59,6 +59,15 @@ def eliminar_sesiones_de_usuario_en_tarea(
     db.flush()
     return len(sesiones)
 
+
+def reiniciar_sesiones_usuario_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> int:
+    """Borra abiertas y cerradas del usuario en la tarea y confirma (Reiniciar)."""
+    cantidad = eliminar_sesiones_de_usuario_en_tarea(db, id_tarea, id_usuario)
+    db.commit()
+    return cantidad
+
 def create_sesion(db: Session, data: dict) -> SesionCronometro:
     sesion = SesionCronometro(**data)
     db.add(sesion)

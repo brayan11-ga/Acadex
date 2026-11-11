@@ -50,3 +50,11 @@ export function descartarSesionCronometro(idSesion: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+// Reiniciar real: borra todas las sesiones (abiertas y cerradas) del usuario
+// en la tarea. El backend toma el usuario del JWT.
+export function reiniciarSesionesCronometro(idTarea: number): Promise<void> {
+  return apiFetch<void>(`/sesiones-cronometro/tarea/${idTarea}/reiniciar`, {
+    method: "DELETE",
+  });
+}

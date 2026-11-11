@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from app.models.sesion_cronometro import SesionCronometro
-from app.repositories import sesion_cronometro_repository as repo
+from app.repositories import historial_tarea_repository, sesion_cronometro_repository as repo
 from app.services import tarea_service
 
 def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronometro:
@@ -77,3 +77,21 @@ def listar_sesiones_usuario(
             detail="No se encontraron sesiones",
         )
     return repo.get_sesiones_by_usuario(db, id_usuario)
+
+
+def reiniciar_sesiones_tarea(db: Session, id_usuario: int, id_tarea: int) -> None:
+    """Borra todo el tiempo guardado del usuario en la tarea (Reiniciar real).
+
+    Borra sus sesiones abiertas y cerradas, nunca las de otros asignados ni las
+    del mismo usuario en otras tareas. No escribe en HistorialTarea.
+    """
+    tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
+    if historial_tarea_repository.usuario_ya_completo(db, id_tarea, id_usuario):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Ya completaste tu parte. Para reiniciar el cronómetro, "
+                "el líder debe reabrir la tarea."
+            ),
+        )
+    repo.reiniciar_sesiones_usuario_tarea(db, id_tarea, id_usuario)

@@ -26,10 +26,10 @@ import {
   type TareaBackend,
 } from "../services/tareas";
 import {
-  descartarSesionCronometro,
   finalizarSesionCronometro,
   iniciarSesionCronometro,
   listarSesionesUsuario,
+  reiniciarSesionesCronometro,
   type SesionCronometroBackend,
 } from "../services/sesionesCronometro";
 import type { GrupoConRol } from "../types/grupo";
@@ -632,7 +632,6 @@ function TiemposIntegrantes({
 
 function MiCronometro({
   segundosGuardados,
-  tiempoBaseSegundos,
   sesionActiva,
   iniciando,
   pausando,
@@ -643,7 +642,6 @@ function MiCronometro({
   onReiniciar,
 }: {
   segundosGuardados: number;
-  tiempoBaseSegundos: number;
   sesionActiva: SesionCronometroBackend | null;
   iniciando: boolean;
   pausando: boolean;
@@ -668,11 +666,8 @@ function MiCronometro({
         Math.floor((ahora - parseFechaSesion(sesionActiva.fecha_inicio)) / 1000),
       )
     : 0;
-  // El reloj muestra solo lo posterior al último reinicio: al reiniciar se
-  // oculta el total guardado anterior y el contador vuelve a cero.
-  const total =
-    Math.max(0, Math.floor(segundosGuardados - tiempoBaseSegundos)) +
-    transcurrido;
+  // El reloj muestra el total real: sesiones cerradas + la que corre.
+  const total = Math.max(0, Math.floor(segundosGuardados)) + transcurrido;
   const ocupado = iniciando || pausando || reiniciando;
 
   return (
@@ -713,10 +708,10 @@ function MiCronometro({
         <button
           type="button"
           className="detalle-tarea-boton detalle-tarea-boton-secundario"
-          disabled={!enCurso || ocupado}
+          disabled={(!enCurso && segundosGuardados <= 0) || ocupado}
           onClick={onReiniciar}
         >
-          {reiniciando ? "Descartando…" : "Reiniciar"}
+          {reiniciando ? "Reiniciando…" : "Reiniciar"}
         </button>
       </div>
       {error && (
@@ -1185,13 +1180,6 @@ function DetalleTareaGrupoPage() {
   const [errorCrono, setErrorCrono] = useState<string | null>(null);
   const [confirmarReiniciarCrono, setConfirmarReiniciarCrono] = useState(false);
   const [segundosDescartar, setSegundosDescartar] = useState(0);
-  const [tiempoBase, setTiempoBase] = useState<{
-    idTarea: number;
-    segundos: number;
-  }>({ idTarea: idT, segundos: 0 });
-  // La base solo vale para la tarea en la que se reinició; al cambiar de tarea
-  // vuelve a 0 sin necesidad de un efecto.
-  const tiempoBaseSegundos = tiempoBase.idTarea === idT ? tiempoBase.segundos : 0;
 
   const esLider = grupo?.rol === "lider";
   const yo = asignados.find((asignado) => asignado.id_usuario === idUsuarioActual) ?? null;
@@ -1414,13 +1402,12 @@ function DetalleTareaGrupoPage() {
   }
 
   async function reiniciarCronometro() {
-    if (!sesionActiva) return;
     setErrorCrono(null);
     setReiniciandoCrono(true);
     try {
-      await descartarSesionCronometro(sesionActiva.id_sesion);
-      setTiempoBase({ idTarea: idT, segundos: tiempoPropioSegundos ?? 0 });
+      await reiniciarSesionesCronometro(idT);
       setSesionActiva(null);
+      setTiempoPropioSegundos(0);
       setConfirmarReiniciarCrono(false);
       await cargar({ silencioso: true });
     } catch (err) {
@@ -1429,10 +1416,7 @@ function DetalleTareaGrupoPage() {
         setEstado("sin-permisos");
       } else {
         setErrorCrono(
-          mensajeDeError(
-            err,
-            "No se pudo descartar la sesión del cronómetro.",
-          ),
+          mensajeDeError(err, "No se pudo reiniciar el cronómetro."),
         );
       }
     } finally {
@@ -1612,7 +1596,6 @@ function DetalleTareaGrupoPage() {
             {puedeTrabajar && (
               <MiCronometro
                 segundosGuardados={tiempoPropioSegundos ?? 0}
-                tiempoBaseSegundos={tiempoBaseSegundos}
                 sesionActiva={sesionActiva}
                 iniciando={iniciandoCrono}
                 pausando={pausandoCrono}
@@ -1623,12 +1606,8 @@ function DetalleTareaGrupoPage() {
                 onReiniciar={() => {
                   setErrorCrono(null);
                   setSegundosDescartar(
-                    Math.max(
-                      0,
-                      Math.floor(
-                        (tiempoPropioSegundos ?? 0) - tiempoBaseSegundos,
-                      ),
-                    ) + segundosTranscurridos(sesionActiva),
+                    Math.max(0, Math.floor(tiempoPropioSegundos ?? 0)) +
+                      segundosTranscurridos(sesionActiva),
                   );
                   setConfirmarReiniciarCrono(true);
                 }}
@@ -1793,12 +1772,11 @@ function DetalleTareaGrupoPage() {
           mensaje={
             <>
               <p>
-                El reloj volverá a <strong>00:00:00</strong> y se dejarán de
-                mostrar{" "}
-                <strong>{formatearCronometro(segundosDescartar)}</strong> del
-                contador.
+                Se borrará todo el tiempo guardado en esta tarea:{" "}
+                <strong>{formatearCronometro(segundosDescartar)}</strong>. El
+                reloj volverá a <strong>00:00:00</strong> y quedará detenido.
               </p>
-              <p>Esta acción no guarda el tiempo que estaba corriendo.</p>
+              <p>Esta acción no se puede deshacer.</p>
               {errorCrono && (
                 <p className="detalle-tarea-error" role="alert">
                   {errorCrono}

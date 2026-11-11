@@ -45,3 +45,12 @@ def listar_sesiones(
     usuario_actual: Usuario = Depends(get_usuario_actual),
 ):
     return service.listar_sesiones_usuario(db, id_usuario, usuario_actual.id_usuario)
+
+
+@router.delete("/tarea/{id_tarea}/reiniciar", status_code=status.HTTP_204_NO_CONTENT)
+def reiniciar_sesiones_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(get_usuario_actual),
+):
+    service.reiniciar_sesiones_tarea(db, usuario_actual.id_usuario, id_tarea)
