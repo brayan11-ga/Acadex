@@ -32,7 +32,7 @@ def _registrar_finalizacion_individual(db: Session, tarea:Tarea, id_usuario:int)
         )
     )
     db.flush()
-    estadistica_service.recalcular_estadistica_categoria(db, id_usuario, tarea.id_usuario, tarea.id_grupo, tarea.id_categoria, commit=False)
+    estadistica_service.recalcular_estadistica_categoria(db, id_usuario, tarea.id_categoria, commit=False)
     prioridad_service.recalcular_pendientes(db, tarea.id_categoria, tarea.id_usuario, tarea.id_grupo)
 
 def finalizar_tarea_individual(db:Session, tarea:Tarea, id_usuario:int)->None:
