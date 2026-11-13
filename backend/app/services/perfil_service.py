@@ -40,6 +40,5 @@ def obtener_perfil_por_usuario(
 def actualizar_perfil(
     db: Session, id_usuario: int, data: dict, id_usuario_actual: int) -> Perfil:
     perfil = obtener_perfil_por_usuario(db, id_usuario, id_usuario_actual)
-    data_limpia = {k: v for k, v in data.items() 
-        if v is not None or k =="limite_cronometro"}
+    data_limpia = {k: v for k, v in data.items() if v is not None}
     return repo.update_perfil(db, perfil, data_limpia)

@@ -24,7 +24,9 @@ def _gracia_segundos(limite:int)->int:
 
 def _notificar(db, perfil, id_usuario, id_tarea, titulo, detalles, tipo)->None:
     if perfil is not None and not perfil.notif_activas:
-        return notificacion_repository.crear_notificacion(db, titulo[:50], detalles[:100], tipo, id_tarea
+        return
+    notificacion_repository.crear_notificacion(
+        db,titulo[:50], detalles[:100], tipo, id_usuario,id_tarea
     )
 
 def _estado(sesion, estado:str, limite:int, segundos_gracia:int | None=None)-> dict:
@@ -36,7 +38,13 @@ def _estado(sesion, estado:str, limite:int, segundos_gracia:int | None=None)-> d
 
 def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronometro:
     tarea=tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
-    if repo.get_sesion_activa(db, id_tarea):
+
+    activa= repo.get_sesion_activa(db, id_tarea)
+    if activa and activa.id_usuario == id_usuario:
+        #si la sesion se vence verifica el limite y la cierra en el limite
+        verificar_limite(db, activa.id_sesion, id_usuario)
+        activa =repo.get_sesion_activa(db, id_tarea)
+    if activa:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ya hay una sesión activa para esta tarea",
@@ -84,7 +92,7 @@ def obtener_estado_tarea(db:Session, id_tarea:int, id_usuario:int)-> dict:
     if sesion is not None and sesion.id_usuario !=id_usuario:
         sesion=None
     en_curso=int((_ahora()-sesion.fecha_inicio).total_seconds()) if sesion else 0
-    inicio=(Session.fecha_confirmacion or Session.fecha_inicio) if sesion else None
+    inicio=(sesion.fecha_confirmacion or sesion.fecha_inicio) if sesion else None
     ventana=int((_ahora()-inicio).total_seconds()) if inicio else 0
     return {"segundos_acumulados": int(round((tarea.tiempo_acumulado or 0) * 60)),
         "segundos_sesion_actual": max(0, en_curso),
@@ -107,7 +115,7 @@ def _cerrar_sesion(db:Session,sesion:SesionCronometro, fecha_fin:datetime | None
 def verificar_limite(db:int, id_sesion:int, id_usuario:int)->dict:
     sesion= repo.get_sesion_by_id(db,id_sesion)
     if not sesion or sesion.id_usuario !=id_usuario:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesion no entrada")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesion no encontrada")
     tarea=tarea_repository.obtener_tarea_por_id(db, sesion.id_tarea)
     if tarea is None:
         raise HTTPException(
@@ -131,7 +139,7 @@ def verificar_limite(db:int, id_sesion:int, id_usuario:int)->dict:
         if sesion.fecha_aviso is None:
             sesion =repo.update_sesion(db, sesion,{"fecha_aviso":momento_aviso})
         sesion=_cerrar_sesion(db,sesion,momento_pausa)
-        _notificar(db,perfil,id_usuario,tarea.id_tarea,"cronometro pausado", f"se pauso{tarea.nombre[:30]}por inactividad","cronometro_pausa_auto",)
+        _notificar(db,perfil,id_usuario,tarea.id_tarea,"cronometro pausado", f"Se pauso {tarea.nombre[:30]} por inactividad","cronometro_pausa_auto",)
         return _estado(sesion, "pausada_automaticamente", limite)
 
     if ahora>=momento_aviso:
@@ -154,10 +162,31 @@ def confirmar_continuar(db:Session, id_sesion:int, id_usuario:int)->dict:
 
 
 def pausar_sesion(db:Session, id_sesion:int, id_usuario:int)->SesionCronometro:
-    return _cerrar_sesion(db, _obtener_sesion_abierta(db, id_sesion, id_usuario))
+    _obtener_sesion_abierta(db, id_sesion, id_usuario)
+    estado=verificar_limite(db, id_sesion, id_usuario)
+    if estado["estado"]=="pausada_automaticamente":
+        return estado["sesion"]
+    return _cerrar_sesion(db, estado["sesion"])
 
+# Cierra la sesión respetando el límite. Si ya se había pausado sola, no falla.
+# Completa la tarea individual con historial, estadística y prioridades, en un solo commit.
+# En grupales solo cierra la sesión.
 def finalizar_sesion(db:Session, id_sesion:int, id_usuario:int)->SesionCronometro:
-    return _cerrar_sesion(db, _obtener_sesion_abierta(db, id_sesion, id_usuario))
+    sesion=repo.get_sesion_by_id(db, id_sesion)
+    if not sesion or sesion.id_usuario != id_usuario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesion no encontrada")
+    if sesion.fecha_fin is None:
+        sesion = pausar_sesion(db, id_sesion, id_usuario)
+    tarea=tarea_repository.obtener_tarea_por_id(db, sesion.id_tarea)
+    if tarea is not None and tarea.id_usuario is not None:
+        try: 
+            tarea_service.finalizar_tarea_individual(db, tarea, id_usuario)
+            db.commit()
+            db.refresh(tarea)
+        except Exception:
+            db.rollback()
+            raise
+        return sesion
 
 def reiniciar_tarea(db:Session, id_tarea:int, id_usuario:int)->None:
     tarea = tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")

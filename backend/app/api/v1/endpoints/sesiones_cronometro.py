@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Optional;
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual

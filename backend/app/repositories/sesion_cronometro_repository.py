@@ -16,7 +16,6 @@ def get_sesion_activa(db: Session, id_tarea: int) -> Optional[SesionCronometro]:
         SesionCronometro.fecha_fin.is_(None)
     ).first()
 
-
 def get_sesion_activa_de_usuario(
     db: Session, id_tarea: int, id_usuario: int
 ) -> Optional[SesionCronometro]:

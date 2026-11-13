@@ -10,6 +10,7 @@ import {
 
 const LIMITE_DEFECTO_SEG = 1800;
 const LIMITE_MINIMO_SEG = 10;
+const LIMITE_MAXIMO_SEG = 12*3600;
 
 function Perfil() {
   const [perfil, setPerfil] = useState<PerfilBackend | null>(null);
@@ -21,6 +22,7 @@ function Perfil() {
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [notifActivas, setNotifActivas] = useState(true);
+  const [limiteHoras, setLimiteHoras] = useState<number | "">("");
   const [limiteMin, setLimiteMin] = useState<number | "">("");
   const [limiteSeg, setLimiteSeg] = useState<number | "">("");
 
@@ -34,7 +36,8 @@ function Perfil() {
         setDescripcion(datos.descripcion ?? "");
         setNotifActivas(datos.notif_activas);
         const total = datos.limite_cronometro ?? LIMITE_DEFECTO_SEG;
-        setLimiteMin(Math.floor(total / 60));
+        setLimiteHoras(Math.floor(total /3600));
+        setLimiteMin(Math.floor((total % 3600 )/ 60));
         setLimiteSeg(total % 60);
         setError(null);
       })
@@ -43,19 +46,16 @@ function Perfil() {
   }, []);
 
   const manejarGuardar = async () => {
+    const horas = Number(limiteHoras || 0);
     const min = Number(limiteMin || 0);
     const seg = Number(limiteSeg || 0);
-    const totalSeg = min * 60 + seg;
+    const totalSeg = horas*3600 +min * 60 + seg;
     if (
-      !Number.isInteger(min) ||
-      !Number.isInteger(seg) ||
-      min < 0 ||
-      seg < 0 ||
-      seg > 59 ||
-      totalSeg < LIMITE_MINIMO_SEG
+      ![horas, min, seg].every(Number.isInteger)|| horas<0 || min< 0 || seg< 0|| min>59 || seg>59 ||
+      totalSeg < LIMITE_MINIMO_SEG || totalSeg> LIMITE_MAXIMO_SEG
     ) {
       setError(
-        `El límite debe ser de al menos ${LIMITE_MINIMO_SEG} segundos y los segundos entre 0 y 59.`
+        `El límite debe estar entre ${LIMITE_MINIMO_SEG} segundos y 12 horas (min y segundos entre 0 a 59).`
       );
       return;
     }
@@ -169,9 +169,23 @@ function Perfil() {
             </p>
           </div>
           <div className="pixel-perfil-limite">
+            <input 
+            type="number" 
+            min={0} 
+            max={12} 
+            value={limiteHoras} 
+            onChange={(e)=>
+              setLimiteHoras(e.target.value === "" ?"":Number(e.target.value))
+            }
+            className="pixel-perfil-input pixel-perfil-input-corto"
+            aria-label="Horas"
+            />{" "}
+            h{" "}
+            
             <input
               type="number"
               min={0}
+              max={59}
               value={limiteMin}
               onChange={(e) =>
                 setLimiteMin(e.target.value === "" ? "" : Number(e.target.value))

@@ -8,10 +8,10 @@ class PerfilBase(BaseModel):
     descripcion: Optional[str] = None
     notif_activas: bool = True
     limite_cronometro: Optional[int] = None
-    limite_cronometro:Optional[int]=Field(default=None, gt=0)
 
 class PerfilCreate(PerfilBase):
     id_usuario: int
+    limite_cronometro:Optional[int]=Field(default=None, ge=10, le=43200)
 
 class PerfilUpdate(BaseModel):
     nombre_usuario: Optional[str] = None
@@ -19,7 +19,6 @@ class PerfilUpdate(BaseModel):
     foto_perfil: Optional[str] = None
     descripcion: Optional[str] = None
     notif_activas: Optional[bool] = None
-    limite_cronometro: Optional[int,] = None
     limite_cronometro:Optional[int]=Field(default=None, gt=0)
 
 class PerfilOut(PerfilBase):

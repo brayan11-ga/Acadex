@@ -34,7 +34,7 @@ def calcular_prioridad(fecha_entrega:datetime, dificultad_estimada:int,historial
     n = len(historial)
     if n<MIN_HISTORIAL:
         return base
-    dev_tiempo=mean((h["tiempo_real"]-h["tiempo_estimado"])/h["tiempo_estimado"] for h in historial)
+    dev_tiempo=mean((h["tiempo_real"]/60-h["tiempo_estimado"])/h["tiempo_estimado"] for h in historial) #tiempo ral de seg -> min
     dif_real=[h["dificultad_real"] for h in historial if h["dificultad_real"]is not None]
     dev_dif=(mean(dif_real)-dificultad_estimada) if dif_real else 0
 
@@ -52,8 +52,7 @@ def _calcular_para(db,tarea,es_primera=False)->int:
     return calcular_prioridad(tarea.fecha_entrega,tarea.dificultad_estimada, historial, es_primera)
 
 def asignar_prioridad_inicial(db,tarea)->None:
-    es_primera=prioridad_repository.contar_tareas(db, tarea.id_usuario, tarea.id_grupo, tarea.id_tarea) ==0 
-    tarea.prioridad = _calcular_para(db, tarea, es_primera)
+    tarea.prioridad = _calcular_para(db, tarea)
     
 def recalcular_pendientes(db,id_categoria,id_usuario,id_grupo)->None:
     for t in prioridad_repository.obtener_pendientes(db, id_categoria, id_usuario, id_grupo):

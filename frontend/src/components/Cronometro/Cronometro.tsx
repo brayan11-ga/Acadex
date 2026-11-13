@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCronometro } from '../../hooks/useCronometro';
-import { PixelHourglass } from './PixelHourglass';
+import { PixelHourglass } from '../cronometro/PixelHourglass';
 import '../../styles/Cronometro.css';
 
 interface CronometroProps {
@@ -8,9 +8,12 @@ interface CronometroProps {
 }
 
 const formatearTiempo = (totalSegundos: number) => {
-  const minutos = Math.floor(totalSegundos / 60);
+  const horas =Math.floor(totalSegundos/3600);
+  const minutos = Math.floor((totalSegundos % 3600 )/ 60);
   const segundos = totalSegundos % 60;
-  return `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+  const mm = String(minutos).padStart(2,'0');
+  const ss = String(segundos).padStart(2,'0');
+  return horas > 0 ? `${horas}:${mm}:${ss}`:`${mm}:${ss}`;
 };
 
 export const Cronometro = ({ idTarea }: CronometroProps) => {
