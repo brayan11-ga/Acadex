@@ -70,7 +70,8 @@ function FormularioNuevaTarea({
   const [idCategoria, setIdCategoria] = useState<number | null>(null);
   const [fecha, setFecha] = useState("");
   const [dificultad, setDificultad] = useState(3);
-  const [tiempoEstimado, setTiempoEstimado] = useState("");
+  const [horasEst, setHorasEst] = useState("");
+  const [minEst, setMinEst]= useState("");
   const [descripcion, setDescripcion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +104,12 @@ function FormularioNuevaTarea({
   const marcarEnviando = (valor: boolean) => {
     setEnviando(valor);
     onEstadoEnvioChange?.(valor);
+  };
+
+  const asignarTiempoEstimado=(totalMin:number)=>{
+    const total=Math.round(totalMin);
+    setHorasEst(String(Math.floor(total/60)));
+    setMinEst(String(total % 60));
   };
 
   const agregarArchivosPendientes = (nuevos: File[]) => {
@@ -175,7 +182,7 @@ function FormularioNuevaTarea({
       setIdCategoria(tareaAEditar.id_categoria);
       setFecha(tareaAEditar.fecha_entrega.slice(0, 16));
       setDificultad(tareaAEditar.dificultad_estimada);
-      setTiempoEstimado(String(tareaAEditar.tiempo_estimado));
+      asignarTiempoEstimado(tareaAEditar.tiempo_estimado);
       setDescripcion(tareaAEditar.descripcion ?? "");
     }
   }, [tareaAEditar]);
@@ -213,7 +220,7 @@ function FormularioNuevaTarea({
       setTitulo(propuesta.titulo);
       setDescripcion(propuesta.descripcion);
       setDificultad(propuesta.dificultad_estimada);
-      setTiempoEstimado(String(propuesta.tiempo_estimado));
+      asignarTiempoEstimado(propuesta.tiempo_estimado);
 
       if (propuesta.id_categoria && categorias.some(c => c.id_categoria === propuesta.id_categoria)) {
         setIdCategoria(propuesta.id_categoria);
@@ -263,9 +270,14 @@ function FormularioNuevaTarea({
       return;
     }
 
-    const tiempoEstimadoNum = Number(tiempoEstimado);
-    if (!tiempoEstimado.trim() || !Number.isFinite(tiempoEstimadoNum) || tiempoEstimadoNum <= 0) {
-      setError("El tiempo estimado debe ser un número mayor a 0 minutos");
+    const horas = Number(horasEst || 0);
+    const minutos = Number(minEst || 0);
+    const tiempoEstimadoNum = horas * 60 + minutos;
+    if (
+      !Number.isInteger(horas) || !Number.isInteger(minutos) ||
+      horas < 0 || minutos < 0 || minutos > 59 || tiempoEstimadoNum <= 0
+    ) {
+      setError("El tiempo estimado debe ser mayor a 0 (minutos entre 0 y 59).");
       return;
     }
 
@@ -465,21 +477,20 @@ function FormularioNuevaTarea({
           </div>
         </div>
 
-        <label className="pixel-field">
+        <div className="pixel-field">
           <span className="pixel-field-label">
             <img src={iconoReloj} alt="" className="pixel-field-icono" />
-            Tiempo estimado (min)
+            Tiempo estimado
           </span>
-          <input
-            type="number"
-            min="1"
-            className="pixel-input"
-            placeholder="120"
-            value={tiempoEstimado}
-            disabled={idTareaCreada !== null}
-            onChange={(e) => setTiempoEstimado(e.target.value)}
-          />
-        </label>
+          <div className="pixel-perfil-limite">
+          <input type="number" min="0" className="pixel-input pixel-perfil-input-corto" placeholder="2" value={horasEst} disabled={idTareaCreada !== null} onChange={(e) => setHorasEst(e.target.value)} aria-label="Horas"
+          />{" "}
+          h{" "}
+          <input type="number" min="0" max="59" className="pixel-input pixel-perfil-input-corto" placeholder="0" value={minEst} disabled={idTareaCreada !== null} onChange={(e) => setMinEst(e.target.value)} aria-label="Minutos"
+          />{" "}
+          min
+          </div>
+        </div>
       </div>
 
       <label className="pixel-field pixel-field-grow">

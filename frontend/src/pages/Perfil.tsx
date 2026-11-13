@@ -8,19 +8,23 @@ import {
   type PerfilBackend,
 } from "../services/perfil";
 
+const LIMITE_DEFECTO_SEG = 1800;
+const LIMITE_MINIMO_SEG = 10;
+const LIMITE_MAXIMO_SEG = 12*3600;
+
 function Perfil() {
   const [perfil, setPerfil] = useState<PerfilBackend | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Campos del formulario, separados del "perfil" original
-  // para que el usuario pueda escribir sin que se guarde todavía
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [notifActivas, setNotifActivas] = useState(true);
-  const [limiteCronometro, setLimiteCronometro] = useState<number | "">("");
+  const [limiteHoras, setLimiteHoras] = useState<number | "">("");
+  const [limiteMin, setLimiteMin] = useState<number | "">("");
+  const [limiteSeg, setLimiteSeg] = useState<number | "">("");
 
   useEffect(() => {
     setCargando(true);
@@ -31,7 +35,10 @@ function Perfil() {
         setTelefono(datos.telefono ?? "");
         setDescripcion(datos.descripcion ?? "");
         setNotifActivas(datos.notif_activas);
-        setLimiteCronometro(datos.limite_cronometro ?? "");
+        const total = datos.limite_cronometro ?? LIMITE_DEFECTO_SEG;
+        setLimiteHoras(Math.floor(total /3600));
+        setLimiteMin(Math.floor((total % 3600 )/ 60));
+        setLimiteSeg(total % 60);
         setError(null);
       })
       .catch(() => setError("No se pudo cargar el perfil"))
@@ -39,6 +46,19 @@ function Perfil() {
   }, []);
 
   const manejarGuardar = async () => {
+    const horas = Number(limiteHoras || 0);
+    const min = Number(limiteMin || 0);
+    const seg = Number(limiteSeg || 0);
+    const totalSeg = horas*3600 +min * 60 + seg;
+    if (
+      ![horas, min, seg].every(Number.isInteger)|| horas<0 || min< 0 || seg< 0|| min>59 || seg>59 ||
+      totalSeg < LIMITE_MINIMO_SEG || totalSeg> LIMITE_MAXIMO_SEG
+    ) {
+      setError(
+        `El límite debe estar entre ${LIMITE_MINIMO_SEG} segundos y 12 horas (min y segundos entre 0 a 59).`
+      );
+      return;
+    }
     setGuardando(true);
     try {
       const actualizado = await actualizarMiPerfil({
@@ -46,8 +66,7 @@ function Perfil() {
         telefono: telefono || undefined,
         descripcion: descripcion || undefined,
         notif_activas: notifActivas,
-        limite_cronometro:
-          limiteCronometro === "" ? undefined : Number(limiteCronometro),
+        limite_cronometro: totalSeg,
       });
       setPerfil(actualizado);
       setError(null);
@@ -146,19 +165,48 @@ function Perfil() {
           <div>
             <p className="pixel-perfil-item-title">Límite del cronómetro</p>
             <p className="pixel-perfil-item-desc">
-              Minutos antes de pausarse solo.
+              Tiempo máximo seguido antes de pausarse solo.
             </p>
           </div>
-          <input
-            type="number"
-            value={limiteCronometro}
-            onChange={(e) =>
-              setLimiteCronometro(
-                e.target.value === "" ? "" : Number(e.target.value)
-              )
+          <div className="pixel-perfil-limite">
+            <input 
+            type="number" 
+            min={0} 
+            max={12} 
+            value={limiteHoras} 
+            onChange={(e)=>
+              setLimiteHoras(e.target.value === "" ?"":Number(e.target.value))
             }
             className="pixel-perfil-input pixel-perfil-input-corto"
-          />
+            aria-label="Horas"
+            />{" "}
+            h{" "}
+            
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={limiteMin}
+              onChange={(e) =>
+                setLimiteMin(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="pixel-perfil-input pixel-perfil-input-corto"
+              aria-label="Minutos"
+            />{" "}
+            min{" "}
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={limiteSeg}
+              onChange={(e) =>
+                setLimiteSeg(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="pixel-perfil-input pixel-perfil-input-corto"
+              aria-label="Segundos"
+            />{" "}
+            s
+          </div>
         </div>
       </section>
 

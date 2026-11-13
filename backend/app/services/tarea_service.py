@@ -14,7 +14,32 @@ from app.schemas.tarea import TareaGrupalCreate
 from app.config.settings import MAX_ARCHIVOS_POR_TAREA
 from app.models.usuario import Usuario
 from app.services import archivo_service
+from app.services import prioridad_service
+from app.services import dificultad_service
+from app.services import estadistica_service
 
+def _registrar_finalizacion_individual(db: Session, tarea:Tarea, id_usuario:int)->None:
+    #Historial, estadística y prioridades al completar una tarea individual (sin commit)
+    tiempo_real_seg= (tarea.tiempo_acumulado or 0)*60 #el acumulado es en minutos
+    db.add(
+        HistorialTarea(
+            id_tarea=tarea.id_tarea,
+            id_usuario=id_usuario,
+            id_grupo=None,
+            fechahora_fin=datetime.now(),
+            tiempo_real=tiempo_real_seg,
+            dificultad_real=dificultad_service.calcular_dificultad_real(tarea.dificultad_estimada, tarea.tiempo_estimado, tiempo_real_seg),
+        )
+    )
+    db.flush()
+    estadistica_service.recalcular_estadistica_categoria(db, id_usuario, tarea.id_categoria, commit=False)
+    prioridad_service.recalcular_pendientes(db, tarea.id_categoria, tarea.id_usuario, tarea.id_grupo)
+
+def finalizar_tarea_individual(db:Session, tarea:Tarea, id_usuario:int)->None:
+    if (tarea.estado or "").lower()=="completada":
+        return
+    tarea.estado ="Completada"
+    _registrar_finalizacion_individual(db, tarea, id_usuario)
 
 def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:
     integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)
@@ -32,7 +57,12 @@ def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bo
                 detail="No tienes permiso para crear tareas en este grupo.",
             )
         datos_seguridad = datos.model_copy(update={"id_usuario": None})
-    return tarea_repository.crear_tarea(db, datos_seguridad, commit=commit)
+    tarea=tarea_repository.crear_tarea(db, datos_seguridad, commit=False)
+    prioridad_service.asignar_prioridad_inicial(db,tarea)
+    if commit:
+        db.commit()
+        db.refresh(tarea)
+    return tarea
 
 
 def crear_tarea_con_pdf(
@@ -172,28 +202,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
             and estado_nuevo.lower() == "completada"
             and estado_anterior.lower() != "completada"
         ):
-            db.add(
-                HistorialTarea(
-                    id_tarea=tarea_actualizada.id_tarea,
-                    id_usuario=id_usuario_historial,
-                    id_grupo=tarea_actualizada.id_grupo,
-                    fechahora_fin=datetime.now(),
-                    tiempo_real=tarea_actualizada.tiempo_acumulado,
-                    dificultad_real=tarea_actualizada.dificultad_estimada,
-                )
-            )
-            if db is not None:
-                db.flush()
-
-            from app.services import estadistica_service
-
-            estadistica_service.recalcular_estadistica_categoria(
-                db,
-                id_usuario_historial,
-                tarea_actualizada.id_categoria,
-                commit=False,
-            )
-
+            _registrar_finalizacion_individual(db, tarea_actualizada, id_usuario_historial)
+            
         # Reabrir conserva el historial como evidencia de una finalización
         # anterior. Si vuelve a completarse se agrega un nuevo registro.
         if db is not None:
@@ -253,7 +263,9 @@ def completar_parte_tarea(
     tiempo_real = sesion_cronometro_repository.sumar_duracion_cerrada(
         db, id_tarea, id_usuario
     )
-
+    dificultad_real=dificultad_service.calcular_dificultad_real(tarea.dificultad_estimada, tarea.tiempo_estimado, tiempo_real
+    )
+    
     try:
         historial_tarea_repository.upsert(
             db,
@@ -363,6 +375,7 @@ def crear_tarea_grupal(
         tarea = tarea_repository.crear_tarea(
             db, tarea_datos, commit=False, max_archivos=datos.max_archivos
         )
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
 
         for integrante in integrantes:
             asignacion_tarea_repository.crear_asignacion(
