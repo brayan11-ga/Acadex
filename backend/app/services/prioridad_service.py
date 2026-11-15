@@ -62,15 +62,14 @@ def _calcular_para(db,tarea,es_primera=False)->int:
     return calcular_prioridad(tarea.fecha_entrega,tarea.tiempo_estimado,tarea.dificultad_estimada, historial, es_primera)
 
 def asignar_prioridad_inicial(db,tarea)->None:
-    es_primera=prioridad_repository.contar_tareas(db, tarea.id_usuario, tarea.id_grupo, tarea.id_tarea) ==0 
-    tarea.prioridad = _calcular_para(db, tarea, es_primera)
+    tarea.prioridad =None if fecha_vencida(tarea.fecha_rentrega) else _calcular_para(db, tarea)
     
 def recalcular_pendientes(db,id_categoria,id_usuario,id_grupo)->None:
     for t in prioridad_repository.obtener_pendientes(db, id_categoria, id_usuario, id_grupo):
-        t.prioridad=_calcular_para(db,t)
+        t.prioridad=None if fecha_vencida(t.fecha_entrega) else _calcular_para(db,t)
 
 def recaulcular_tarea(db,tarea)->None:
-    tarea.prioridad=_calcular_para(db, tarea)
+    tarea.prioridad=None if fecha_vencida(tarea.fecha_entrega) else _calcular_para(db, tarea)
 
 def calcular_dificultad_real(dificultad_estimada:int, tiempo_estimado:int, tiempo_real:float | None)->int:
     # sin timpos registrados no se podra medir, se conservara la estimacion
@@ -85,9 +84,23 @@ def recalcular_visibles(db, tareas) -> None:
     for t in tareas:
         if (t.estado or "").lower() == "completada":
             continue
-        clave = (t.id_categoria, t.id_usuario, t.id_grupo)
+        if fecha_vencida(t.fecha_entrega):
+            t.prioridad = None
+            continue
+        clave=(t.id_categoria, t.id_usuario, t.id_grupo)
         if clave not in historiales:
-            historiales[clave] = prioridad_repository.obtener_historial(db, *clave)
+            historiales[clave]=prioridad_repository.obtener_historial(db, *clave)
         t.prioridad = calcular_prioridad(
             t.fecha_entrega, t.tiempo_estimado, t.dificultad_estimada, historiales[clave]
         )
+
+def _a_datetime(fecha_entrega):
+    if not isinstance(fecha_entrega, datetime):
+        return datetime.combine(fecha_entrega, time.max)
+    return fecha_entrega
+
+def fecha_vencida(fecha_entrega, ahora:datetime |None= None)->bool:
+    fecha_entrega= _a_datetime(fecha_entrega)
+    ahora= ahora or datetime.now(fecha_entrega.tzinfo)
+    return fecha_entrega<ahora
+
