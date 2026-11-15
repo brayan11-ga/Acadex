@@ -1,6 +1,7 @@
+// Ruta: frontend/src/pages/Lider.tsx
 import { useEffect, useState, useCallback } from 'react';
 import { Navigate, useNavigate,useParams } from 'react-router-dom';
-import { listarMisGrupos, obtenerIntegrantes, expulsarIntegrante, eliminarGrupo } from '../services/grupos';import type { GrupoConRol, Integrante } from '../types/grupo';
+import { listarMisGrupos, obtenerIntegrantes, expulsarIntegrante, eliminarGrupo, regenerarCodigoAcceso } from '../services/grupos';import type { GrupoConRol, Integrante } from '../types/grupo';
 import { obtenerIdUsuarioActual } from '../utils/jwt';
 import { GroupMembersLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 import '../styles/group-detail.css';
@@ -16,6 +17,8 @@ function Lider(){
     const [cargando, setCargando]= useState(true);
     const [error, setError]= useState<string | null >(null);
     const [copiado, setCopiado]=useState(false);
+    const [regenerando, setRegenerando]=useState(false);
+    const [errorRegenerar, setErrorRegenerar]=useState<string | null>(null);
 
     const cargar = useCallback(async()=>{
         try{
@@ -60,6 +63,30 @@ function Lider(){
         setCopiado(true);
         setTimeout(()=>setCopiado(false),2000);
     };
+
+    const handleRegenerar = async()=>{
+        if (!grupo) return;
+        const confirmado = window.confirm(
+            "¿Regenerar el código de acceso? El código anterior dejará de funcionar de inmediato y no podrás volver a usarlo."
+        );
+        if (!confirmado) return;
+
+        setRegenerando(true);
+        setErrorRegenerar(null);
+        try{
+            const actualizado = await regenerarCodigoAcceso(id);
+            setGrupo((prev)=> prev ? { ...prev, codigo_acceso: actualizado.codigo_acceso } : prev);
+            setCopiado(false);
+        }catch(error){
+            setErrorRegenerar(
+                error instanceof Error
+                    ? error.message
+                    : "No se logró regenerar el código de acceso"
+            );
+        }finally{
+            setRegenerando(false);
+        }
+    };
     
     console.log({ idGrupo, id, cargando, error, grupo });
     if (Number.isNaN(id)) return<Navigate to="/grupos" replace/>;
@@ -78,10 +105,14 @@ function Lider(){
         <h1 className='detail-title'>Panel de Líder — {grupo.nombre_grupo}</h1>
         <p className='detail.desc'>
         Codigo de acceso:<strong>{grupo.codigo_acceso}</strong>
-        <button className='detail-btn' onClick={copiarCodigo}>
+        <button className='detail-btn' onClick={copiarCodigo} disabled={regenerando}>
         {copiado ? "¡Copiado": "Copiar"}
         </button>
+        <button className='detail-btn' onClick={handleRegenerar} disabled={regenerando}>
+        {regenerando ? "Regenerando..." : "Regenerar código"}
+        </button>
         </p>
+        {errorRegenerar && <p className='detail-error'>{errorRegenerar}</p>}
         </div>
         <div className="detail-header-action">
         <button className="detail-btn detail-btn-danger" onClick={handleDelete}>

@@ -44,6 +44,13 @@ def crear_grupo(
     return grupo
 
 
+def actualizar_codigo_acceso(db: Session, grupo: Grupo, codigo_acceso: str) -> Grupo:
+    grupo.codigo_acceso = codigo_acceso
+    db.commit()
+    db.refresh(grupo)
+    return grupo
+
+
 def eliminar_grupo(db: Session, grupo: Grupo) -> None:
     db.delete(grupo)
     db.commit()

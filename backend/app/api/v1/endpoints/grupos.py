@@ -102,3 +102,12 @@ def eliminar_grupo(
     usuario: Usuario = Depends(requerir_lider_de_grupo),
 ):
     grupo_service.eliminar_grupo(db, id_grupo)
+
+
+@router.post("/{id_grupo}/regenerar-codigo", response_model=GrupoResponse)
+def regenerar_codigo_acceso(
+    id_grupo: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(requerir_lider_de_grupo),
+):
+    return grupo_service.regenerar_codigo_acceso(db, id_grupo)

@@ -45,6 +45,15 @@ def eliminar_grupo(db: Session, id_grupo: int) -> None:
     grupo_repository.eliminar_grupo(db, grupo)
 
 
+def regenerar_codigo_acceso(db: Session, id_grupo: int) -> Grupo:
+    grupo = grupo_repository.obtener_grupo_por_id(db, id_grupo)
+    if not grupo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
+
+    nuevo_codigo = _generar_codigo_acceso(db)
+    return grupo_repository.actualizar_codigo_acceso(db, grupo, nuevo_codigo)
+
+
 def listar_grupos_de_usuario(db: Session, id_usuario: int) -> List[dict]:
     filas = grupo_repository.obtener_grupos_de_usuario(db, id_usuario)
     return [
