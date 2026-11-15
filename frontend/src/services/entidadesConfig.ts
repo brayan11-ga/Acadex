@@ -161,7 +161,6 @@ export const TABS_ADMIN: EntidadConfig<any>[] = [
     usuariosConfig,
     { ...gruposConfig, soloLectura: true },
     categoriasConfig,
-    { ...integrantesConfig, soloLectura: true },
 ];
 
 export const TABS_LIDER: EntidadConfig<any>[] = [

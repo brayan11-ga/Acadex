@@ -127,11 +127,12 @@ def _adjuntar_total_archivos(db: Session, tareas: List[Tarea]) -> List[Tarea]:
         tarea.total_archivos = conteos.get(tarea.id_tarea, 0)
     return tareas
 
-
 def listar_tareas(db: Session, id_usuario: int) -> List[Tarea]:
-    return _adjuntar_total_archivos(
-        db, tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
-    )
+    tareas=tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    prioridad_service.recalcular_visibles(db, tareas)
+    db.commit()
+    tareas= tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(db, tareas)
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario: int) -> Tarea:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
@@ -191,6 +192,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
         tarea_actualizada = tarea_repository.actualizar_tarea(
             db, tarea, datos, commit=False
         )
+        if {"fecha_entrega","dificultad_estimada", "tiempo_estimado"} & cambios.keys():
+            prioridad_service.recaulcular_tarea(db, tarea_actualizada)
         estado_nuevo = tarea_actualizada.estado
 
         # Tarea, historial y estadística se confirman en un único commit.
@@ -202,7 +205,27 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
             and estado_nuevo.lower() == "completada"
             and estado_anterior.lower() != "completada"
         ):
-            _registrar_finalizacion_individual(db, tarea_actualizada, id_usuario_historial)
+            db.add(
+                HistorialTarea(
+                    id_tarea=tarea_actualizada.id_tarea,
+                    id_usuario=id_usuario_historial,
+                    id_grupo=tarea_actualizada.id_grupo,
+                    fechahora_fin=datetime.now(),
+                    tiempo_real=tarea_actualizada.tiempo_acumulado,
+                    dificultad_real=prioridad_service.calcular_dificultad_real(tarea_actualizada.dificultad_estimada,tarea_actualizada.tiempo_estimado,tarea_actualizada.tiempo_acumulado,),
+                )
+            )
+            if db is not None:
+                db.flush()
+
+            from app.services import estadistica_service
+
+            estadistica_service.recalcular_estadistica_categoria(
+                db,
+                id_usuario_historial,
+                tarea_actualizada.id_categoria,
+                commit=False,
+            )
             
         # Reabrir conserva el historial como evidencia de una finalización
         # anterior. Si vuelve a completarse se agrega un nuevo registro.
@@ -284,6 +307,8 @@ def completar_parte_tarea(
 
         if ids_asignados and ids_asignados.issubset(completados):
             tarea.estado = "Completada"
+            db.flush()
+            prioridad_service.recalcular_pendientes(db, tarea.id_categoria, None, tarea.id_grupo)
         elif (tarea.estado or "").lower() == "pendiente":
             tarea.estado = "en progreso"
 

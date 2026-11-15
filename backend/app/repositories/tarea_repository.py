@@ -1,7 +1,8 @@
 # app/repositories/tarea_repository.py
-from datetime import date, timedelta
+from datetime import date,datetime, timedelta
 from typing import List, Optional
-from sqlalchemy import or_, select
+from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 from app.models.tarea import Tarea
 from app.models.integrante import Integrante
@@ -35,7 +36,8 @@ def obtener_tareas_visibles_para_usuario(db: Session, id_usuario: int) -> List[T
     grupos_usuario = select(Integrante.id_grupo).where(Integrante.id_usuario == id_usuario)
     return (
         db.query(Tarea)
-        .filter(or_(Tarea.id_usuario == id_usuario, Tarea.id_grupo.in_(grupos_usuario)))
+        .filter(or_(Tarea.id_usuario==id_usuario, Tarea.id_grupo.in_(grupos_usuario)))
+        .order_by(*_orden_por_prioridad())
         .all()
     )
 
@@ -76,4 +78,14 @@ def obtener_tareas_por_rango(
     return query.order_by(Tarea.fecha_entrega).all()
 
 def obtener_tareas_por_grupo(db: Session, id_grupo: int) -> List[Tarea]:
-    return db.query(Tarea).filter(Tarea.id_grupo == id_grupo).all()
+    return db.query(Tarea).filter(Tarea.id_grupo == id_grupo).order_by(*_orden_por_prioridad()).all()
+
+def _orden_por_prioridad():
+    completada=func.lower(Tarea.estado)=='completada'
+    vencida=and_(~completada, Tarea.fecha_entrega<datetime.now())
+    return(case((completada,2),(vencida,1), else_=0),
+            Tarea.prioridad.desc().nulls_last(),
+            case((vencida, Tarea.fecha_entrega)).desc().nulls_last(),
+            Tarea.dificultad_estimada.desc(),
+            Tarea.fecha_entrega.asc(),
+            )

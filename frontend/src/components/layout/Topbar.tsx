@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PanelNotificaciones } from '../common/PanelNotificaciones'; 
+import BarraBusqueda from '../ui/BarraBusqueda';
+import '../../styles/BarraBusqueda.css';
 import '../../styles/Topbar.css';
 
 interface TopbarProps {
@@ -13,14 +15,17 @@ interface TopbarProps {
 
 export const Topbar = ({ nombreUsuario, rolUsuario, token, onAbrirModalLogout }: TopbarProps) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [busqueda, setBusqueda]=useState('');
   const navigate = useNavigate();
 
   return (
     <header className="panel-topbar">
-      <div className="search-container pixel-panel-flat">
-        <span className="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar tareas o comandos..." className="pixel-input-search" />
-      </div>
+      <BarraBusqueda 
+      valor={busqueda}
+      onCambiar={setBusqueda}
+      placeholder='Buscar tarea o comandos...'
+      className='busqueda--topbar'
+      />
       
       <div className="user-profile-wrapper">
         <div className="user-profile">
