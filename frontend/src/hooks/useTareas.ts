@@ -60,11 +60,15 @@ export const useTareas = (refreshKey: number) => {
   const formatearFecha = (iso: string) =>
     new Date(iso).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-  const tareasPendientes = tareas.filter((t) => t.estado !== "Completada").length;
+  const esVencida = (t:TareaBackend) => t.estado !== "Completada" && t.vencida;
+  
+  const tareasVencidas = tareas.filter(esVencida).length;
+  const tareasPendientes =tareas.filter((t)=>t.estado !=="Completada" && !t.vencida).length;
 
   const tareasFiltradas = tareas.filter((tarea) => {
     if (filtroActivo === "alta") return tarea.dificultad_estimada >= 4;
     if (filtroActivo === "activas") return tarea.estado !== "Completada";
+    if (filtroActivo === "vencidas") return esVencida(tarea);
     if (filtroActivo === "completadas") return tarea.estado === "Completada";
     return true;
   });
@@ -113,15 +117,34 @@ const cancelarEliminar = () => {
   setTareaAEliminar(null); // Solo cierra el modal
 };
 
-  const manejarCambiarEstado = async (tarea: TareaBackend) => {
-    const nuevoEstado = tarea.estado === "Completada" ? "Pendiente" : "Completada";
-    try {
-      const tareaActualizada = await actualizarTarea(tarea.id_tarea, { estado: nuevoEstado });
-      setTareas((actuales) => actuales.map((t) => (t.id_tarea === tarea.id_tarea ? tareaActualizada : t)));
-    } catch {
-      setError("No se pudo actualizar el estado de la tarea");
+  const [tareaVencidaPorCompletar, setTareaVencidaPorCompletar]=useState<TareaBackend | null>(null);
+
+  const aplicarCambioEstado =async(tarea:TareaBackend) =>{
+    const nuevoEstado= tarea.estado ==="Completada"?"Pendiente": "Completada";
+    try{
+      const tareaActualizada = await actualizarTarea(tarea.id_tarea, {estado:nuevoEstado});
+      setTareas((actuales)=> actuales.map((t)=>(t.id_tarea === tarea.id_tarea ? tareaActualizada: t)));
+    } catch{
+      setError("No se pudo actualizar el estado de la tarea")
     }
   };
+
+  const manejarCambiarEstado = async (tarea: TareaBackend) => {
+    if (esVencida(tarea)){
+      setTareaVencidaPorCompletar(tarea);
+    return; 
+    }
+    await aplicarCambioEstado(tarea);
+  };
+
+  const confirmarCompletarVencida = async()=>{
+    if (!tareaVencidaPorCompletar) return;
+    const tarea = tareaVencidaPorCompletar;
+    setTareaVencidaPorCompletar(null);
+    await aplicarCambioEstado(tarea);
+  };
+
+  const cancelarCompletarVencida =()=> setTareaVencidaPorCompletar(null);
 
   const manejarVerDetalles = async (id: number) => {
     try {
@@ -140,6 +163,7 @@ const cancelarEliminar = () => {
     totalTareas: tareas.length,
     totalTareasFiltradas: tareasFiltradas.length,
     nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles,
+    tareasVencidas, tareaVencidaPorCompletar, confirmarCompletarVencida, cancelarCompletarVencida,
     tareaAEliminar, solicitarEliminar, confirmarEliminar, cancelarEliminar
   };
 };

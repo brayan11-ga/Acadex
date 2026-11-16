@@ -109,13 +109,15 @@ export const Calendario: React.FC = () => {
           <div className="lista-eventos">
             {tareasDelDia.map((t) => {
               const estadoLimpio = (t.estado || 'pendiente').toLowerCase();
+              const esVencida = estadoLimpio !== 'completada' && t.vencida;
+              const claseEstado = esVencida ? 'estado-vencida': `estado-${estadoLimpio.replace(' ','_')}`;
               return (
                 <button
                   type="button"
                   key={t.id_tarea}
-                  className={`evento-badge estado-${estadoLimpio}`}
+                  className={`evento-badge ${claseEstado}`}
                   aria-label={`Ver detalles de ${t.nombre}`}
-                  title={`${t.nombre} (${estadoLimpio.replace('_', ' ')})`}
+                  title={`${t.nombre} (${esVencida ? 'vencida': estadoLimpio.replace('_', ' ')})`}
                   onClick={() => setTareaDetalle(t)}
                 >
                   {t.nombre}

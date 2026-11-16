@@ -1,5 +1,5 @@
 import type { TareaPanel, ProgresoDiario } from '../../types/panel';
-import { Cronometro } from '../Cronometro/Cronometro';
+import { Cronometro } from '../cronometro/Cronometro';
 import { TasksCompletedChart } from '../estadisticas/TasksCompletedChart';
 
 import '../../styles/estadisticas.css';

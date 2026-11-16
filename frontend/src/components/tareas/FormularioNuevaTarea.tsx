@@ -70,8 +70,8 @@ function FormularioNuevaTarea({
   const [idCategoria, setIdCategoria] = useState<number | null>(null);
   const [fecha, setFecha] = useState("");
   const [dificultad, setDificultad] = useState(3);
-  const [horasEst, setHorasEst] = useState("");
-  const [minEst, setMinEst]= useState("");
+  const [horasEst, setHorasEst] = useState("0");
+  const [minEst, setMinEst]= useState("0");
   const [descripcion, setDescripcion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -483,10 +483,10 @@ function FormularioNuevaTarea({
             Tiempo estimado
           </span>
           <div className="pixel-perfil-limite">
-          <input type="number" min="0" className="pixel-input pixel-perfil-input-corto" placeholder="2" value={horasEst} disabled={idTareaCreada !== null} onChange={(e) => setHorasEst(e.target.value)} aria-label="Horas"
+          <input type="number" min="0" className="pixel-input pixel-perfil-input-corto" value={horasEst} disabled={idTareaCreada !== null} onChange={(e) => setHorasEst(e.target.value)} aria-label="Horas"
           />{" "}
           h{" "}
-          <input type="number" min="0" max="59" className="pixel-input pixel-perfil-input-corto" placeholder="0" value={minEst} disabled={idTareaCreada !== null} onChange={(e) => setMinEst(e.target.value)} aria-label="Minutos"
+          <input type="number" min="0" max="59" className="pixel-input pixel-perfil-input-corto" value={minEst} disabled={idTareaCreada !== null} onChange={(e) => setMinEst(e.target.value)} aria-label="Minutos"
           />{" "}
           min
           </div>

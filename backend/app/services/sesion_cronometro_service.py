@@ -186,7 +186,7 @@ def finalizar_sesion(db:Session, id_sesion:int, id_usuario:int)->SesionCronometr
         except Exception:
             db.rollback()
             raise
-        return sesion
+    return sesion
 
 def reiniciar_tarea(db:Session, id_tarea:int, id_usuario:int)->None:
     tarea = tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")

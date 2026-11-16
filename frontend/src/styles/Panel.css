@@ -353,3 +353,21 @@
     justify-content: center;
   }
 }
+
+.panel-vencidas {
+  margin-top: 2rem;
+}
+
+.panel-vencidas .tarjeta-vencida {
+  border-left: 3px solid #ef4444;
+  cursor: pointer;
+}
+
+.panel-vencidas .tarjeta-vencida .tarjeta-hora {
+  color: #ef4444;
+}
+
+.panel-vencidas .tarjeta-vencida:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}

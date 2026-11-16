@@ -16,7 +16,8 @@ class PanelRepository:
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
             .filter(
                 Tarea.id_usuario == id_usuario, 
-                func.lower(Tarea.estado) != 'completada'  # <-- Permite cualquier variación de "completada" y trae las demás
+                func.lower(Tarea.estado) != 'completada',  # <-- Permite cualquier variación de "completada" y trae las demás
+                Tarea.fecha_entrega >=datetime.now(),
             )\
             .order_by(Tarea.prioridad.desc().nulls_last(),desc(Tarea.dificultad_estimada),asc(Tarea.fecha_entrega),)\
             .first()
@@ -29,7 +30,8 @@ class PanelRepository:
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
             .filter(
                 Tarea.id_usuario == id_usuario, 
-                func.lower(Tarea.estado) != 'completada'  # <-- Igual aquí
+                func.lower(Tarea.estado) != 'completada',  # <-- Igual aquí
+                Tarea.fecha_entrega>=datetime.now(),
             )
         
         if exclude_id:

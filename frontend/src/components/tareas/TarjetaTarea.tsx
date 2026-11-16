@@ -32,6 +32,7 @@ export const TarjetaTarea = ({
   onCambiarEstado,
 }: TarjetaTareaProps) => {
   const esCompletada = tarea.estado === "Completada";
+  const esVencida = !esCompletada && tarea.vencida ===true;
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,7 @@ export const TarjetaTarea = ({
   };
 
   return (
-    <article className={`pixel-tarea-card ${esCompletada ? "completada" : ""}`}>
+    <article className={`pixel-tarea-card ${esCompletada ? "completada" : ""} ${esVencida ? "vencida":""}`}>
       <div className="pixel-tarea-info">
         <div className="pixel-tarea-header-card">
           <h3 className={`pixel-tarea-titulo ${esCompletada ? "tachado" : ""}`}>
@@ -73,8 +74,8 @@ export const TarjetaTarea = ({
       </div>
 
       <div className="pixel-tarea-acciones">
-        <span className={`pixel-estado-badge ${tarea.estado.replace(" ", "-").toLowerCase()}`}>
-          {tarea.estado}
+        <span className={`pixel-estado-badge ${esVencida ?"Vencida": tarea.estado.replace(" ", "-").toLowerCase()}`}>
+          {esVencida ? "Vencida" : tarea.estado}
         </span>
 
         <div className="pixel-tarea-botones" ref={menuRef}>

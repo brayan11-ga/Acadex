@@ -7,6 +7,7 @@ export interface TareaBackend {
   descripcion: string | null;
   fecha_entrega: string;
   estado: string;
+  vencida:boolean;
   dificultad_estimada: number;
   tiempo_estimado: number;
   prioridad: number | null;

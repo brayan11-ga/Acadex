@@ -448,11 +448,21 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
 
     def test_propietario_puede_finalizar_y_listar_sus_sesiones(self):
         inicio = datetime.utcnow() - timedelta(minutes=5)
-        sesion = SimpleNamespace(id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=None)
-        finalizada = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=datetime.utcnow())
+        sesion = SimpleNamespace(
+            id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=None,
+            fecha_aviso=None, fecha_confirmacion=None,
+        )
+        finalizada = SimpleNamespace(
+        id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=datetime.utcnow(),
+        )
+        tarea = SimpleNamespace(
+            id_tarea=5, id_usuario=None, id_grupo=3, nombre="Tarea",
+            tiempo_acumulado=0, cronometro_activo=True, ultima_pausa=None,
+        )
         with (
             patch.object(sesion_cronometro_service.repo, "get_sesion_by_id", return_value=sesion),
-            patch.object(sesion_cronometro_service.tarea_repository, "obtener_tarea_por_id", return_value=None),
+            patch.object(sesion_cronometro_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(sesion_cronometro_service.perfil_repository, "get_perfil_by_usuario", return_value=None),
             patch.object(sesion_cronometro_service.repo, "update_sesion", return_value=finalizada) as actualizar,
             patch.object(sesion_cronometro_service.repo, "get_sesiones_by_usuario", return_value=[finalizada]) as listar,
         ):
@@ -460,7 +470,6 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
             self.assertEqual(sesion_cronometro_service.listar_sesiones_usuario(None, 12, 12), [finalizada])
         actualizar.assert_called_once()
         listar.assert_called_once_with(None, 12)
-
 
 class ConsultasTareaAisladasTests(unittest.TestCase):
     def test_listado_y_calendario_filtran_a_tareas_del_usuario_y_sus_grupos(self):

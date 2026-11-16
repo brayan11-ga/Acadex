@@ -24,9 +24,11 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
   cargando, error, tareaDetalle, setTareaDetalle,
   filtroActivo, setFiltroActivo, modoVista, setModoVista,
   paginaActual, setPaginaActual, totalPaginas, gruposPaginados, gruposFiltrados, tareasPendientes,
+  tareasVencidas,
   totalTareas,
   nombreCategoria, formatearFecha, manejarCambiarEstado, manejarVerDetalles,
-  tareaAEliminar, solicitarEliminar, confirmarEliminar, cancelarEliminar
+  tareaAEliminar, solicitarEliminar, confirmarEliminar, cancelarEliminar,
+  tareaVencidaPorCompletar, confirmarCompletarVencida, cancelarCompletarVencida,
 } = useTareas(refreshKey);
 
   const [categoriaAbierta, setCategoriaAbierta] = useState<number | null>(null);
@@ -58,8 +60,10 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
           <p className="pixel-tareas-subtitle">
             {totalTareas === 0
               ? "Crea tu primera tarea para empezar a organizar tus actividades."
-              : tareasPendientes === 0
+              : tareasPendientes === 0 && tareasVencidas === 0
                 ? "¡Vas al día! No tienes tareas pendientes."
+                :tareasVencidas>0
+                ? `Tienes ${tareasPendientes} tareas pendientes y ${tareasVencidas} vencidas.`
                 : `Tienes ${tareasPendientes} tareas pendientes esta semana. Mantén el enfoque.`}
           </p>
         </div>
@@ -192,6 +196,14 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       onConfirm={confirmarEliminar}
       onCancel={cancelarEliminar}
       />
+
+      <ModalConfirmacion
+  isOpen={tareaVencidaPorCompletar !== null}
+  title="Esta tarea venció"
+  message="La fecha de entrega ya pasó. ¿Quieres marcarla como completada de todas formas? Se registrará como entregada con retraso."
+  onConfirm={confirmarCompletarVencida}
+  onCancel={cancelarCompletarVencida}
+/>
 
     </main>
   );

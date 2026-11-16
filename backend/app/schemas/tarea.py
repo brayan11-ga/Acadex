@@ -68,12 +68,12 @@ class TareaResponse(TareaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-@computed_field
-@property
-def vencida(self)-> bool:
-    if (self.estado or"").lower()=="completada":
-        return False
-    return self.fecha_entrega < datetime.now(self.fecha_entrega.tzinfo)
+    @computed_field
+    @property
+    def vencida(self)-> bool:
+        if (self.estado or"").lower()=="completada":
+            return False
+        return self.fecha_entrega < datetime.now(self.fecha_entrega.tzinfo)
 
 class TareaGrupalCreate(BaseModel):
     nombre: str

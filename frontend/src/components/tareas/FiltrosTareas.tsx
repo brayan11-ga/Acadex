@@ -25,6 +25,11 @@ export const FiltrosTareas = ({ filtroActivo, onCambiarFiltro }: FiltrosTareasPr
       >
         Activas
       </button>
+      <button
+      className={`pixel-filtro-btn ${filtroActivo==="vencidas"?"activo":""}`}
+      onClick={()=>onCambiarFiltro("vencidas")}>
+        Vencidas
+      </button>
       <button 
         className={`pixel-filtro-btn ${filtroActivo === "completadas" ? "activo" : ""}`}
         onClick={() => onCambiarFiltro("completadas")}

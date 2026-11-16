@@ -1,5 +1,7 @@
 /* src/styles/contenido-tareas.css */
-
+:root {
+  --pixel-vencida: #ef4444;
+}
 /* Contenedor principal */
 .pixel-tareas-main {
   padding: 2rem 3rem;
@@ -187,6 +189,22 @@
   background-color: transparent;
   color: var(--pixel-baja);
   border: 1px solid var(--pixel-baja);
+}
+
+.pixel-tarea-card.vencida {
+  border-left: 3px solid var(--pixel-vencida);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--pixel-vencida) 8%, transparent),
+    transparent 40%
+  );
+  opacity: 0.85;
+}
+
+.pixel-tarea-card.vencida .pixel-estado-badge {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid #ef4444;
 }
 
 .pixel-tarea-botones {

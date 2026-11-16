@@ -62,7 +62,7 @@ def _calcular_para(db,tarea,es_primera=False)->int:
     return calcular_prioridad(tarea.fecha_entrega,tarea.tiempo_estimado,tarea.dificultad_estimada, historial, es_primera)
 
 def asignar_prioridad_inicial(db,tarea)->None:
-    tarea.prioridad =None if fecha_vencida(tarea.fecha_rentrega) else _calcular_para(db, tarea)
+    tarea.prioridad =None if fecha_vencida(tarea.fecha_entrega) else _calcular_para(db, tarea)
     
 def recalcular_pendientes(db,id_categoria,id_usuario,id_grupo)->None:
     for t in prioridad_repository.obtener_pendientes(db, id_categoria, id_usuario, id_grupo):
