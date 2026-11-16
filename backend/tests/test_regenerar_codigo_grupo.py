@@ -1,6 +1,7 @@
 # Ruta: backend/tests/test_regenerar_codigo_grupo.py
 # Pruebas de C7: POST /grupos/{id_grupo}/regenerar-codigo
 import unittest
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -35,10 +36,21 @@ class RegenerarCodigoBase(unittest.TestCase):
             ]
         )
         self.db.flush()
+        fecha_vigente = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=30)
         self.db.add_all(
             [
-                Grupo(id_grupo=10, nombre_grupo="Grupo propio", codigo_acceso="VIEJO123"),
-                Grupo(id_grupo=11, nombre_grupo="Grupo ajeno", codigo_acceso="OTRO1234"),
+                Grupo(
+                    id_grupo=10,
+                    nombre_grupo="Grupo propio",
+                    codigo_acceso="VIEJO123",
+                    fecha_expiracion_codigo=fecha_vigente,
+                ),
+                Grupo(
+                    id_grupo=11,
+                    nombre_grupo="Grupo ajeno",
+                    codigo_acceso="OTRO1234",
+                    fecha_expiracion_codigo=fecha_vigente,
+                ),
             ]
         )
         self.db.flush()
@@ -128,6 +140,7 @@ class RegenerarCodigoEndpointTests(unittest.TestCase):
             nombre_grupo="Grupo propio",
             descripcion=None,
             codigo_acceso="NUEVO123",
+            fecha_expiracion_codigo=None,
             fecha_creacion=None,
         )
         with patch.object(
@@ -136,7 +149,8 @@ class RegenerarCodigoEndpointTests(unittest.TestCase):
             resultado = endpoints.regenerar_codigo_acceso(10, None, usuario_actual)
 
         regenerar.assert_called_once_with(None, 10)
-        self.assertIs(resultado, grupo)
+        self.assertEqual(resultado["id_grupo"], 10)
+        self.assertEqual(resultado["codigo_acceso"], "NUEVO123")
 
 
 if __name__ == "__main__":

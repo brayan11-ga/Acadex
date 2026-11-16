@@ -6,6 +6,12 @@ import { obtenerIdUsuarioActual } from '../utils/jwt';
 import { GroupMembersLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 import '../styles/group-detail.css';
 
+function formatearTiempoRestante(segundos: number): string {
+    const minutos = Math.floor(segundos / 60);
+    const resto = segundos % 60;
+    return `${String(minutos).padStart(2, "0")}:${String(resto).padStart(2, "0")}`;
+}
+
 function Lider(){
     const {idGrupo}=useParams();
     const id=Number(idGrupo);
@@ -19,6 +25,7 @@ function Lider(){
     const [copiado, setCopiado]=useState(false);
     const [regenerando, setRegenerando]=useState(false);
     const [errorRegenerar, setErrorRegenerar]=useState<string | null>(null);
+    const [segundosRestantes, setSegundosRestantes]=useState<number | null>(null);
 
     const cargar = useCallback(async()=>{
         try{
@@ -39,6 +46,19 @@ function Lider(){
         cargar();
     },[cargar]);
 
+    useEffect(()=>{
+        setSegundosRestantes(grupo?.segundos_restantes_codigo ?? null);
+    }, [grupo?.segundos_restantes_codigo]);
+
+    const contadorActivo = segundosRestantes !== null && segundosRestantes > 0;
+    useEffect(()=>{
+        if (!contadorActivo) return;
+        const intervalo = setInterval(()=>{
+            setSegundosRestantes((prev)=> (prev !== null && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+        return ()=> clearInterval(intervalo);
+    }, [contadorActivo]);
+
     const handleKick=async (idUsuario:number)=>{
         if (!window.confirm("¿expulsar a este integrante del grupo?")) return;
         try{
@@ -58,7 +78,7 @@ function Lider(){
     }
 };
     const copiarCodigo = async()=>{
-        if (!grupo) return;
+        if (!grupo || !grupo.codigo_acceso) return;
         await navigator.clipboard.writeText(grupo.codigo_acceso);
         setCopiado(true);
         setTimeout(()=>setCopiado(false),2000);
@@ -75,7 +95,13 @@ function Lider(){
         setErrorRegenerar(null);
         try{
             const actualizado = await regenerarCodigoAcceso(id);
-            setGrupo((prev)=> prev ? { ...prev, codigo_acceso: actualizado.codigo_acceso } : prev);
+            setGrupo((prev)=> prev ? {
+                ...prev,
+                codigo_acceso: actualizado.codigo_acceso,
+                fecha_expiracion_codigo: actualizado.fecha_expiracion_codigo,
+                segundos_restantes_codigo: actualizado.segundos_restantes_codigo,
+            } : prev);
+            setSegundosRestantes(actualizado.segundos_restantes_codigo ?? null);
             setCopiado(false);
         }catch(error){
             setErrorRegenerar(
@@ -104,7 +130,13 @@ function Lider(){
         <div className='detail-header-info'>
         <h1 className='detail-title'>Panel de Líder — {grupo.nombre_grupo}</h1>
         <p className='detail.desc'>
-        Codigo de acceso:<strong>{grupo.codigo_acceso}</strong>
+        Codigo de acceso:<strong>{grupo.codigo_acceso ?? "—"}</strong>
+        <span>
+        {" · "}
+        {segundosRestantes === null || segundosRestantes <= 0
+            ? "Vencido"
+            : `Vence en ${formatearTiempoRestante(segundosRestantes)}`}
+        </span>
         <button className='detail-btn' onClick={copiarCodigo} disabled={regenerando}>
         {copiado ? "¡Copiado": "Copiar"}
         </button>
