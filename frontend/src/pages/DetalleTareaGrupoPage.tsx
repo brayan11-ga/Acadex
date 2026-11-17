@@ -9,8 +9,11 @@ import {
 } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
+import AsignarIntegrantes, {
+  type IntegranteAsignable,
+} from "../components/tareas-grupo/AsignarIntegrantes";
 import { listarCategorias, type Categoria } from "../services/categorias";
-import { listarMisGrupos } from "../services/grupos";
+import { listarMisGrupos, obtenerIntegrantes } from "../services/grupos";
 import {
   completarParteTarea,
   descargarArchivoTarea,
@@ -20,6 +23,7 @@ import {
   listarAsignadosTarea,
   obtenerTarea,
   reabrirTarea,
+  reasignarAsignadosTarea,
   subirArchivoTarea,
   type ArchivoTarea,
   type IntegranteAsignadoBackend,
@@ -987,11 +991,13 @@ function ModalCompletar({
 function AccionesLider({
   completada,
   onEditar,
+  onReasignar,
   onEliminar,
   onReabrir,
 }: {
   completada: boolean;
   onEditar: () => void;
+  onReasignar: () => void;
   onEliminar: () => void;
   onReabrir: () => void;
 }) {
@@ -1011,6 +1017,17 @@ function AccionesLider({
           }
         >
           Editar tarea
+        </button>
+        <button
+          type="button"
+          className="detalle-tarea-boton detalle-tarea-boton-secundario"
+          disabled={completada}
+          onClick={onReasignar}
+          aria-describedby={
+            completada ? "detalle-tarea-nota-editar" : undefined
+          }
+        >
+          Reasignar integrantes
         </button>
         {completada && (
           <button
@@ -1096,6 +1113,249 @@ function ModalEditarTarea({
   );
 }
 
+function ModalReasignar({
+  abierto,
+  idGrupo,
+  idTarea,
+  asignados,
+  usuarioActualId,
+  onCerrar,
+  onGuardada,
+}: {
+  abierto: boolean;
+  idGrupo: number;
+  idTarea: number;
+  asignados: IntegranteAsignadoBackend[];
+  usuarioActualId: number | null;
+  onCerrar: () => void;
+  onGuardada: () => void;
+}) {
+  const [integrantes, setIntegrantes] = useState<IntegranteAsignable[]>([]);
+  const [seleccionados, setSeleccionados] = useState<number[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [confirmarQuitar, setConfirmarQuitar] = useState(false);
+
+  const idsActuales = useMemo(
+    () => asignados.map((asignado) => asignado.id_usuario),
+    [asignados],
+  );
+
+  // Al abrir, carga los integrantes del grupo y deja marcados los asignados actuales.
+  useEffect(() => {
+    if (!abierto) return;
+    let activo = true;
+    setCargando(true);
+    setErrorCarga(null);
+    setErrorAccion(null);
+    setConfirmarQuitar(false);
+    setSeleccionados(idsActuales);
+
+    obtenerIntegrantes(idGrupo)
+      .then((datos) => {
+        if (!activo) return;
+        const completados = new Set(
+          asignados
+            .filter((asignado) => asignado.completado)
+            .map((asignado) => asignado.id_usuario),
+        );
+        setIntegrantes(
+          datos.map((integrante) => ({
+            id_usuario: integrante.id_usuario,
+            correo_electronico: integrante.correo_electronico,
+            rol: integrante.rol,
+            completado: completados.has(integrante.id_usuario),
+          })),
+        );
+      })
+      .catch((err) => {
+        if (!activo) return;
+        setErrorCarga(
+          esErrorDePermiso(err)
+            ? "No tienes permiso para ver los integrantes de este grupo."
+            : mensajeDeError(
+                err,
+                "No se pudieron cargar los integrantes del grupo.",
+              ),
+        );
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [abierto, idGrupo, idsActuales, asignados]);
+
+  const quitados = idsActuales.filter((id) => !seleccionados.includes(id));
+  const agregados = seleccionados.filter((id) => !idsActuales.includes(id));
+  const hayCambios = quitados.length > 0 || agregados.length > 0;
+  const sinAsignados = seleccionados.length === 0;
+
+  function nombreDe(id: number): string {
+    const integrante = integrantes.find((item) => item.id_usuario === id);
+    return (
+      integrante?.nombre ||
+      integrante?.correo_electronico ||
+      asignados.find((item) => item.id_usuario === id)?.correo_electronico ||
+      `Usuario ${id}`
+    );
+  }
+
+  const completadosQuitados = asignados.filter(
+    (asignado) =>
+      asignado.completado && quitados.includes(asignado.id_usuario),
+  );
+
+  async function aplicar() {
+    setEnviando(true);
+    setErrorAccion(null);
+    try {
+      await reasignarAsignadosTarea(idTarea, seleccionados);
+      setConfirmarQuitar(false);
+      onGuardada();
+    } catch (err) {
+      const mensaje = err instanceof Error ? err.message : "";
+      const normalizado = mensaje.toLowerCase();
+      if (esErrorDePermiso(err)) {
+        setErrorAccion("No tienes permiso para reasignar esta tarea.");
+      } else if (
+        normalizado.includes("reábrela") ||
+        mensaje.includes("409")
+      ) {
+        setErrorAccion("La tarea está completada. Reábrela para editarla.");
+      } else if (
+        normalizado.includes("no encontrada") ||
+        mensaje.includes("404")
+      ) {
+        setErrorAccion("La tarea no existe o fue eliminada.");
+      } else {
+        setErrorAccion(
+          mensajeDeError(err, "No se pudieron guardar los cambios."),
+        );
+      }
+      setConfirmarQuitar(false);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function confirmar() {
+    if (sinAsignados) return;
+    if (quitados.length > 0) {
+      setConfirmarQuitar(true);
+      return;
+    }
+    void aplicar();
+  }
+
+  const cerrar = () => {
+    if (!enviando) onCerrar();
+  };
+
+  return (
+    <>
+      <Modal abierto={abierto} onCerrar={cerrar} titulo="Reasignar integrantes">
+        <fieldset className="detalle-tarea-fieldset" disabled={enviando}>
+          {cargando ? (
+            <p className="detalle-tarea-nota">Cargando integrantes…</p>
+          ) : errorCarga ? (
+            <p className="detalle-tarea-error" role="alert">
+              {errorCarga}
+            </p>
+          ) : (
+            <>
+              <p className="detalle-tarea-nota">
+                Marca quiénes trabajan en esta tarea. El líder también puede
+                quitarse o quedarse.
+              </p>
+              <AsignarIntegrantes
+                integrantes={integrantes}
+                seleccionados={seleccionados}
+                onChange={setSeleccionados}
+                usuarioActualId={usuarioActualId}
+                etiqueta="Integrantes del grupo"
+              />
+              {sinAsignados && (
+                <p className="detalle-tarea-nota" role="alert">
+                  La tarea necesita al menos un asignado.
+                </p>
+              )}
+              {errorAccion && (
+                <p className="detalle-tarea-error" role="alert">
+                  {errorAccion}
+                </p>
+              )}
+            </>
+          )}
+        </fieldset>
+
+        <div className="detalle-tarea-modal-acciones">
+          <button
+            type="button"
+            className="detalle-tarea-boton detalle-tarea-boton-secundario"
+            onClick={cerrar}
+            disabled={enviando}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="detalle-tarea-boton detalle-tarea-boton-primario"
+            onClick={confirmar}
+            disabled={
+              !hayCambios || sinAsignados || cargando || enviando || !!errorCarga
+            }
+          >
+            {enviando ? "Guardando…" : "Confirmar"}
+          </button>
+        </div>
+      </Modal>
+
+      <DialogoConfirmacion
+        abierto={confirmarQuitar}
+        titulo="Quitar integrantes"
+        peligro
+        textoConfirmar="Quitar y guardar"
+        cargando={enviando}
+        mensaje={
+          <>
+            <p>
+              Vas a quitar de esta tarea a{" "}
+              <strong>{quitados.map(nombreDe).join(", ")}</strong>.
+            </p>
+            <p>
+              Se borrarán sus archivos subidos, sus sesiones de cronómetro, su
+              historial y su asignación. No se puede deshacer.
+            </p>
+            {completadosQuitados.length > 0 && (
+              <p>
+                Ojo:{" "}
+                <strong>{completadosQuitados.map((a) => nombreDe(a.id_usuario)).join(", ")}</strong>{" "}
+                {completadosQuitados.length === 1
+                  ? "ya había completado su parte."
+                  : "ya habían completado su parte."}
+              </p>
+            )}
+            {errorAccion && (
+              <p className="detalle-tarea-error" role="alert">
+                {errorAccion}
+              </p>
+            )}
+          </>
+        }
+        onConfirmar={() => void aplicar()}
+        onCancelar={() => {
+          if (!enviando) setConfirmarQuitar(false);
+        }}
+      />
+    </>
+  );
+}
+
 function Esqueleto() {
   return (
     <div
@@ -1165,6 +1425,7 @@ function DetalleTareaGrupoPage() {
   const [modalCompletar, setModalCompletar] = useState(false);
   const [confirmarEliminarTarea, setConfirmarEliminarTarea] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
+  const [modalReasignar, setModalReasignar] = useState(false);
   const [eliminandoTarea, setEliminandoTarea] = useState(false);
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
   const [confirmarReabrir, setConfirmarReabrir] = useState(false);
@@ -1669,6 +1930,7 @@ function DetalleTareaGrupoPage() {
               <AccionesLider
                 completada={completada}
                 onEditar={() => setModalEditar(true)}
+                onReasignar={() => setModalReasignar(true)}
                 onEliminar={() => {
                   setErrorEliminar(null);
                   setConfirmarEliminarTarea(true);
@@ -1704,6 +1966,19 @@ function DetalleTareaGrupoPage() {
           onCerrar={() => setModalEditar(false)}
           onGuardada={() => {
             setModalEditar(false);
+            void cargar({ silencioso: true });
+          }}
+        />
+
+        <ModalReasignar
+          abierto={modalReasignar}
+          idGrupo={idG}
+          idTarea={idT}
+          asignados={asignados}
+          usuarioActualId={idUsuarioActual}
+          onCerrar={() => setModalReasignar(false)}
+          onGuardada={() => {
+            setModalReasignar(false);
             void cargar({ silencioso: true });
           }}
         />

@@ -196,6 +196,16 @@ export function listarAsignadosTarea(idTarea: number): Promise<IntegranteAsignad
   return apiFetch<IntegranteAsignadoBackend[]>(`/tareas/${idTarea}/asignados`);
 }
 
+export function reasignarAsignadosTarea(
+  idTarea: number,
+  idsUsuarios: number[],
+): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/asignados`, {
+    method: "PUT",
+    body: JSON.stringify({ ids_usuarios: idsUsuarios }),
+  });
+}
+
 export function listarTareasAsignadasMias(): Promise<TareaBackend[]> {
   return apiFetch<TareaBackend[]>("/tareas/asignadas/mias");
 }

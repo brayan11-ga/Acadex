@@ -8,4 +8,6 @@ export interface IntegranteAsignable {
   correo_electronico: string;
   nombre?: string;
   rol: RolIntegrante;
+  // Solo lo envía el detalle de tarea grupal al reasignar; crear tarea no lo usa.
+  completado?: boolean;
 }
