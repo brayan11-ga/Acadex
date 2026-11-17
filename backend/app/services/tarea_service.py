@@ -56,6 +56,28 @@ def _formatear_fecha_corta(fecha: Optional[datetime]) -> str:
     return f"{fecha.day} {_MESES_CORTOS.get(fecha.month, '')}".strip()
 
 
+def _fecha_en_minutos(valor: Optional[datetime]) -> Optional[datetime]:
+    """Normaliza a minutos para comparar fechas del mismo tipo sin falsos avisos."""
+    if valor is None:
+        return None
+    return valor.replace(second=0, microsecond=0)
+
+
+def _cambio_fecha_entrega(
+    tarea: Tarea, cambios: dict, fecha_anterior: Optional[datetime]
+) -> bool:
+    """C9: True solo si el PUT es de una tarea grupal y la fecha cambió de verdad."""
+    if tarea.id_grupo is None:
+        return False
+    if "fecha_entrega" not in cambios:
+        return False
+    # Se compara el valor nuevo (datetime parseado por el schema) con el
+    # anterior (datetime de la BD): nunca una fecha contra un texto.
+    return _fecha_en_minutos(cambios["fecha_entrega"]) != _fecha_en_minutos(
+        fecha_anterior
+    )
+
+
 def _calcular_estado_grupal(
     tarea: Tarea, ids_asignados: set[int], ids_completados: set[int]
 ) -> str:
@@ -234,6 +256,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                 ),
             )
     estado_anterior = tarea.estado
+    # Se captura antes del repositorio, que modifica el mismo objeto `tarea`.
+    fecha_anterior = getattr(tarea, "fecha_entrega", None)
 
     # Actualizamos la tarea mediante el repositorio
     try:
@@ -272,6 +296,35 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                 tarea_actualizada.id_categoria,
                 commit=False,
             )
+
+        # C9: si la fecha de entrega cambió de verdad, avisa a los asignados
+        # (menos al líder) en la misma transacción del PUT. Solo grupales.
+        if _cambio_fecha_entrega(tarea_actualizada, cambios, fecha_anterior):
+            nombre_cambio = _recortar_nombre_tarea(tarea_actualizada.nombre)
+            fecha_vieja_txt = _formatear_fecha_corta(fecha_anterior)
+            fecha_nueva_txt = _formatear_fecha_corta(
+                tarea_actualizada.fecha_entrega
+            )
+            asignados_cambio = (
+                asignacion_tarea_repository.obtener_usuarios_asignados(
+                    db, tarea_actualizada.id_tarea
+                )
+            )
+            for asignado in asignados_cambio:
+                if asignado.id_usuario == id_usuario:
+                    continue
+                notificacion_repository.crear_notificacion(
+                    db,
+                    titulo="Cambió la fecha de entrega",
+                    detalles=(
+                        f"«{nombre_cambio}»: de {fecha_vieja_txt} "
+                        f"a {fecha_nueva_txt}."
+                    )[:100],
+                    tipo="tarea_fecha_cambiada",
+                    id_usuario=asignado.id_usuario,
+                    id_tarea=tarea_actualizada.id_tarea,
+                    commit=False,
+                )
 
         # Reabrir conserva el historial como evidencia de una finalización
         # anterior. Si vuelve a completarse se agrega un nuevo registro.
@@ -610,8 +663,39 @@ def eliminar_tarea(db: Session, id_tarea: int, id_usuario: int) -> None:
             detail="No tienes permiso para eliminar esta tarea.",
         )
 
+    # C9: se capturan antes del borrado. Tras el DELETE en cascada ya no habría
+    # asignados que consultar. Las individuales no generan notificaciones.
+    es_grupal = tarea.id_grupo is not None
+    nombre = (
+        _recortar_nombre_tarea(getattr(tarea, "nombre", "")) if es_grupal else ""
+    )
+    asignados = (
+        asignacion_tarea_repository.obtener_usuarios_asignados(db, id_tarea)
+        if es_grupal and db is not None
+        else []
+    )
+
     # Mantiene los binarios recuperables si falla el commit que elimina la tarea y sus metadatos.
     with archivo_service.preparar_eliminacion_archivos_tarea(db, id_tarea):
+        if es_grupal and db is not None:
+            # La notificación viaja en la misma transacción que el borrado:
+            # `eliminar_tarea` del repositorio hace el commit final. Va sin
+            # `id_tarea` porque la FK está en cascada y la tarea se elimina.
+            for asignado in asignados:
+                if asignado.id_usuario == id_usuario:
+                    continue
+                notificacion_repository.crear_notificacion(
+                    db,
+                    titulo="Tarea eliminada",
+                    detalles=(
+                        f"El líder eliminó la tarea «{nombre}». "
+                        "Ya no está asignada a ti."
+                    )[:100],
+                    tipo="tarea_eliminada",
+                    id_usuario=asignado.id_usuario,
+                    id_tarea=None,
+                    commit=False,
+                )
         tarea_repository.eliminar_tarea(db, tarea)
 
 def listar_tareas_calendario(
