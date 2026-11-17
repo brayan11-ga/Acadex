@@ -36,6 +36,7 @@ export interface ActualizarTareaPayload {
   dificultad_estimada?: number;
   tiempo_estimado?: number;
   id_categoria?: number;
+  max_archivos?: number;
   estado?: string;
 }
 
