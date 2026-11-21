@@ -18,6 +18,7 @@ Empieza por el [README](../README.md). Para ejecutar el proyecto, elige Docker o
 | [Migraciones SQL históricas](../backend/migrations/README.md) | Historia anterior a Alembic y notas técnicas de esa transición; no es una guía de inicio |
 | [Adopción de Alembic](DESPLIEGUE_ALEMBIC.md) | Procedimiento excepcional para una base con tablas e historial por reconciliar; separado del desarrollo local |
 | [Arquitectura](arquitectura.md) | Componentes, comunicación y organización del código |
+| [Plan de implantación](plan-implantacion.md) | Despliegue, configuración, operación y criterios de aceptación de Acadex |
 | [Calidad y pruebas](calidad-y-pruebas.md) | Comandos de validación, entorno de pruebas PostgreSQL y alcance de CI |
 | [Diseño frontend](diseno-frontend.md) | Tokens, estilos y convenciones de interfaz existentes |
 | [RF](RF/README.md) y sus 58 fichas | Requisitos funcionales, historias y escenarios |
