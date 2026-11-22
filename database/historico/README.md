@@ -1,6 +1,23 @@
 # Migraciones SQL históricas de ACADEX
 
-Estas migraciones documentan la historia anterior y se conservan para auditoría. La fuente vigente es Alembic en `backend/alembic/versions/`; no agregues migraciones nuevas a esta carpeta ni ejecutes sus SQL como ruta normal.
+Esta carpeta reúne los SQL de la ruta manual anterior. Crea las nuevas migraciones en
+[`backend/alembic/versions/`](../../backend/alembic/versions) y sigue
+[Inicio con Docker](../../docs/inicio-docker.md) o
+[Inicio manual](../../docs/inicio-manual.md) para preparar una base local.
+Consulta la [guía de base de datos](../README.md) para actualizar una instalación.
+
+## Archivos conservados
+
+- [`init.sql`](init.sql) es el volcado base. [`acadex.sql`](acadex.sql) reproduce el
+  arranque manual antiguo con ese volcado y las cinco primeras migraciones SQL.
+- Los SQL fechados contienen los cambios y las dos reversiones manuales que
+  antes se guardaban en los directorios de migraciones.
+- [`supabase_new_project.sql`](supabase_new_project.sql) y
+  [`supabase_resume_migrations.sql`](supabase_resume_migrations.sql) son
+  snapshots manuales antiguos con configuración RLS.
+
+Los scripts se conservan para consulta y reproducción histórica en bases aisladas.
+Algunos comentarios conservan las rutas originales.
 
 Las referencias a bases migradas o pendientes describen el estado registrado en
 aquella transición. No confirman el estado actual de Supabase. Para instalar en
@@ -10,21 +27,30 @@ local, usa [Inicio con Docker](../../docs/inicio-docker.md) o
 
 ## Secuencia SQL histórica convertida a revisiones Alembic
 
-1. `20261011_add_archivo_uploader.sql`: agrega `archivos.id_usuario_subida` como nullable y una FK a `usuarios.id_usuario` con `ON DELETE SET NULL`. Las filas históricas quedan sin autor conocido.
-2. `20261011_add_registration_consents.sql`: crea `consentimientos_usuario`, su FK con `ON DELETE CASCADE`, el `CHECK` de los dos tipos vigentes y la restricción `UNIQUE` por usuario, tipo y versión.
-3. `20261012_add_gemini_usage_limits.sql`: crea contadores diarios para limitar análisis de Gemini por usuario y para toda la demostración. No guarda documentos ni respuestas.
-4. `20261012_add_gemini_quota_lockout.sql`: crea el bloqueo compartido que evita nuevas llamadas hasta el reinicio diario de Google cuando la API confirma que agotó su cuota diaria.
-5. `20261012_add_security_guards.sql`: agrega el vencimiento de bloqueos de cuenta, una tabla de límites temporales compartidos y un índice único parcial para permitir solo un cronómetro activo por tarea. La migración se detiene sin borrar filas si encuentra sesiones activas duplicadas.
+1. [`20261011_add_archivo_uploader.sql`](20261011_add_archivo_uploader.sql) agrega la columna opcional `archivos.id_usuario_subida` y una FK a `usuarios.id_usuario` con `ON DELETE SET NULL`. Las filas históricas quedan sin autor conocido.
+2. [`20261011_add_registration_consents.sql`](20261011_add_registration_consents.sql) crea `consentimientos_usuario`, su FK con `ON DELETE CASCADE`, el `CHECK` de los dos tipos vigentes y la restricción `UNIQUE` por usuario, tipo y versión.
+3. [`20261012_add_gemini_usage_limits.sql`](20261012_add_gemini_usage_limits.sql) crea contadores diarios para limitar análisis de Gemini por usuario y para toda la demostración. No guarda documentos ni respuestas.
+4. [`20261012_add_gemini_quota_lockout.sql`](20261012_add_gemini_quota_lockout.sql) crea el bloqueo compartido que evita nuevas llamadas hasta el reinicio diario de Google cuando la API confirma que agotó su cuota diaria.
+5. [`20261012_add_security_guards.sql`](20261012_add_security_guards.sql) añade el vencimiento de bloqueos de cuenta, una tabla de límites temporales compartidos y un índice único parcial para permitir solo un cronómetro activo por tarea. La migración se detiene sin borrar filas si encuentra sesiones activas duplicadas.
+6. [`20261018_add_tarea_max_archivos.sql`](20261018_add_tarea_max_archivos.sql) es el SQL manual equivalente a `20261018_01`, que agrega `tareas.max_archivos`.
 
-La ruta de análisis de Gemini requiere que las migraciones tercera y cuarta estén aplicadas. En Compose, el servicio `migrate` las aplica antes de iniciar FastAPI; el proceso de FastAPI no ejecuta DDL. Para la demostración gratuita, el límite inicial es 1 análisis exitoso por usuario y 18 intentos para todo el proyecto por día de reinicio de Google. `GEMINI_GLOBAL_DAILY_LIMIT` puede configurarse entre 1 y 20; solo súbelo a 20 si AI Studio confirma 20 solicitudes diarias para ese proyecto y no se harán llamadas manuales con la misma cuota. El backend impone el máximo de 20 aunque queden variables antiguas con valores mayores en un `.env`. La cuota personal usa día UTC; la global usa el día de Google (medianoche del Pacífico). Los intentos que Google rechaza liberan el cupo personal, pero siguen contando contra el límite global. Un error confirmado de cuota diaria crea un bloqueo persistente hasta medianoche del Pacífico. Si las tablas no están disponibles, el endpoint falla de forma segura y no llama al proveedor.
+La ruta de análisis de Gemini requiere las revisiones Alembic que crean los contadores y bloqueos. En Compose, el servicio `migrate` ejecuta Alembic antes de iniciar FastAPI. Para la demostración gratuita, el límite inicial es 1 análisis exitoso por usuario y 18 intentos para todo el proyecto por día de reinicio de Google. `GEMINI_GLOBAL_DAILY_LIMIT` puede configurarse entre 1 y 20. Solo súbelo a 20 si AI Studio confirma 20 solicitudes diarias para ese proyecto y no se harán llamadas manuales con la misma cuota. El backend impone el máximo de 20 aunque queden variables antiguas con valores mayores en un `.env`. La cuota personal usa día UTC. La global usa el día de Google (medianoche del Pacífico). Los intentos que Google rechaza liberan el cupo personal y siguen contando contra el límite global. Un error confirmado de cuota diaria crea un bloqueo persistente hasta medianoche del Pacífico. Si faltan las tablas, el endpoint rechaza la solicitud sin llamar al proveedor.
 
-La migración quinta es necesaria antes de habilitar registro, inicio de sesión, recuperación de contraseña o unión a grupos: si falta su tabla de límites, esas rutas responden `503` de forma segura. Supabase es producción y no se ha reconciliado ni migrado con Alembic. Antes de cualquier acción allí, compara su esquema e historial y revisa por separado sus políticas de seguridad a nivel de fila (RLS); un respaldo por sí solo no sustituye esa comprobación. Si una migración aborta por sesiones activas duplicadas, no elimine filas automáticamente: revise con el propietario qué sesión debe finalizar y vuelva a evaluar la migración después de resolver la inconsistencia.
+Registro, inicio de sesión, recuperación de contraseña y unión a grupos responden `503` si falta la tabla de límites de la revisión de guardas de seguridad. Si la revisión aborta por sesiones activas duplicadas, acuerda con el propietario qué sesión debe finalizar antes de reintentar.
 
 El código bloquea una cuenta durante 15 minutos al quinto intento fallido y también libera los bloqueos heredados permanentes. La tabla de límites almacena solo HMAC de los identificadores y contadores con retención de 24 horas; los límites se comparten entre instancias mediante PostgreSQL.
 
-La secuencia equivalente está versionada en `backend/alembic/versions/`. El Compose normal y el Compose de pruebas ejecutan Alembic mediante el servicio `migrate`; los SQL de esta carpeta ya no se montan para inicialización y son históricos, no el procedimiento operativo vigente. FastAPI espera a que el servicio de migración termine correctamente, pero no ejecuta DDL por su cuenta. La base persistente de Docker `acadex_dev` fue respaldada y comparada antes de registrar `20261016_03`, y después se actualizó hasta `20261016_06`. Se verificaron 18 tablas funcionales, las nueve categorías originales y que `alembic check` no encontrara operaciones pendientes. Este resultado solo corresponde al entorno local de Docker. Supabase no fue reconciliada ni migrada; su esquema y políticas de seguridad a nivel de fila (RLS) requieren una revisión separada antes de cualquier cambio. No se ha confirmado aquí el estado del PostgreSQL instalado en Windows ni el de las bases auxiliares.
+Durante la transición se respaldó y comparó la base persistente de Docker
+`acadex_dev` antes de registrar `20261016_03`. Luego se actualizó a
+`20261016_06`. En esa base local se comprobaron 18 tablas, las nueve
+categorías originales y el resultado de `alembic check` sin operaciones
+pendientes. El estado informado de Supabase se registra en la
+[guía de Alembic](../../docs/DESPLIEGUE_ALEMBIC.md#estado-informado-de-supabase).
 
-Los SQL originales tenían comprobaciones de repetición para una ejecución manual. Alembic registra el avance en `public.alembic_version`, por lo que una revisión aplicada no se vuelve a ejecutar al correr `upgrade head`; su código no se debe copiar de nuevo aquí. Alembic se niega a arrancar la revisión base si encuentra tablas Acadex sin historial, hasta que se diseñe una reconciliación segura.
+Los SQL originales tenían comprobaciones para repetir la ejecución manual.
+Alembic usa `public.alembic_version` para aplicar solo las revisiones pendientes.
+Si encuentra tablas de Acadex sin historial, la guardia exige
+[adoptar la base existente](../../docs/DESPLIEGUE_ALEMBIC.md#adopción-de-una-base-sin-historial).
 
 ## Archivos adjuntos
 

@@ -55,7 +55,7 @@ El orden configurado es:
 3. `backend` arranca cuando la migración termina correctamente; también depende de Mailpit.
 4. `frontend` arranca cuando la API está saludable.
 
-En una base nueva no cargues `database/init.sql` ni los SQL de `backend/migrations/`: son históricos. Alembic crea el esquema vigente.
+En una base nueva, no ejecutes manualmente los [SQL históricos](../database/historico/README.md): se conservan únicamente para consulta. Alembic es el sistema encargado de crear y actualizar el esquema vigente.
 
 ## 3. Comprueba el resultado
 

@@ -1,6 +1,7 @@
 """Alembic usa el engine compartido por la aplicación FastAPI."""
 
 import os
+from logging import getLogger
 from logging.config import fileConfig
 
 from alembic import context
@@ -67,6 +68,19 @@ def _rechazar_esquema_existente_sin_historial(connection) -> None:
     )
 
 
+def _verificar_revision_inicial(revisiones: tuple[str, ...]) -> str:
+    if not revisiones and config.attributes["permitir_base_vacia"]:
+        return "base vacía"
+    if len(revisiones) != 1:
+        raise RuntimeError("Pre-Deploy requiere exactamente una revisión aplicada.")
+
+    actual = revisiones[0]
+    revision = context.script.get_revision(actual)
+    if revision is None or revision.revision != actual:
+        raise RuntimeError(f"Revisión aplicada desconocida: {actual}.")
+    return actual
+
+
 def run_migrations_offline() -> None:
     """Genera SQL sin abrir una conexión a PostgreSQL."""
     context.configure(
@@ -102,8 +116,24 @@ def run_migrations_online() -> None:
             include_object=_incluir_objeto,
             transaction_per_migration=True,
         )
+        head = config.attributes.get("revision_predeploy")
+        if head is not None:
+            migracion = context.get_context()
+            actual = _verificar_revision_inicial(migracion.get_current_heads())
+            logger = getLogger("alembic.predeploy")
+            logger.info("Revisión antes de migrar: %s. Head esperado: %s.", actual, head)
+            connection.rollback()
+
         with context.begin_transaction():
             context.run_migrations()
+
+        if head is not None:
+            finales = migracion.get_current_heads()
+            if finales != (head,):
+                raise RuntimeError(
+                    f"Revisión final inesperada: {finales}. Head esperado: {head}."
+                )
+            logger.info("Revisión final verificada: %s.", head)
 
 
 if context.is_offline_mode():

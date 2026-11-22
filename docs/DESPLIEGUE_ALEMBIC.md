@@ -1,4 +1,4 @@
-# Alinear una base existente con Alembic
+# Migraciones y adopción de Alembic
 
 Para instalar Acadex por primera vez, usa [Inicio con Docker](inicio-docker.md) o
 [Inicio manual](inicio-manual.md). Esta guía es para una intervención de datos
@@ -7,20 +7,33 @@ parte del arranque local.
 
 ## Alcance
 
-Esta guía explica cómo adoptar con seguridad Alembic en una base que ya tiene
-tablas y datos. `stamp` registra una revisión en `alembic_version`; no crea,
-altera ni verifica las tablas. Por eso, primero se compara el esquema completo.
+Las migraciones nuevas se aplican con `upgrade`. La adopción se reserva para
+bases con tablas y sin historial de Alembic. `stamp` solo escribe el registro
+en `alembic_version`, por lo que la adopción exige comparar antes el esquema
+completo.
 
 No guardes respaldos, archivos `.env`, credenciales ni datos personales dentro
 del repositorio. Usa una copia aislada para ensayar el procedimiento.
 
-## Evidencia histórica y estado a verificar
+## Estado informado de Supabase
 
-Los resultados siguientes proceden de notas anteriores. No se repitieron en la
-revisión documental y no confirman la revisión ni las políticas actuales de
-Supabase. Antes de operar, hay que verificar el destino y su estado real.
+El estado confirmado de Supabase es PostgreSQL 17.11 con la revisión
+Alembic `20261018_01` registrada.
+Antes de una nueva operación en producción, confirma el destino y la revisión
+vigente, compara el esquema y revisa los permisos y las políticas RLS aplicables.
 
-- Al revisar el repositorio, la revisión `head` era `20261018_01`. Confirma siempre el `head` de la rama que vayas a desplegar; este dato cambia al añadir migraciones.
+## Evidencia histórica de la copia aislada
+
+Los resultados siguientes corresponden a pruebas históricas realizadas en una
+copia aislada. No sustituyen la comprobación actual del esquema, los permisos
+ni las políticas RLS de Supabase.
+
+El `head` de Alembic debe verificarse antes de cada despliegue. La prueba
+de recuperación realizada el 22/11/2026 confirmó 19 tablas y la revisión
+`20261018_01` en un respaldo de producción, pero no validó los permisos
+del rol de migración en Supabase.
+
+
 - La copia restaurada tenía las mismas 18 tablas, 110 columnas, 72
   restricciones y 43 índices que una base nueva creada con las migraciones.
 - La única diferencia textual en una restricción `CHECK` era el formato de un
@@ -91,7 +104,51 @@ el ensayo, no lo supongas. Consulta la documentación de PostgreSQL 17 sobre
 [`ALTER TABLE`](https://www.postgresql.org/docs/17/sql-altertable.html) y
 [modificación de tablas](https://www.postgresql.org/docs/17/ddl-alter.html).
 
-## Procedimiento recomendado
+## Pre-Deploy de Render
+
+Cuando se apruebe la activación, configura este comando en **Pre-Deploy Command**.
+El directorio de trabajo de la imagen es `/app`. Uvicorn sigue siendo el
+comando de arranque.
+
+```sh
+python -m scripts.migrar_bd
+```
+
+Desde el repositorio, ejecútalo en `backend/` con Alembic 1.16.5. El comando
+registra la revisión aplicada y el único `head` disponible, aplica las
+revisiones pendientes y comprueba que `public.alembic_version` tenga exactamente
+ese `head`. Un historial ausente, desconocido o inconsistente, o un fallo de
+conexión o de migración, devuelve un código distinto de cero. Para probar la
+inicialización de una base nueva aislada, usa
+`python -m scripts.migrar_bd --allow-empty`. El comando rechaza esa opción con
+`APP_ENV=production`.
+
+Antes de activar el Pre-Deploy:
+
+1. Completa el PR a `develop` y el PR de liberación a `main`. Exige los checks de
+   CI en GitHub, incluido **Backend con PostgreSQL aislado**. El workflow corre
+   en los PR y en cada push a `main`. En Render, configura **After CI Checks
+   Pass** y confirma que los checks ejecutados corresponden al SHA que se
+   desplegará. Para un despliegue manual, comprueba ese SHA antes de iniciarlo.
+   [Flujo de PR](../CONTRIBUTING.md) · [CI en Render](https://render.com/docs/deploys#integrating-with-ci)
+2. Comprueba que los `DB_*` del servicio identifican el destino aprobado, que TLS
+   funciona desde Render y que el rol puede leer y actualizar el historial con
+   sus reglas RLS, además de ejecutar el DDL previsto.
+3. Confirma con el responsable que el respaldo se puede restaurar. Ensaya el
+   comando con la imagen candidata en PostgreSQL 17 aislado. Comprueba que la
+   API anterior sigue operativa durante el cambio y que la nueva pasa
+   `/health/ready` y una operación sintética. Define límites de espera de
+   bloqueos y de ejecución según ese ensayo. Coordina un solo proceso migrador
+   para evitar que coincida con una ejecución manual.
+
+Cada revisión tiene su propia transacción. Si el proceso falla después de
+aplicar alguna, las revisiones ya confirmadas quedan en la base. Revisa la
+revisión aplicada y el esquema antes de reintentar. Un rollback de Render
+vuelve al código anterior y deja aplicado el DDL.
+[Pasos de despliegue](https://render.com/docs/deploys#deploy-steps) ·
+[Rollbacks de Render](https://render.com/docs/rollbacks)
+
+## Adopción de una base sin historial
 
 ### 1. Crear un respaldo recuperable
 
@@ -151,7 +208,8 @@ datos de prueba sintéticos.
 
 ### 6. Activar RLS en la tabla de control de Alembic
 
-Después del `stamp` en Supabase, activa RLS en la tabla de historial de Alembic:
+Para una tabla de historial recién registrada, aplica RLS si lo exige la
+configuración aprobada del destino.
 
 ```sql
 ALTER TABLE public.alembic_version ENABLE ROW LEVEL SECURITY;
@@ -162,11 +220,11 @@ RLS activo en `public.alembic_version`. Esa prueba local usó un superusuario,
 que omite RLS. Ejecuta el comando con el rol propietario de la tabla y valida
 por separado los permisos del rol de migración de Supabase.
 
-## Procedimiento final para Windows (PowerShell)
+## Adopción de una base sin historial desde PowerShell
 
-Este procedimiento es para una persona autorizada a operar la base. No lo
-ejecutes desde una sesión de prueba ni con una conexión que apunte a otra base.
-El respaldo debe quedar fuera del repositorio y con acceso restringido.
+Usa este procedimiento si la base autorizada requiere adopción. Ensaya primero
+en una copia aislada. El respaldo debe quedar fuera del repositorio y con
+acceso restringido.
 
 ### A. Preparar el entorno y revisar el destino
 
@@ -257,9 +315,8 @@ if ($LASTEXITCODE -ne 0) { throw 'La segunda verificación de upgrade falló.' }
 `upgrade head` deben terminar sin aplicar revisiones nuevas. La variable de
 adopción no habilita `upgrade`; quítala al terminar `stamp`.
 
-Después del `stamp`, aplica también el comando RLS de la sección anterior a
-`public.alembic_version`, con el rol propietario adecuado. `psql` pedirá la
-contraseña; no la añadas a la línea de comandos:
+Si el destino exige RLS en la tabla de historial recién registrada, aplícalo
+con el rol propietario. Introduce la contraseña cuando `psql` la solicite.
 
 ```powershell
 psql --host $env:DB_HOST --port $env:DB_PORT --username $env:DB_USER --dbname $env:DB_NAME --password --command "ALTER TABLE public.alembic_version ENABLE ROW LEVEL SECURITY;"
@@ -272,13 +329,7 @@ aplicación; debe devolver `t`. Comprueba también `/health/ready` y operaciones
 de la aplicación en un entorno controlado. La prueba con el usuario superusuario
 local no valida los permisos RLS de los roles de Supabase.
 
-### D. Arranque de Render y reversión
-
-El comando del contenedor backend en `backend/Dockerfile` inicia Uvicorn; no
-ejecuta Alembic. El repositorio no contiene una configuración de Render que
-añada una migración al arranque. Por eso, no asumas que el backend de Render
-migra la base al iniciar: la adopción y cualquier migración deben ejecutarse
-como operación explícita y controlada.
+### D. Reversión del registro de adopción
 
 Si necesitas retirar solo el registro de Alembic, conéctate a la base correcta
 como propietario y ejecuta:

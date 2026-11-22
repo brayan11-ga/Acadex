@@ -97,7 +97,7 @@ Las notificaciones de asignación, reasignación, reapertura, eliminación y cam
 
 ## 4. Cambios en la base de datos
 
-- **Límite de archivos:** columna nueva en `tareas` (propuesta: `max_archivos_por_integrante`, entero con `CHECK` entre 1 y 10 y un valor por defecto por definir). Va como migración nueva en `backend/migrations/` (con `IF NOT EXISTS`), más su comprobación en `verify_schema.sql` y la actualización de `database.md`.
+- **Límite de archivos:** la propuesta de octubre era añadir `max_archivos_por_integrante` en `tareas`, con un `CHECK` entre 1 y 10 y un valor por defecto por definir. La [revisión Alembic `20261018_01`](../../backend/alembic/versions/20261018_01_add_tarea_max_archivos.py) añadió `tareas.max_archivos`. La comprobación está en [`verify_schema.sql`](../../database/verify_schema.sql).
 - **"Completó su parte":** no hace falta una tabla nueva. Se usa `historial_tareas` (una fila por usuario y tarea, con `upsert`). Si se quiere garantizar la unicidad en la base, habría que revisar primero si ya hay filas duplicadas.
 
 ---
@@ -174,13 +174,13 @@ Las pantallas de V0 se piden en paralelo, una por sesión: detalle de la tarea (
 ### Buenas prácticas para esta tanda
 - Cada endpoint nuevo se prueba en Swagger con el caso feliz, el de datos inválidos y el de falta de permisos.
 - El borrado del historial al quitar a alguien debe filtrar **siempre** por usuario y tarea a la vez (nunca solo por usuario o por categoría), dentro de la misma transacción, con una prueba que lo verifique.
-- Después de cada `git pull`, revisar si llegaron migraciones nuevas: `git diff --name-status HEAD@{1} HEAD -- backend/migrations`.
-- Al terminar la migración del límite de archivos, actualizar `database.md` y `memory.md`.
+- Después de actualizar la rama, revisa los cambios en `backend/alembic/versions/` con `git diff --name-status "HEAD@{1}" HEAD -- backend/alembic/versions`.
+- Documenta los cambios de esquema en la [guía de base de datos](../../database/README.md).
 - Para las pruebas de estrés: agregar paginación a los listados y mantener los topes de archivos.
 
 ### Pendientes de documentación
 - El Excel tiene IDs repetidos: `RF-002` (debería haber un RF-019 y un RF-023) y `RF-031` (debería haber un RF-032).
-- Observaciones desactualizadas: RF-036, RF-044 y RF-045 dicen que el frontend está pendiente, y RF-039 dice que falta el desbloqueo (el README de migraciones indica que el bloqueo de 15 minutos ya existe).
+- Observaciones desactualizadas: RF-036, RF-044 y RF-045 dicen que el frontend está pendiente, y RF-039 dice que falta el desbloqueo. Las [notas de la migración de seguridad](../../database/historico/README.md#secuencia-sql-histórica-convertida-a-revisiones-alembic) documentan el bloqueo de 15 minutos.
 - Sumar los RF nuevos y sus escenarios a `docs/RF/`.
 - `README.md` de la raíz y la sección de comandos de `AGENTS.md`.
 
