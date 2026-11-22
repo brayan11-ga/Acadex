@@ -24,6 +24,16 @@ vigente, compara el esquema y revisa los permisos y las políticas RLS aplicable
 
 ## Evidencia histórica de la copia aislada
 
+Los resultados siguientes corresponden a pruebas históricas realizadas en una
+copia aislada. No sustituyen la comprobación actual del esquema, los permisos
+ni las políticas RLS de Supabase.
+
+El `head` de Alembic debe verificarse antes de cada despliegue. La prueba
+de recuperación realizada el 22/11/2026 confirmó 19 tablas y la revisión
+`20261018_01` en un respaldo de producción, pero no validó los permisos
+del rol de migración en Supabase.
+
+
 - La copia restaurada tenía las mismas 18 tablas, 110 columnas, 72
   restricciones y 43 índices que una base nueva creada con las migraciones.
 - La única diferencia textual en una restricción `CHECK` era el formato de un

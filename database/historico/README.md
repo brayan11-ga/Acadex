@@ -19,6 +19,12 @@ Consulta la [guía de base de datos](../README.md) para actualizar una instalaci
 Los scripts se conservan para consulta y reproducción histórica en bases aisladas.
 Algunos comentarios conservan las rutas originales.
 
+Las referencias a bases migradas o pendientes describen el estado registrado en
+aquella transición. No confirman el estado actual de Supabase. Para instalar en
+local, usa [Inicio con Docker](../../docs/inicio-docker.md) o
+[Inicio manual](../../docs/inicio-manual.md); para una base existente, consulta
+[Base de datos](../../database/README.md).
+
 ## Secuencia SQL histórica convertida a revisiones Alembic
 
 1. [`20261011_add_archivo_uploader.sql`](20261011_add_archivo_uploader.sql) agrega la columna opcional `archivos.id_usuario_subida` y una FK a `usuarios.id_usuario` con `ON DELETE SET NULL`. Las filas históricas quedan sin autor conocido.
