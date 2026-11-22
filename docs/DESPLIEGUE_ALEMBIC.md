@@ -94,6 +94,50 @@ el ensayo, no lo supongas. Consulta la documentación de PostgreSQL 17 sobre
 [`ALTER TABLE`](https://www.postgresql.org/docs/17/sql-altertable.html) y
 [modificación de tablas](https://www.postgresql.org/docs/17/ddl-alter.html).
 
+## Pre-Deploy de Render
+
+Cuando se apruebe la activación, configura este comando en **Pre-Deploy Command**.
+El directorio de trabajo de la imagen es `/app`. Uvicorn sigue siendo el
+comando de arranque.
+
+```sh
+python -m scripts.migrar_bd
+```
+
+Desde el repositorio, ejecútalo en `backend/` con Alembic 1.16.5. El comando
+registra la revisión aplicada y el único `head` disponible, aplica las
+revisiones pendientes y comprueba que `public.alembic_version` tenga exactamente
+ese `head`. Un historial ausente, desconocido o inconsistente, o un fallo de
+conexión o de migración, devuelve un código distinto de cero. Para probar la
+inicialización de una base nueva aislada, usa
+`python -m scripts.migrar_bd --allow-empty`. El comando rechaza esa opción con
+`APP_ENV=production`.
+
+Antes de activar el Pre-Deploy:
+
+1. Completa el PR a `develop` y el PR de liberación a `main`. Exige los checks de
+   CI en GitHub, incluido **Backend con PostgreSQL aislado**. El workflow corre
+   en los PR y en cada push a `main`. En Render, configura **After CI Checks
+   Pass** y confirma que los checks ejecutados corresponden al SHA que se
+   desplegará. Para un despliegue manual, comprueba ese SHA antes de iniciarlo.
+   [Flujo de PR](../CONTRIBUTING.md) · [CI en Render](https://render.com/docs/deploys#integrating-with-ci)
+2. Comprueba que los `DB_*` del servicio identifican el destino aprobado, que TLS
+   funciona desde Render y que el rol puede leer y actualizar el historial con
+   sus reglas RLS, además de ejecutar el DDL previsto.
+3. Confirma con el responsable que el respaldo se puede restaurar. Ensaya el
+   comando con la imagen candidata en PostgreSQL 17 aislado. Comprueba que la
+   API anterior sigue operativa durante el cambio y que la nueva pasa
+   `/health/ready` y una operación sintética. Define límites de espera de
+   bloqueos y de ejecución según ese ensayo. Coordina un solo proceso migrador
+   para evitar que coincida con una ejecución manual.
+
+Cada revisión tiene su propia transacción. Si el proceso falla después de
+aplicar alguna, las revisiones ya confirmadas quedan en la base. Revisa la
+revisión aplicada y el esquema antes de reintentar. Un rollback de Render
+vuelve al código anterior y deja aplicado el DDL.
+[Pasos de despliegue](https://render.com/docs/deploys#deploy-steps) ·
+[Rollbacks de Render](https://render.com/docs/rollbacks)
+
 ## Adopción de una base sin historial
 
 ### 1. Crear un respaldo recuperable
@@ -275,13 +319,7 @@ aplicación; debe devolver `t`. Comprueba también `/health/ready` y operaciones
 de la aplicación en un entorno controlado. La prueba con el usuario superusuario
 local no valida los permisos RLS de los roles de Supabase.
 
-### D. Arranque de Render y reversión
-
-El comando del contenedor backend en `backend/Dockerfile` inicia Uvicorn; no
-ejecuta Alembic. El repositorio no contiene una configuración de Render que
-añada una migración al arranque. Por eso, no asumas que el backend de Render
-migra la base al iniciar: la adopción y cualquier migración deben ejecutarse
-como operación explícita y controlada.
+### D. Reversión del registro de adopción
 
 Si necesitas retirar solo el registro de Alembic, conéctate a la base correcta
 como propietario y ejecuta:
