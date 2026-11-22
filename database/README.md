@@ -77,6 +77,13 @@ El Compose ya suministra `ACADEX_RUN_POSTGRES_TESTS` y las demás variables `ACA
 
 Antes de crear o eliminar esquemas, verifica esas condiciones; después de conectar, comprueba que PostgreSQL informa `acadex_test`. Las suites usan esquemas aleatorios con prefijo `acadex_test_`; la API aplica rollback por prueba. Estas barreras no autorizan ejecutar pruebas contra Supabase o una base compartida.
 
-## Producción
 
-La [guía de Alembic](../docs/DESPLIEGUE_ALEMBIC.md#estado-informado-de-supabase) recoge el estado informado de Supabase y el procedimiento manual para aplicar revisiones nuevas en producción.
+## Producción y evidencia histórica
+
+La [guía de Alembic](../docs/DESPLIEGUE_ALEMBIC.md#estado-informado-de-supabase) recoge el estado informado de Supabase y el procedimiento para aplicar revisiones nuevas en producción.
+
+Esta guía no verifica ni modifica Supabase por sí sola. Las evidencias históricas de migraciones y pruebas locales no garantizan el estado actual de producción.
+
+Antes de cualquier migración en producción, se deben comprobar el esquema, el historial de Alembic, un respaldo recuperable, las políticas RLS y los permisos del rol de migración.
+
+La activación del Pre-Deploy de Render requiere una validación independiente.
