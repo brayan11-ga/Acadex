@@ -10,11 +10,10 @@ Este documento cubre cambios de esquema, administración local y las barreras de
 | --- | --- |
 | [backend/alembic.ini](../backend/alembic.ini), [env.py](../backend/alembic/env.py) y [versions/](../backend/alembic/versions) | Configuración y cadena vigente de migraciones |
 | [verify_schema.sql](verify_schema.sql) | Consulta de solo lectura para comprobar objetos concretos del esquema |
-| [init.sql](init.sql), [scripts/acadex.sql](scripts/acadex.sql) y [backend/migrations/](../backend/migrations/README.md) | Ruta SQL histórica; no se ejecuta en el arranque actual |
-| [supabase_new_project.sql](supabase_new_project.sql) y [supabase_resume_migrations.sql](supabase_resume_migrations.sql) | Snapshots manuales antiguos, con políticas RLS; no son la ruta actual de instalación |
+| [historico/](historico/README.md) | Archivo SQL de la ruta manual anterior, con el volcado base, las reversiones y los snapshots de Supabase |
 | [backend/app/db/init.sql](../backend/app/db/init.sql) | Archivo vacío, sin participación en el arranque |
 
-La revisión inicial de Alembic contiene un snapshot autocontenido. No necesita montar `database/` para crear el esquema. Las revisiones posteriores añaden autoría de archivos, consentimientos, límites y bloqueos de IA, guardas de seguridad y `tareas.max_archivos`. La cadena actual termina en `20261018_01`; comprueba siempre las revisiones de tu rama.
+Alembic es el único sistema de migraciones activo. Su revisión inicial lleva incorporado el esquema base. Las revisiones posteriores añaden autoría de archivos, consentimientos, límites y bloqueos de IA, guardas de seguridad y `tareas.max_archivos`. La cadena de esta rama termina en `20261018_01`. Comprueba siempre las revisiones de tu rama.
 
 No añadas cambios nuevos a los SQL históricos. Tampoco hay un `seed.sql` vigente para crear administradores: usa el comando dedicado más abajo.
 
@@ -32,7 +31,7 @@ Si hay tablas Acadex sin `public.alembic_version`, Alembic aborta antes de ejecu
 
 La revisión de guardas de seguridad aborta si encuentra más de un cronómetro activo por tarea. No elimina filas para resolverlo. Revisa esa inconsistencia con el equipo y un respaldo antes de reintentar. Los archivos históricos conservan autoría `NULL`; no se inventan autores ni consentimientos previos.
 
-No uses `downgrade` como reparación automática. Algunas revisiones bloquean la reversión o comprueban que no se pierdan datos. Consulta las [notas históricas de reversión](../backend/migrations/README.md#downgrade-de-alembic).
+No uses `downgrade` como reparación automática. Algunas revisiones bloquean la reversión o comprueban que no se pierdan datos. Consulta las [notas de reversión](historico/README.md#downgrade-de-alembic).
 
 ## Volumen de desarrollo con Compose
 
@@ -78,6 +77,6 @@ El Compose ya suministra `ACADEX_RUN_POSTGRES_TESTS` y las demás variables `ACA
 
 Antes de crear o eliminar esquemas, verifica esas condiciones; después de conectar, comprueba que PostgreSQL informa `acadex_test`. Las suites usan esquemas aleatorios con prefijo `acadex_test_`; la API aplica rollback por prueba. Estas barreras no autorizan ejecutar pruebas contra Supabase o una base compartida.
 
-## Producción y evidencia histórica
+## Producción
 
-Este recorrido no verifica ni modifica Supabase. Las notas antiguas de adopción describen copias o ensayos de otro momento; no prueban su estado actual. Antes de una operación de producción, el responsable debe confirmar esquema, historial Alembic, respaldo y políticas RLS. Ese procedimiento está separado en [Adopción de Alembic](../docs/DESPLIEGUE_ALEMBIC.md).
+La [guía de Alembic](../docs/DESPLIEGUE_ALEMBIC.md#estado-informado-de-supabase) recoge el estado informado de Supabase y el procedimiento manual para aplicar revisiones nuevas en producción.
