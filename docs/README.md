@@ -15,8 +15,8 @@ Empieza por el [README](../README.md). Para ejecutar el proyecto, elige Docker o
 | [Backend](../backend/README.md) | Entrada de la API, estructura y configuración de sus integraciones |
 | [Frontend](../frontend/README.md) | Variables públicas, scripts disponibles y referencias de interfaz |
 | [Base de datos](../database/README.md) | Fuente del esquema, actualización de bases existentes, administración local y guardas de pruebas |
-| [Migraciones SQL históricas](../backend/migrations/README.md) | Historia anterior a Alembic y notas técnicas de esa transición; no es una guía de inicio |
-| [Adopción de Alembic](DESPLIEGUE_ALEMBIC.md) | Procedimiento excepcional para una base con tablas e historial por reconciliar; separado del desarrollo local |
+| [Migraciones SQL históricas](../database/historico/README.md) | Archivo de los SQL manuales y notas de la transición a Alembic |
+| [Migraciones y adopción de Alembic](DESPLIEGUE_ALEMBIC.md) | Estado informado de Supabase, migraciones nuevas en producción y adopción excepcional de bases sin historial |
 | [Arquitectura](arquitectura.md) | Componentes, comunicación y organización del código |
 | [Calidad y pruebas](calidad-y-pruebas.md) | Comandos de validación, entorno de pruebas PostgreSQL y alcance de CI |
 | [Diseño frontend](diseno-frontend.md) | Tokens, estilos y convenciones de interfaz existentes |

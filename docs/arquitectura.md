@@ -53,6 +53,7 @@ Acadex/
 │   ├── test/  tests/
 │   └── scripts/
 ├── database/
+│   └── historico/
 ├── docs/
 ├── docker-compose.yml
 └── docker-compose.test.yml
@@ -65,6 +66,6 @@ Los directorios anteriores son una orientación de alto nivel, no un contrato pa
 - docker-compose.yml define el entorno local y mapea los servicios en 127.0.0.1.
 - El archivo .env de la raíz sirve a la interpolación de Compose. backend/.env es opcional para backend y migraciones; frontend/.env.local es para Vite ejecutado manualmente.
 - backend/app/config/settings.py valida configuración de CORS, almacenamiento y correo según el entorno.
-- La fuente vigente del esquema es Alembic. Los SQL de database y backend/migrations que la guía de datos identifica como históricos no son el procedimiento de arranque.
+- Alembic aplica las migraciones. [`database/historico/`](../database/historico/README.md) conserva la antigua ruta SQL manual.
 
 Los detalles operativos están en el [README raíz](../README.md), [backend/README.md](../backend/README.md), [frontend/README.md](../frontend/README.md) y [database/README.md](../database/README.md).
