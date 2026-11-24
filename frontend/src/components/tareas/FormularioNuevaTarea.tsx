@@ -26,9 +26,8 @@ import {
   claveArchivo,
   TAMANO_MAXIMO_ADJUNTO,
 } from "./validacionArchivosTarea";
-import AsignarIntegrantes, {
-  validarAsignados,
-} from "../tareas-grupo/AsignarIntegrantes";
+import AsignarIntegrantes from "../tareas-grupo/AsignarIntegrantes";
+import { validarAsignados } from "../tareas-grupo/validarAsignados";
 import type { IntegranteAsignable } from "../../types/tareaGrupo";
 
 const NIVELES_DIFICULTAD = [
@@ -69,14 +68,15 @@ function FormularioNuevaTarea({
   formId,
 }: FormularioProps) {
   const esGrupal = modo === "grupal";
+  const [tareaAnterior, setTareaAnterior] = useState(tareaAEditar);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [titulo, setTitulo] = useState("");
-  const [idCategoria, setIdCategoria] = useState<number | null>(null);
-  const [fecha, setFecha] = useState("");
-  const [dificultad, setDificultad] = useState(3);
-  const [tiempoEstimado, setTiempoEstimado] = useState("");
-  const [maxArchivos, setMaxArchivos] = useState("3");
-  const [descripcion, setDescripcion] = useState("");
+  const [titulo, setTitulo] = useState(tareaAEditar?.nombre ?? "");
+  const [idCategoria, setIdCategoria] = useState<number | null>(tareaAEditar?.id_categoria ?? null);
+  const [fecha, setFecha] = useState(tareaAEditar?.fecha_entrega.slice(0, 16) ?? "");
+  const [dificultad, setDificultad] = useState(tareaAEditar?.dificultad_estimada ?? 3);
+  const [tiempoEstimado, setTiempoEstimado] = useState(tareaAEditar ? String(tareaAEditar.tiempo_estimado) : "");
+  const [maxArchivos, setMaxArchivos] = useState(tareaAEditar ? String(tareaAEditar.max_archivos) : "3");
+  const [descripcion, setDescripcion] = useState(tareaAEditar?.descripcion ?? "");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorSubidaAdjuntos, setErrorSubidaAdjuntos] = useState<string | null>(null);
@@ -164,17 +164,25 @@ function FormularioNuevaTarea({
   };
 
   useEffect(() => {
+    let activo = true;
     listarCategorias()
       .then((datos) => {
+        if (!activo) return;
         setCategorias(datos);
         if (!tareaAEditar && datos.length > 0) {
           setIdCategoria(datos[0].id_categoria);
         }
       })
-      .catch(() => setError("No se pudieron cargar las categorías"));
+      .catch(() => {
+        if (activo) setError("No se pudieron cargar las categorías");
+      });
+    return () => {
+      activo = false;
+    };
   }, [tareaAEditar]);
 
-  useEffect(() => {
+  if (tareaAEditar !== tareaAnterior) {
+    setTareaAnterior(tareaAEditar);
     if (tareaAEditar) {
       setTitulo(tareaAEditar.nombre);
       setIdCategoria(tareaAEditar.id_categoria);
@@ -184,7 +192,7 @@ function FormularioNuevaTarea({
       setMaxArchivos(String(tareaAEditar.max_archivos));
       setDescripcion(tareaAEditar.descripcion ?? "");
     }
-  }, [tareaAEditar]);
+  }
 
   const manejarAutocompletadoIA = async () => {
     if (!archivoIA || !archivoIA.name.toLowerCase().endsWith(".pdf")) {

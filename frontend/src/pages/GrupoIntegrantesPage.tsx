@@ -14,6 +14,11 @@ import { obtenerIdUsuarioActual } from "../utils/jwt";
 function GrupoIntegrantesPage() {
   const { idGrupo } = useParams();
   const id = Number(idGrupo);
+  if (Number.isNaN(id)) return <Navigate to="/grupos" replace />;
+  return <IntegrantesDelGrupo key={id} id={id} />;
+}
+
+function IntegrantesDelGrupo({ id }: { id: number }) {
   const navigate = useNavigate();
   const idUsuarioActual = obtenerIdUsuarioActual();
 
@@ -23,10 +28,8 @@ function GrupoIntegrantesPage() {
   const [error, setError] = useState<string | null>(null);
   const [sinPermisos, setSinPermisos] = useState(false);
 
-  const cargar = useCallback(async () => {
-    setCargando(true);
-    try {
-      const misGrupos = await listarMisGrupos();
+  const cargar = useCallback(() => listarMisGrupos()
+    .then(async (misGrupos) => {
       const encontrado = misGrupos.find((g) => g.id_grupo === id) ?? null;
       if (!encontrado) {
         setSinPermisos(true);
@@ -40,7 +43,8 @@ function GrupoIntegrantesPage() {
       setIntegrantes(miembros);
       setSinPermisos(false);
       setError(null);
-    } catch (err) {
+    })
+    .catch((err: unknown) => {
       const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
       if (mensaje.includes("permiso") || mensaje.includes("403") || mensaje.includes("forbidden")) {
         setSinPermisos(true);
@@ -48,19 +52,20 @@ function GrupoIntegrantesPage() {
       } else {
         setError("No se pudieron cargar los integrantes.");
       }
-    } finally {
+    })
+    .finally(() => {
       setCargando(false);
-    }
-  }, [id]);
+    }), [id]);
 
   useEffect(() => {
-    if (!Number.isNaN(id)) cargar();
-  }, [cargar, id]);
+    void cargar();
+  }, [cargar]);
 
   const handleKick = async (idUsuario: number) => {
     if (!window.confirm("¿Expulsar a este integrante del grupo?")) return;
     try {
       await expulsarIntegrante(id, idUsuario);
+      setCargando(true);
       await cargar();
     } catch {
       setError("No se pudo expulsar al integrante.");
@@ -77,7 +82,6 @@ function GrupoIntegrantesPage() {
     }
   };
 
-  if (Number.isNaN(id)) return <Navigate to="/grupos" replace />;
   if (cargando) return <p>Cargando integrantes...</p>;
   if (sinPermisos) {
     return (

@@ -20,17 +20,17 @@ function Grupos() {
   const [mostrarCrear, setMostrarCrear] = useState(false);
   const [mostrarUnirse, setMostrarUnirse] = useState(false);
 
-  const cargarGrupos = async () => {
-    try {
-      const datos = await listarMisGrupos();
+  const cargarGrupos = () => listarMisGrupos()
+    .then((datos) => {
       setGrupos(datos);
       setError(null);
-    } catch {
+    })
+    .catch(() => {
       setError("No se pudieron cargar tus grupos.");
-    } finally {
+    })
+    .finally(() => {
       setCargando(false);
-    }
-  };
+    });
 
   useEffect(() => {
     cargarGrupos();

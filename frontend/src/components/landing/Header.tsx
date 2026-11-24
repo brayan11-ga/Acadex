@@ -3,7 +3,7 @@ import logoParaFondoOscuro from '../../assets/logos/logo_acadex_dark.png';
 import logoParaFondoClaro from '../../assets/logos/logo_acadex_light.png';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/useTheme';
 
 export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

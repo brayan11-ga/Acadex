@@ -1,5 +1,5 @@
 // pageAdmin
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { adminApi } from '../services/adminapi';
 import { GenericTable } from '../components/admin/GenericTable';
 import { Resumen } from '../components/admin/Resumen';
@@ -17,34 +17,46 @@ export const Admin = () => {
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [errorCarga, setErrorCarga] = useState<string | null>(null);
+    const solicitudActual = useRef(0);
     const { perfil } = usePerfilActual();
     const esTabResumen = tabActivo === TAB_RESUMEN.clave;
     const configActual = esTabResumen ? null : TABS_ADMIN.find((t) => t.clave === tabActivo)!;
 
-    const cargarDatos = useCallback(async () => {
-    if (!configActual) return;
-    setCargando(true);
-    setErrorCarga(null);
-    setError(null);
-    const datos = await adminApi.listar<any>(configActual.clave);
-    if (datos === null) {
-        setErrorCarga('No se pudo cargar la información.');
-        setFilas([]);
-    } else {
-        setFilas(datos);
-    }
-    setCargando(false);
-    }, [configActual]);
+    const cargarDatos = async (clave: string) => {
+        const solicitud = ++solicitudActual.current;
+        setCargando(true);
+        setErrorCarga(null);
+        setError(null);
+        const datos = await adminApi.listar<any>(clave);
+        if (solicitudActual.current !== solicitud) return;
+        if (datos === null) {
+            setErrorCarga('No se pudo cargar la información.');
+            setFilas([]);
+        } else {
+            setFilas(datos);
+        }
+        setCargando(false);
+    };
 
-    useEffect(() => {
-    cargarDatos();
-    }, [cargarDatos]);
+    const cambiarTab = (clave: string) => {
+        if (clave === tabActivo) return;
+        setTabActivo(clave);
+        if (clave === TAB_RESUMEN.clave) {
+            solicitudActual.current++;
+            setErrorCarga(null);
+            setCargando(false);
+        } else {
+            void cargarDatos(clave);
+        }
+    };
 
     const eliminar = async (fila: any) => {
     const idField = Object.keys(fila).find((k) => k.startsWith('id_'));
     if (!confirm('¿Eliminar este registro?')) return;
-    await adminApi.eliminar(configActual!.clave, fila[idField!]);
-    cargarDatos();
+    const solicitud = solicitudActual.current;
+    const clave = configActual!.clave;
+    await adminApi.eliminar(clave, fila[idField!]);
+    if (solicitudActual.current === solicitud) void cargarDatos(clave);
     };
 
     //  generar contraseña haseada aleatoria
@@ -69,11 +81,7 @@ const restablecerPassword = async (fila: any) => {
         <Sidebar
             tabs={TODAS_LAS_TABS}
             tabActivo={tabActivo}
-            onCambiarTab={(clave) => {
-                setTabActivo(clave);
-                setErrorCarga(null);
-                setCargando(clave !== TAB_RESUMEN.clave);
-            }}
+            onCambiarTab={cambiarTab}
         />
 
         <main className="admin-content">
@@ -93,7 +101,7 @@ const restablecerPassword = async (fila: any) => {
                 {errorCarga ? (
                     <div className="error-msg" role="alert">
                         <p>{errorCarga}</p>
-                        <button type="button" className="btn btn-secundario" onClick={() => void cargarDatos()}>
+                        <button type="button" className="btn btn-secundario" onClick={() => void cargarDatos(configActual!.clave)}>
                             Reintentar
                         </button>
                     </div>

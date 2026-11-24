@@ -1,6 +1,6 @@
 // src/components/landing/ThemeToggle.tsx
 import '../../styles/ThemeToggle.css';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/useTheme';
 
 export const ThemeToggle = () => {
     const { isDarkMode, toggleTheme } = useTheme();

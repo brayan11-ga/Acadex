@@ -1,13 +1,7 @@
 // src/contexts/ThemeContext.tsx
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-
-interface ThemeContextType {
-    isDarkMode: boolean;
-    toggleTheme: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { ThemeContext } from "./useTheme";
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // Inicializamos leyendo del localStorage para que persista al cambiar de ruta
@@ -33,12 +27,4 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
             {children}
         </ThemeContext.Provider>
     );
-};
-
-export const useTheme = () => {
-    const context = useContext(ThemeContext);
-    if (!context) {
-        throw new Error('useTheme debe usarse dentro de un ThemeProvider');
-    }
-    return context;
 };
