@@ -247,10 +247,14 @@ class AutorizacionServiciosTests(unittest.TestCase):
             id_categoria=1,
             id_usuario=13,
         )
+        db=Mock()
         actor = SimpleNamespace(id_usuario=12, es_admin=False)
         creada = SimpleNamespace(id_usuario=12)
-        with patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=creada) as crear:
-            self.assertIs(tarea_service.crear_tarea(None, datos, actor), creada)
+        with (
+            patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=creada) as crear,
+            patch.object(tarea_service.prioridad_service, "asignar_prioridad_inicial"),
+        ):
+            self.assertIs(tarea_service.crear_tarea(db, datos, actor), creada)
         self.assertEqual(crear.call_args.args[1].id_usuario, 12)
 
     def test_usuario_no_lider_no_crea_tarea_en_grupo_por_ruta_general(self):
@@ -456,10 +460,21 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
 
     def test_propietario_puede_finalizar_y_listar_sus_sesiones(self):
         inicio = datetime.utcnow() - timedelta(minutes=5)
-        sesion = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=None)
-        finalizada = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=datetime.utcnow())
+        sesion = SimpleNamespace(
+            id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=None,
+            fecha_aviso=None, fecha_confirmacion=None,
+        )
+        finalizada = SimpleNamespace(
+        id_usuario=12, id_tarea=5, fecha_inicio=inicio, fecha_fin=datetime.utcnow(),
+        )
+        tarea = SimpleNamespace(
+            id_tarea=5, id_usuario=None, id_grupo=3, nombre="Tarea",
+            tiempo_acumulado=0, cronometro_activo=True, ultima_pausa=None,
+        )
         with (
             patch.object(sesion_cronometro_service.repo, "get_sesion_by_id", return_value=sesion),
+            patch.object(sesion_cronometro_service.tarea_repository, "obtener_tarea_por_id", return_value=tarea),
+            patch.object(sesion_cronometro_service.perfil_repository, "get_perfil_by_usuario", return_value=None),
             patch.object(sesion_cronometro_service.repo, "update_sesion", return_value=finalizada) as actualizar,
             patch.object(sesion_cronometro_service.repo, "get_sesiones_by_usuario", return_value=[finalizada]) as listar,
         ):
@@ -467,7 +482,6 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
             self.assertEqual(sesion_cronometro_service.listar_sesiones_usuario(None, 12, 12), [finalizada])
         actualizar.assert_called_once()
         listar.assert_called_once_with(None, 12)
-
 
 class ConsultasTareaAisladasTests(unittest.TestCase):
     def test_listado_y_calendario_filtran_a_tareas_del_usuario_y_sus_grupos(self):

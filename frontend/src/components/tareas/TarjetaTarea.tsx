@@ -1,15 +1,15 @@
 // src/components/tareas/TarjetaTarea.tsx
 import { useState, useRef, useEffect } from "react";
 import type { TareaBackend } from "../../services/tareas";
-import { 
-  CalendarDays, 
-  Folder, 
-  Check, 
-  Undo2, 
-  MoreVertical, 
-  Eye, 
-  Pencil, 
-  Trash2 
+import {
+  CalendarDays,
+  Folder,
+  Check,
+  Undo2,
+  MoreVertical,
+  Eye,
+  Pencil,
+  Trash2
 } from "lucide-react";
 
 interface TarjetaTareaProps {
@@ -32,7 +32,8 @@ export const TarjetaTarea = ({
   onCambiarEstado,
 }: TarjetaTareaProps) => {
   const esCompletada = tarea.estado === "Completada";
-  
+  const esVencida = !esCompletada && tarea.vencida ===true;
+
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +53,7 @@ export const TarjetaTarea = ({
   };
 
   return (
-    <article className={`pixel-tarea-card ${esCompletada ? "completada" : ""}`}>
+    <article className={`pixel-tarea-card ${esCompletada ? "completada" : ""} ${esVencida ? "vencida":""}`}>
       <div className="pixel-tarea-info">
         <div className="pixel-tarea-header-card">
           <h3 className={`pixel-tarea-titulo ${esCompletada ? "tachado" : ""}`}>
@@ -73,10 +74,10 @@ export const TarjetaTarea = ({
       </div>
 
       <div className="pixel-tarea-acciones">
-        <span className={`pixel-estado-badge ${tarea.estado.replace(" ", "-").toLowerCase()}`}>
-          {tarea.estado}
+        <span className={`pixel-estado-badge ${esVencida ?"Vencida": tarea.estado.replace(" ", "-").toLowerCase()}`}>
+          {esVencida ? "Vencida" : tarea.estado}
         </span>
-        
+
         <div className="pixel-tarea-botones" ref={menuRef}>
           <button
             type="button"
@@ -93,8 +94,8 @@ export const TarjetaTarea = ({
           </button>
 
           <div className="pixel-menu-kebab-container">
-            <button 
-              className="pixel-btn-kebab" 
+            <button
+              className="pixel-btn-kebab"
               onClick={() => setMenuAbierto(!menuAbierto)}
               title="Más opciones"
             >
@@ -110,9 +111,9 @@ export const TarjetaTarea = ({
                   <Pencil size={16} /> Editar Tarea
                 </button>
                 <div className="pixel-dropdown-divisor"></div>
-                <button 
-                  type="button" 
-                  className="pixel-btn-peligro-texto" 
+                <button
+                  type="button"
+                  className="pixel-btn-peligro-texto"
                   onClick={() => ejecutarAccion(() => onEliminar(tarea.id_tarea))}
                 >
                   <Trash2 size={16} /> Eliminar

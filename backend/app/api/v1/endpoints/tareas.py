@@ -12,7 +12,6 @@ from app.schemas.tarea import (
 
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
-
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual
 from app.models.usuario import Usuario

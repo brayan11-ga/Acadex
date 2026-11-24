@@ -1,6 +1,7 @@
 import type { TareaBackend } from "../../services/tareas";
 import { adjuntosHabilitados } from "../../config/featureFlags";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
+import { formatearMinutos } from "../../utils/tiempo";
 
 interface ModalDetalleTareaProps {
   tarea: TareaBackend;
@@ -28,7 +29,7 @@ export const ModalDetalleTarea = ({
         <p><strong>Estado:</strong> {tarea.estado}</p>
         <p><strong>Fecha de entrega:</strong> {formatearFecha(tarea.fecha_entrega)}</p>
         <p><strong>Dificultad:</strong> Nivel {tarea.dificultad_estimada}</p>
-        <p><strong>Tiempo estimado:</strong> {tarea.tiempo_estimado} min</p>
+        <p><strong>Tiempo estimado:</strong> {formatearMinutos(tarea.tiempo_estimado)}</p>
         <p><strong>Descripción:</strong> {tarea.descripcion || "Sin descripción"}</p>
 
         {adjuntosHabilitados() && (

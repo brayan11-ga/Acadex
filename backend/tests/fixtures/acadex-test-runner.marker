@@ -1,1 +1,0 @@
-This file is mounted only by docker-compose.test.yml into the isolated test runner.

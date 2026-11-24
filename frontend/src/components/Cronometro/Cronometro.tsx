@@ -1,30 +1,34 @@
 import { useState } from 'react';
 import { useCronometro } from '../../hooks/useCronometro';
-import { PixelHourglass } from './PixelHourglass';
+import { PixelHourglass } from '../cronometro/PixelHourglass';
 import '../../styles/Cronometro.css';
 
 interface CronometroProps {
   idTarea: number;
-  limiteSegundos?: number; //(default 25 min)
 }
 
 const formatearTiempo = (totalSegundos: number) => {
-  const minutos = Math.floor(totalSegundos / 60);
+  const horas =Math.floor(totalSegundos/3600);
+  const minutos = Math.floor((totalSegundos % 3600 )/ 60);
   const segundos = totalSegundos % 60;
-  return `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+  const mm = String(minutos).padStart(2,'0');
+  const ss = String(segundos).padStart(2,'0');
+  return horas > 0 ? `${horas}:${mm}:${ss}`:`${mm}:${ss}`;
 };
 
-export const Cronometro = ({ idTarea, limiteSegundos = 25 * 60 }: CronometroProps) => {
-  const { segundos, corriendo, pausadoPorLimite, alternar, reiniciar } =
-    useCronometro(idTarea, limiteSegundos);
+export const Cronometro = ({ idTarea }: CronometroProps) => {
+  const {
+    segundos, corriendo, cargando, error, pausadoPorLimite,
+    segundosGracia, limiteSegundos, alternar, confirmar, reiniciar,
+  } = useCronometro(idTarea);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
 
-  const porcentajeLimite = Math.min(100, Math.round((segundos / limiteSegundos) * 100));
-
   const confirmarReinicio = () => {
-    reiniciar();
+    void reiniciar();
     setMostrarConfirmacion(false);
   };
+
+  const hayAviso = segundosGracia !== null;
 
   return (
     <div className="cronometro-contenedor">
@@ -34,20 +38,37 @@ export const Cronometro = ({ idTarea, limiteSegundos = 25 * 60 }: CronometroProp
 
       <p className="cronometro-estado">
         {corriendo
-          ? 'Cronómetro activo'
+          ? hayAviso
+            ? '¿Sigues trabajando?'
+            : 'Cronómetro activo'
           : pausadoPorLimite
-          ? 'Pausado automáticamente (límite alcanzado)'
+          ? 'Pausado automáticamente por inactividad'
           : segundos > 0
           ? 'En pausa'
           : 'Cronómetro detenido'}
       </p>
 
-      <div className="cronometro-barra-limite">
-        <div className="cronometro-barra-relleno" style={{ width: `${porcentajeLimite}%` }} />
-      </div>
+      {error && <p className="pixel-error">{error}</p>}
+
+      {hayAviso && (
+        <div className="cronometro-confirmacion" role="alert">
+          <p>
+            Llevas {formatearTiempo(limiteSegundos)} seguidos. Se pausara en{' '}
+            {formatearTiempo(segundosGracia)}.
+          </p>
+          <button type="button" className="pixel-btn-play" onClick={() => void confirmar()}>
+            Sigo trabajando
+          </button>
+        </div>
+      )}
 
       <div className="cronometro-acciones">
-        <button type="button" className="pixel-btn-play" onClick={alternar}>
+        <button
+          type="button"
+          className="pixel-btn-play"
+          onClick={() => void alternar()}
+          disabled={cargando}
+        >
           <span className="icon">{corriendo ? '❚❚' : '▶'}</span>
           {corriendo ? 'Pausar' : 'Iniciar'}
         </button>
@@ -55,6 +76,7 @@ export const Cronometro = ({ idTarea, limiteSegundos = 25 * 60 }: CronometroProp
           type="button"
           className="pixel-btn-outline"
           onClick={() => setMostrarConfirmacion(true)}
+          disabled={cargando}
           aria-label="Reiniciar cronómetro"
         >
           ↺

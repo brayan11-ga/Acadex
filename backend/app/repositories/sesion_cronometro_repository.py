@@ -1,4 +1,4 @@
-# Ruta: backend/app/repositories/sesion_cronometro_repository.py
+# repositories/SesionCronometro
 from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -9,6 +9,12 @@ def get_sesion_by_id(db: Session, id_sesion: int) -> Optional[SesionCronometro]:
 
 def get_sesiones_by_usuario(db: Session, id_usuario: int) -> list[SesionCronometro]:
     return db.query(SesionCronometro).filter(SesionCronometro.id_usuario == id_usuario).all()
+
+def get_sesion_activa(db: Session, id_tarea: int) -> Optional[SesionCronometro]:
+    return db.query(SesionCronometro).filter(
+        SesionCronometro.id_tarea == id_tarea,
+        SesionCronometro.fecha_fin.is_(None)
+    ).first()
 
 def get_sesion_activa_de_usuario(
     db: Session, id_tarea: int, id_usuario: int
@@ -82,8 +88,12 @@ def update_sesion(db: Session, sesion: SesionCronometro, data: dict) -> SesionCr
     db.refresh(sesion)
     return sesion
 
-
 def delete_sesion(db: Session, sesion: SesionCronometro) -> None:
     """Elimina una sesión; el service ya validó dueño y que esté abierta."""
     db.delete(sesion)
+    
+def delete_sesiones_by_tarea(db:Session, id_tarea:int) ->None:
+    db.query(SesionCronometro).filter(
+        SesionCronometro.id_tarea==id_tarea
+    ).delete(synchronize_session=False)
     db.commit()

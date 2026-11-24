@@ -38,7 +38,7 @@ def leer_mi_perfil(
             "telefono": "",
             "descripcion": "Estudiante en Acadex",
             "notif_activas": True,
-            "limite_cronometro": 30,
+            "limite_cronometro": 1800,
             "id_usuario": usuario_actual.id_usuario
         }
     return perfil

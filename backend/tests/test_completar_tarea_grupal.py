@@ -18,7 +18,7 @@ def _tarea_grupal(estado="pendiente"):
         id_grupo=7,
         id_categoria=1,
         estado=estado,
-        dificultad_estimada=3,
+        dificultad_estimada=3, tiempo_estimado=60,
         tiempo_acumulado=0.0,
     )
 
@@ -188,7 +188,7 @@ class CompletarParteExitosoTests(unittest.TestCase):
         )
         upsert.assert_called_once()
         _, kwargs = upsert.call_args
-        self.assertEqual(kwargs["dificultad_real"], 4)
+        self.assertEqual(kwargs["dificultad_real"], 2)
         self.assertEqual(kwargs["tiempo_real"], 125.0)
         self.assertEqual(kwargs["id_grupo"], 7)
         self.assertEqual(resultado.estado, "en progreso")

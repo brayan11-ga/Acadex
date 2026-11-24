@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/hooks';
 import { fetchPanelData } from '../store/panelSlice';
-import { actualizarTarea } from '../services/tareas';
 import type { AppLayoutContext } from '../types/AppLayoutContext';
-
+import { listarTareas, actualizarTarea, type TareaBackend } from '../services/tareas';
+import { listarCategorias, type Categoria } from '../services/categorias';
+import { ModalConfirmacion } from '../components/layout/ModalConfirmacion';
+import { PanelTareasVencidas } from '../components/panel/PanelTareasVencidas';
 import { PanelHero } from '../components/panel/PanelHero';
 import { PanelTareasRecientes } from '../components/panel/PanelTareasRecientes';
 import { PanelLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
@@ -17,9 +19,23 @@ export const Panel = () => {
   const { data: datos, error } = useAppSelector((state) => state.panel);
   const { nombreUsuario, abrirModalGlobal } = useOutletContext<AppLayoutContext>();
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [vencidas, setVencidas] = useState<TareaBackend[]>([]);
+  const [categoria, setCategorias]= useState<Categoria[]>([]);
+  const [tareaVencida, setTareaVencida]= useState<TareaBackend | null>(null);
+
+  const cargarVencidas =()=>
+    Promise.all([listarTareas(), listarCategorias()])
+      .then(([tareas, cats])=>{
+        setCategorias(cats);
+        setVencidas(
+          tareas.filter((t)=>t.id_usuario !== null && t.estado !== 'Completada' && t.vencida)
+        );
+      })
+      .catch(()=> setVencidas([]));
 
   useEffect(() => {
     dispatch(fetchPanelData());
+    void cargarVencidas();
   }, [dispatch]);
 
   const manejarCompletarTarea = async (idTarea: number) => {
@@ -28,10 +44,21 @@ export const Panel = () => {
       // Actualizamos el estado en el backend a "Completada"
       await actualizarTarea(idTarea, { estado: "Completada" });
       dispatch(fetchPanelData());
+      void cargarVencidas();
     } catch {
       setErrorAccion("No se pudo completar la tarea desde el panel.");
     }
   };
+
+  const confirmarCompletarVencida=async()=>{
+    if (!tareaVencida) return;
+    const id = tareaVencida.id_tarea;
+    setTareaVencida(null);
+    await manejarCompletarTarea(id);
+  };
+
+  const nombreCategoria =(id:number)=>
+    categoria.find((e)=> e.id_categoria === id)?.nombre_categoria ?? 'Sin categoria';
 
   if (!datos && !error) {
     return <PanelLoadingSkeleton />;
@@ -78,7 +105,22 @@ export const Panel = () => {
         onCompletarTarea={manejarCompletarTarea} 
       />
 
-      <PanelTareasRecientes proximasTareas={proximasTareas} onCrearTarea={abrirModalGlobal} />
+      <PanelTareasRecientes
+      proximasTareas={proximasTareas} 
+      onCrearTarea={abrirModalGlobal} 
+      />
+      <PanelTareasVencidas
+      tareas={vencidas}
+      nombreCategoria={nombreCategoria}
+      onSeleccionar={setTareaVencida}
+      />
+      <ModalConfirmacion
+      isOpen={tareaVencida !==null}
+      title="Esta tarea vencio"
+      message="La fecha de entrega ya paso. ¿Quieres marcarla como completada de todas formas? Se registrara como entregada con retraso."
+      onConfirm={confirmarCompletarVencida}
+      onCancel={()=> setTareaVencida(null)}
+      />
     </div>
   );
 };

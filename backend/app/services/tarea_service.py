@@ -16,9 +16,34 @@ from app.schemas.tarea import TareaGrupalCreate
 from app.config.settings import MAX_ARCHIVOS_POR_TAREA
 from app.models.usuario import Usuario
 from app.services import archivo_service
+from app.services import prioridad_service
+from app.services import dificultad_service
+from app.services import estadistica_service
 
 logger = logging.getLogger(__name__)
 
+def _registrar_finalizacion_individual(db: Session, tarea:Tarea, id_usuario:int)->None:
+    #Historial, estadística y prioridades al completar una tarea individual (sin commit)
+    tiempo_real_seg= (tarea.tiempo_acumulado or 0)*60 #el acumulado es en minutos
+    db.add(
+        HistorialTarea(
+            id_tarea=tarea.id_tarea,
+            id_usuario=id_usuario,
+            id_grupo=None,
+            fechahora_fin=datetime.now(),
+            tiempo_real=tiempo_real_seg,
+            dificultad_real=dificultad_service.calcular_dificultad_real(tarea.dificultad_estimada, tarea.tiempo_estimado, tiempo_real_seg),
+        )
+    )
+    db.flush()
+    estadistica_service.recalcular_estadistica_categoria(db, id_usuario, tarea.id_categoria, commit=False)
+    prioridad_service.recalcular_pendientes(db, tarea.id_categoria, tarea.id_usuario, tarea.id_grupo)
+
+def finalizar_tarea_individual(db:Session, tarea:Tarea, id_usuario:int)->None:
+    if (tarea.estado or "").lower()=="completada":
+        return
+    tarea.estado ="Completada"
+    _registrar_finalizacion_individual(db, tarea, id_usuario)
 
 def _es_lider(db: Session, id_usuario: int, id_grupo: int) -> bool:
     integrante = grupo_repository.obtener_integrante(db, id_usuario, id_grupo)
@@ -133,7 +158,12 @@ def crear_tarea(db: Session, datos: TareaCreate, usuario: Usuario, *, commit: bo
                 detail="No tienes permiso para crear tareas en este grupo.",
             )
         datos_seguridad = datos.model_copy(update={"id_usuario": None})
-    return tarea_repository.crear_tarea(db, datos_seguridad, commit=commit)
+    tarea=tarea_repository.crear_tarea(db, datos_seguridad, commit=False)
+    prioridad_service.asignar_prioridad_inicial(db,tarea)
+    if commit:
+        db.commit()
+        db.refresh(tarea)
+    return tarea
 
 
 def crear_tarea_con_pdf(
@@ -198,11 +228,12 @@ def _adjuntar_total_archivos(db: Session, tareas: List[Tarea]) -> List[Tarea]:
         tarea.total_archivos = conteos.get(tarea.id_tarea, 0)
     return tareas
 
-
 def listar_tareas(db: Session, id_usuario: int) -> List[Tarea]:
-    return _adjuntar_total_archivos(
-        db, tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
-    )
+    tareas=tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    prioridad_service.recalcular_visibles(db, tareas)
+    db.commit()
+    tareas= tarea_repository.obtener_tareas_visibles_para_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(db, tareas)
 
 def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario: int) -> Tarea:
     tarea = obtener_tarea(db, id_tarea, id_usuario)
@@ -264,6 +295,8 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
         tarea_actualizada = tarea_repository.actualizar_tarea(
             db, tarea, datos, commit=False
         )
+        if {"fecha_entrega","dificultad_estimada", "tiempo_estimado"} & cambios.keys():
+            prioridad_service.recaulcular_tarea(db, tarea_actualizada)
         estado_nuevo = tarea_actualizada.estado
 
         # Tarea, historial y estadística se confirman en un único commit.
@@ -282,7 +315,7 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
                     id_grupo=tarea_actualizada.id_grupo,
                     fechahora_fin=datetime.now(),
                     tiempo_real=tarea_actualizada.tiempo_acumulado,
-                    dificultad_real=tarea_actualizada.dificultad_estimada,
+                    dificultad_real=prioridad_service.calcular_dificultad_real(tarea_actualizada.dificultad_estimada,tarea_actualizada.tiempo_estimado,tarea_actualizada.tiempo_acumulado,),
                 )
             )
             if db is not None:
@@ -385,7 +418,9 @@ def completar_parte_tarea(
     tiempo_real = sesion_cronometro_repository.sumar_duracion_cerrada(
         db, id_tarea, id_usuario
     )
-
+    dificultad_real=dificultad_service.calcular_dificultad_real(tarea.dificultad_estimada, tarea.tiempo_estimado, tiempo_real
+    )
+    
     try:
         historial_tarea_repository.upsert(
             db,
@@ -403,6 +438,9 @@ def completar_parte_tarea(
         ids_asignados = {usuario.id_usuario for usuario in asignados}
         tarea.estado = _calcular_estado_grupal(tarea, ids_asignados, completados)
 
+        if tarea.estado =="Completada":
+            db.flush()
+            prioridad_service.recalcular_pendientes(db, tarea.id_categoria, None, tarea.id_grupo)
         db.commit()
         db.refresh(tarea)
         tarea.total_archivos = archivo_repository.contar_archivos_de_tarea(db, id_tarea)
@@ -776,6 +814,7 @@ def crear_tarea_grupal(
         tarea = tarea_repository.crear_tarea(
             db, tarea_datos, commit=False, max_archivos=datos.max_archivos
         )
+        prioridad_service.asignar_prioridad_inicial(db,tarea)
 
         for integrante in integrantes:
             asignacion_tarea_repository.crear_asignacion(

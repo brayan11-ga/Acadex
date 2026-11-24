@@ -1,8 +1,7 @@
 # app/repositories/panel_repository.py
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, func
+from sqlalchemy import asc, desc, func
 from datetime import datetime, timedelta
-
 from app.models.tarea import Tarea
 from app.models.categoria import Categoria
 from app.models.historial_tarea import HistorialTarea
@@ -17,9 +16,10 @@ class PanelRepository:
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
             .filter(
                 Tarea.id_usuario == id_usuario, 
-                func.lower(Tarea.estado) != 'completada'  # <-- Permite cualquier variación de "completada" y trae las demás
+                func.lower(Tarea.estado) != 'completada',  # <-- Permite cualquier variación de "completada" y trae las demás
+                Tarea.fecha_entrega >=datetime.now(),
             )\
-            .order_by(asc(Tarea.prioridad), asc(Tarea.fecha_entrega))\
+            .order_by(Tarea.prioridad.desc().nulls_last(),desc(Tarea.dificultad_estimada),asc(Tarea.fecha_entrega),)\
             .first()
 
     def obtener_proximas_tareas(self, db: Session, id_usuario: int, exclude_id: int = None, limit: int = 3):
@@ -30,7 +30,8 @@ class PanelRepository:
             .join(Categoria, Tarea.id_categoria == Categoria.id_categoria)\
             .filter(
                 Tarea.id_usuario == id_usuario, 
-                func.lower(Tarea.estado) != 'completada'  # <-- Igual aquí
+                func.lower(Tarea.estado) != 'completada',  # <-- Igual aquí
+                Tarea.fecha_entrega>=datetime.now(),
             )
         
         if exclude_id:

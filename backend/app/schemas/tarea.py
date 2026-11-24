@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, model_validator, Field
+from pydantic import BaseModel, ConfigDict, model_validator, Field, computed_field
 from typing import List
-
 from app.config.settings import (
     MAX_ARCHIVOS_POR_TAREA,
     MAX_ARCHIVOS_POR_TAREA_DEFECTO,
@@ -68,6 +67,13 @@ class TareaResponse(TareaBase):
     total_archivos: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def vencida(self)-> bool:
+        if (self.estado or"").lower()=="completada":
+            return False
+        return self.fecha_entrega < datetime.now(self.fecha_entrega.tzinfo)
 
 class TareaGrupalCreate(BaseModel):
     nombre: str

@@ -575,7 +575,8 @@ class CrearTareaConPdfTests(unittest.TestCase):
         archivo_pdf = crear_upload("guia.pdf", b"%PDF-1.7", "application/pdf")
 
         with (
-            patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=tarea) as crear_tarea,
+        patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=tarea) as crear_tarea,
+        patch.object(tarea_service.prioridad_service, "asignar_prioridad_inicial"),
             patch.object(archivo_service, "subir_archivo_tarea") as subir_pdf,
         ):
             resultado = tarea_service.crear_tarea_con_pdf(db, self.crear_datos(), usuario, archivo_pdf)
@@ -600,6 +601,7 @@ class CrearTareaConPdfTests(unittest.TestCase):
 
             with (
                 patch.object(tarea_service.tarea_repository, "crear_tarea", return_value=tarea),
+                patch.object(tarea_service.prioridad_service, "asignar_prioridad_inicial"),
                 patch.object(archivo_service, "subir_archivo_tarea", side_effect=fallar_subida),
                 self.assertRaises(HTTPException),
             ):

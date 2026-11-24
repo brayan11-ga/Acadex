@@ -2,10 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { obtenerEstadisticas } from '../services/estadisticasService';
 import type { ResumenEstadisticas } from '../types/estadisticas';
-
 import { WeeklyGoalCard } from '../components/estadisticas/WeeklyGoalCard';
-import { StatCard } from '../components/estadisticas/StatCard';
-import { EfficiencyInsights } from '../components/estadisticas/EfficiencyInsights';
+import { RendimientoCategorias } from '../components/estadisticas/RendimientoCategorias';
 import { StatisticsPageLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
 
 // Importamos los estilos independientes
@@ -51,35 +49,9 @@ export const Estadisticas: React.FC = () => {
       <div className="stats-grid-top">
         <WeeklyGoalCard data={data.meta_semanal} />
       </div>
+      
+      <RendimientoCategorias categorias={data.categorias}/>
 
-      <div className="stats-grid-middle">
-        <StatCard 
-          titulo="Focus Score" 
-          valorPrincipal={`${data.focus_score.puntaje}/100`} 
-          subtexto={data.focus_score.nivel} 
-          icono="zap"
-          colorSubtexto="positive"
-        />
-        <StatCard 
-          titulo="Top Category" 
-          valorPrincipal={data.categoria_top.nombre} 
-          subtexto={`${data.categoria_top.horas_dedicadas} hrs logged`} 
-          icono="rocket"
-          colorSubtexto="neutral"
-        />
-        <StatCard 
-          titulo="Avg. Completion" 
-          valorPrincipal={`${data.promedio_tiempo.minutos} min`} 
-          subtexto={data.promedio_tiempo.tendencia} 
-          icono="clock"
-          colorSubtexto="positive"
-        />
-      </div>
-
-      <EfficiencyInsights 
-        insights={data.insights} 
-        sugerenciaIa={data.sugerencia_ia} 
-      />
     </div>
   );
 };
