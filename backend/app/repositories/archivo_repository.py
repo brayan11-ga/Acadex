@@ -36,6 +36,37 @@ def obtener_archivos_de_tarea(db: Session, id_tarea: int) -> List[Archivo]:
     return db.query(Archivo).filter(Archivo.id_tarea == id_tarea).all()
 
 
+def obtener_archivos_de_usuarios_en_tarea(
+    db: Session, id_tarea: int, ids_usuarios: List[int]
+) -> List[Archivo]:
+    """Archivos de la tarea subidos por los usuarios indicados (C4c).
+
+    Los archivos con id_usuario_subida NULL (históricos sin autor) no entran
+    en el filtro y, por tanto, no se tocan.
+    """
+    if not ids_usuarios:
+        return []
+    return (
+        db.query(Archivo)
+        .filter(
+            Archivo.id_tarea == id_tarea,
+            Archivo.id_usuario_subida.in_(ids_usuarios),
+        )
+        .all()
+    )
+
+
+def eliminar_archivos_de_usuarios_en_tarea(
+    db: Session, id_tarea: int, ids_usuarios: List[int]
+) -> int:
+    """Borra las filas de archivo de esos usuarios en la tarea (sin commit)."""
+    filas = obtener_archivos_de_usuarios_en_tarea(db, id_tarea, ids_usuarios)
+    for fila in filas:
+        db.delete(fila)
+    db.flush()
+    return len(filas)
+
+
 def contar_archivos_de_tarea(db: Session, id_tarea: int) -> int:
     """Cuenta los archivos de una sola tarea (validaciones puntuales)."""
     return (

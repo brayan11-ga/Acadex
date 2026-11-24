@@ -1,6 +1,7 @@
 # backend/app/services/grupo_service.py
 import secrets
 import string
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -12,6 +13,20 @@ from app.repositories import grupo_repository
 
 ALFABETO_CODIGO = string.ascii_uppercase + string.digits
 LONGITUD_CODIGO = 8
+# Vigencia única del código de acceso: 30 minutos.
+DURACION_CODIGO_SEGUNDOS = 30 * 60
+
+
+def _ahora_utc() -> datetime:
+    # Misma convención que usuarios.bloqueado_hasta: UTC sin zona horaria.
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _segundos_restantes(fecha_expiracion: Optional[datetime]) -> int:
+    if fecha_expiracion is None:
+        return 0
+    restantes = int((fecha_expiracion - _ahora_utc()).total_seconds())
+    return max(0, restantes)
 
 
 def _generar_codigo_acceso(db: Session) -> str:
@@ -21,11 +36,32 @@ def _generar_codigo_acceso(db: Session) -> str:
             return codigo
 
 
+def serializar_grupo(grupo: Grupo, incluir_codigo: bool) -> dict:
+    """Arma la respuesta del grupo ocultando el código a quien no es líder ni admin."""
+    return {
+        "id_grupo": grupo.id_grupo,
+        "nombre_grupo": grupo.nombre_grupo,
+        "descripcion": grupo.descripcion,
+        "codigo_acceso": grupo.codigo_acceso if incluir_codigo else None,
+        "fecha_expiracion_codigo": grupo.fecha_expiracion_codigo if incluir_codigo else None,
+        "segundos_restantes_codigo": (
+            _segundos_restantes(grupo.fecha_expiracion_codigo) if incluir_codigo else None
+        ),
+        "fecha_creacion": grupo.fecha_creacion,
+    }
+
+
 def crear_grupo(db: Session, nombre_grupo: str, descripcion: Optional[str], id_usuario: int) -> Grupo:
     codigo_acceso = _generar_codigo_acceso(db)
+    fecha_expiracion_codigo = _ahora_utc() + timedelta(seconds=DURACION_CODIGO_SEGUNDOS)
     try:
         grupo = grupo_repository.crear_grupo(
-            db, nombre_grupo, descripcion, codigo_acceso, commit=False
+            db,
+            nombre_grupo,
+            descripcion,
+            codigo_acceso,
+            fecha_expiracion_codigo,
+            commit=False,
         )
         grupo_repository.agregar_integrante(
             db, id_usuario, grupo.id_grupo, rol="lider", commit=False
@@ -45,18 +81,33 @@ def eliminar_grupo(db: Session, id_grupo: int) -> None:
     grupo_repository.eliminar_grupo(db, grupo)
 
 
-def listar_grupos_de_usuario(db: Session, id_usuario: int) -> List[dict]:
+def regenerar_codigo_acceso(db: Session, id_grupo: int) -> Grupo:
+    grupo = grupo_repository.obtener_grupo_por_id(db, id_grupo)
+    if not grupo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
+
+    nuevo_codigo = _generar_codigo_acceso(db)
+    fecha_expiracion_codigo = _ahora_utc() + timedelta(seconds=DURACION_CODIGO_SEGUNDOS)
+    return grupo_repository.actualizar_codigo_acceso(
+        db, grupo, nuevo_codigo, fecha_expiracion_codigo
+    )
+
+
+def listar_grupos_de_usuario(db: Session, id_usuario: int, es_admin: bool = False) -> List[dict]:
     filas = grupo_repository.obtener_grupos_de_usuario(db, id_usuario)
     return [
         {
-            "id_grupo": grupo.id_grupo,
-            "nombre_grupo": grupo.nombre_grupo,
-            "descripcion": grupo.descripcion,
-            "codigo_acceso": grupo.codigo_acceso,
-            "fecha_creacion": grupo.fecha_creacion,
+            **serializar_grupo(grupo, incluir_codigo=(rol == "lider" or es_admin)),
             "rol": rol,
         }
         for grupo, rol in filas
+    ]
+
+
+def listar_todos_los_grupos(db: Session) -> List[dict]:
+    return [
+        serializar_grupo(grupo, incluir_codigo=True)
+        for grupo in grupo_repository.obtener_todos_los_grupos(db)
     ]
 
 
@@ -64,6 +115,11 @@ def unirse_a_grupo(db: Session, codigo_acceso: str, id_usuario: int) -> Integran
     grupo = grupo_repository.obtener_grupo_por_codigo(db, codigo_acceso)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Código de acceso inválido")
+
+    if grupo.fecha_expiracion_codigo is None or grupo.fecha_expiracion_codigo <= _ahora_utc():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Código vencido"
+        )
 
     ya_es_integrante = grupo_repository.obtener_integrante(db, id_usuario, grupo.id_grupo)
     if ya_es_integrante:

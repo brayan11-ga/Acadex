@@ -120,15 +120,26 @@ class AutenticacionRutasTests(unittest.TestCase):
             ("/api/v1/tareas/{id_tarea}", "PUT"),
             ("/api/v1/tareas/{id_tarea}", "DELETE"),
             ("/api/v1/tareas/{id_tarea}/completar", "POST"),
+            ("/api/v1/tareas/{id_tarea}/reabrir", "POST"),
             ("/api/v1/tareas/{id_tarea}/asignados", "GET"),
+            ("/api/v1/tareas/{id_tarea}/asignados", "PUT"),
             ("/api/v1/tareas/grupos/{id_grupo}", "GET"),
             ("/api/v1/perfiles/", "POST"),
             ("/api/v1/perfiles/usuario/{id_usuario}", "GET"),
             ("/api/v1/perfiles/usuario/{id_usuario}", "PATCH"),
             ("/api/v1/sesiones-cronometro/iniciar", "POST"),
             ("/api/v1/sesiones-cronometro/{id_sesion}/finalizar", "PATCH"),
+            ("/api/v1/sesiones-cronometro/{id_sesion}/descartar", "DELETE"),
+            ("/api/v1/sesiones-cronometro/tarea/{id_tarea}/reiniciar", "DELETE"),
             ("/api/v1/sesiones-cronometro/usuario/{id_usuario}", "GET"),
+            ("/api/v1/grupos/{id_grupo}/regenerar-codigo", "POST"),
         }
+
+        def dependencias_anidadas(dependencia):
+            for sub in dependencia.dependencies:
+                yield sub
+                yield from dependencias_anidadas(sub)
+
         for ruta, metodo in rutas_privadas:
             with self.subTest(ruta=ruta, metodo=metodo):
                 coincidencias = [
@@ -138,10 +149,11 @@ class AutenticacionRutasTests(unittest.TestCase):
                     and metodo in getattr(registro, "methods", set())
                 ]
                 self.assertEqual(len(coincidencias), 1)
-                self.assertIn(
-                    get_usuario_actual,
-                    {dependencia.call for dependencia in coincidencias[0].dependant.dependencies},
-                )
+                llamadas = {
+                    dependencia.call
+                    for dependencia in dependencias_anidadas(coincidencias[0].dependant)
+                }
+                self.assertIn(get_usuario_actual, llamadas)
 
     def test_jwt_valido_identifica_al_usuario_y_token_invalido_se_rechaza(self):
         credencial = HTTPAuthorizationCredentials(
@@ -418,7 +430,7 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
         sesion = SimpleNamespace(id_usuario=12, id_tarea=4)
         with (
             patch.object(tarea_service, "verificar_permiso_tarea") as verificar,
-            patch.object(sesion_cronometro_service.repo, "get_sesion_activa", return_value=None),
+            patch.object(sesion_cronometro_service.repo, "get_sesion_activa_de_usuario", return_value=None),
             patch.object(sesion_cronometro_service.repo, "create_sesion", return_value=sesion) as crear,
         ):
             resultado = sesion_cronometro_service.iniciar_sesion(None, 12, 4)

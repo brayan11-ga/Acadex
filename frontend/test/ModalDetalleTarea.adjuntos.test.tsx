@@ -1,3 +1,4 @@
+// Ruta: frontend/test/ModalDetalleTarea.adjuntos.test.tsx
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -60,6 +61,10 @@ const tarea: TareaBackend = {
   id_categoria: 4,
   id_usuario: 12,
   id_grupo: null,
+  max_archivos: 3,
+  total_archivos: 0,
+  cronometro_activo: false,
+  tiempo_acumulado: 0,
 };
 
 const adjunto: ArchivoTarea = {

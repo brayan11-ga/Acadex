@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,7 +12,9 @@ class GrupoResponse(BaseModel):
     id_grupo: int
     nombre_grupo: str
     descripcion: Optional[str] = None
-    codigo_acceso: str
+    codigo_acceso: Optional[str] = None
+    fecha_expiracion_codigo: Optional[datetime] = None
+    segundos_restantes_codigo: Optional[int] = None
     fecha_creacion: date
 
     model_config = ConfigDict(from_attributes=True)

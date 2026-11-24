@@ -13,6 +13,7 @@ import { Estadisticas } from "../pages/Estadisticas";
 import { Calendario } from "../pages/Calendario";
 import Grupos from "../pages/Grupos";
 import TareasGrupoPage from "../pages/TareasGrupoPage";
+import DetalleTareaGrupoPage from "../pages/DetalleTareaGrupoPage";
 import GrupoIntegrantesPage from "../pages/GrupoIntegrantesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RutaAdmin } from "./RutaAdmin";
@@ -42,6 +43,10 @@ function AppRouter() {
           <Route path="/estadisticas" element={<Estadisticas />} />
           <Route path="/grupos" element={<Grupos />} />
           <Route path="/grupos/:idGrupo/tareas" element={<TareasGrupoPage />} />
+          <Route
+            path="/grupos/:idGrupo/tareas/:idTarea"
+            element={<DetalleTareaGrupoPage />}
+          />
           <Route path="/grupos/:idGrupo" element={<GrupoIntegrantesPage />} />
           <Route path="/grupos/:idGrupo/lider" element={<Lider />} />
         </Route>

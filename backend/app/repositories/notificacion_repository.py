@@ -5,7 +5,14 @@ from app.models.notificacion import Notificacion
 
 
 def crear_notificacion(
-    db: Session, titulo: str, detalles: str, tipo: str, id_usuario: int, id_tarea: Optional[int] = None
+    db: Session,
+    titulo: str,
+    detalles: str,
+    tipo: str,
+    id_usuario: int,
+    id_tarea: Optional[int] = None,
+    *,
+    commit: bool = True,
 ) -> Notificacion:
     notificacion = Notificacion(
         titulo=titulo,
@@ -15,6 +22,11 @@ def crear_notificacion(
         id_tarea=id_tarea,
     )
     db.add(notificacion)
-    db.commit()
-    db.refresh(notificacion)
+    if commit:
+        db.commit()
+        db.refresh(notificacion)
+    else:
+        # C4b/C4c: permite crear la notificación dentro de la transacción
+        # principal sin confirmarla por separado.
+        db.flush()
     return notificacion

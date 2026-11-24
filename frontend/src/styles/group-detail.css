@@ -187,6 +187,15 @@
 .member-kick:hover {
   background: rgba(239, 68, 68, 0.15);
 }
+.detail-error {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  font-size: 0.88rem;
+}
 .detail-footer {
   margin-top: 2rem;
   padding-top: 1.5rem;

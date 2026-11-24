@@ -4,15 +4,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from app.models.sesion_cronometro import SesionCronometro
-from app.repositories import sesion_cronometro_repository as repo
+from app.repositories import historial_tarea_repository, sesion_cronometro_repository as repo
 from app.services import tarea_service
 
 def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronometro:
     tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
-    if repo.get_sesion_activa(db, id_tarea):
+    if repo.get_sesion_activa_de_usuario(db, id_tarea, id_usuario):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya hay una sesión activa para esta tarea",
+            detail="Ya tienes una sesión activa en esta tarea",
         )
     ahora = datetime.now(timezone.utc).replace(tzinfo=None)
     data = {"fecha_inicio": ahora, "id_usuario": id_usuario, "id_tarea": id_tarea}
@@ -22,7 +22,7 @@ def iniciar_sesion(db: Session, id_usuario: int, id_tarea: int) -> SesionCronome
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ya hay una sesión activa para esta tarea",
+            detail="Ya tienes una sesión activa en esta tarea",
         ) from None
 
 def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCronometro:
@@ -47,6 +47,27 @@ def finalizar_sesion(db: Session, id_sesion: int, id_usuario: int) -> SesionCron
     duracion = (fecha_fin - sesion.fecha_inicio).total_seconds()
     return repo.update_sesion(db, sesion, {"fecha_fin": fecha_fin, "duracion": duracion})
 
+
+def descartar_sesion(db: Session, id_sesion: int, id_usuario: int) -> None:
+    """Borra una sesión abierta sin guardar su duración.
+
+    Solo el dueño puede descartarla y solo si sigue en curso. Así se corrige
+    el caso de un cronómetro que quedó corriendo por olvido.
+    """
+    sesion = repo.get_sesion_by_id(db, id_sesion)
+    if not sesion or sesion.id_usuario != id_usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sesión no encontrada",
+        )
+    if sesion.fecha_fin is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La sesión ya fue finalizada",
+        )
+    repo.delete_sesion(db, sesion)
+
+
 def listar_sesiones_usuario(
     db: Session, id_usuario: int, id_usuario_actual: int
 ) -> List[SesionCronometro]:
@@ -56,3 +77,21 @@ def listar_sesiones_usuario(
             detail="No se encontraron sesiones",
         )
     return repo.get_sesiones_by_usuario(db, id_usuario)
+
+
+def reiniciar_sesiones_tarea(db: Session, id_usuario: int, id_tarea: int) -> None:
+    """Borra todo el tiempo guardado del usuario en la tarea (Reiniciar real).
+
+    Borra sus sesiones abiertas y cerradas, nunca las de otros asignados ni las
+    del mismo usuario en otras tareas. No escribe en HistorialTarea.
+    """
+    tarea_service.verificar_permiso_tarea(db, id_tarea, id_usuario, "cronometro")
+    if historial_tarea_repository.usuario_ya_completo(db, id_tarea, id_usuario):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Ya completaste tu parte. Para reiniciar el cronómetro, "
+                "el líder debe reabrir la tarea."
+            ),
+        )
+    repo.reiniciar_sesiones_usuario_tarea(db, id_tarea, id_usuario)
