@@ -34,7 +34,7 @@ def registrar_usuario(
 ) -> Usuario:
     if not acepta_tratamiento_datos or not confirma_aviso_almacenamiento:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Debes aceptar el tratamiento de datos y confirmar la lectura de los avisos.",
         )
     if repo.get_usuario_by_correo(db, correo_electronico):
