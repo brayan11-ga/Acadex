@@ -4,7 +4,7 @@
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
-
+from unittest.mock import ANY, Mock, patch
 from fastapi import HTTPException
 
 from app.schemas.tarea import CompletarTareaRequest
@@ -174,8 +174,12 @@ class CompletarParteExitosoTests(unittest.TestCase):
                 "contar_archivos_de_tarea",
                 return_value=0,
             ),
+            patch.object(
+                tarea_service.prioridad_service, "recalcular_pendientes"
+            ) as recalcular,
         ):
             resultado = tarea_service.completar_parte_tarea(Mock(), 4, 4, 12)
+        self.recalcular = recalcular
         return resultado, upsert
 
     def test_guarda_tiempo_real_de_sesiones_cerradas_y_marca_en_progreso(self):
@@ -192,6 +196,7 @@ class CompletarParteExitosoTests(unittest.TestCase):
         self.assertEqual(kwargs["tiempo_real"], 125.0)
         self.assertEqual(kwargs["id_grupo"], 7)
         self.assertEqual(resultado.estado, "en progreso")
+        self.recalcular.assert_not_called()
 
     def test_marca_completada_cuando_todos_los_asignados_completaron(self):
         resultado, _ = self._ejecutar(
@@ -201,7 +206,7 @@ class CompletarParteExitosoTests(unittest.TestCase):
                 SimpleNamespace(id_usuario=13),
             ],
         )
-        self.assertEqual(resultado.estado, "Completada")
+        self.recalcular.assert_called_once_with(ANY, 1, None, 7)
 
     def test_no_llama_recalcular_estadistica(self):
         with patch(

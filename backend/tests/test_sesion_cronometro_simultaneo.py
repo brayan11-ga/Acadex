@@ -3,7 +3,7 @@
 
 import unittest
 from unittest.mock import patch
-
+from types import SimpleNamespace
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -18,18 +18,25 @@ class CronometroSimultaneoTests(unittest.TestCase):
         self.engine = create_engine("sqlite+pysqlite:///:memory:")
         SesionCronometro.__table__.create(self.engine)
         self.db = Session(self.engine)
+        self.tarea = SimpleNamespace(
+            id_tarea=4, nombre="Tarea", id_usuario=None, id_grupo=7,
+            tiempo_acumulado=0.0, cronometro_activo=False, ultima_pausa=None,
+        )
+        for destino, atributo, valor in (
+            (sesion_cronometro_service.tarea_service, "verificar_permiso_tarea", self.tarea),
+            (sesion_cronometro_service.tarea_repository, "obtener_tarea_por_id", self.tarea),
+            (sesion_cronometro_service.perfil_repository, "get_perfil_by_usuario", None),
+        ):
+            parche = patch.object(destino, atributo, return_value=valor)
+            parche.start()
+            self.addCleanup(parche.stop)
 
     def tearDown(self):
         self.db.close()
         self.engine.dispose()
 
     def _iniciar(self, id_usuario: int, id_tarea: int = 4):
-        with patch.object(
-            sesion_cronometro_service.tarea_service, "verificar_permiso_tarea"
-        ):
-            return sesion_cronometro_service.iniciar_sesion(
-                self.db, id_usuario, id_tarea
-            )
+        return sesion_cronometro_service.iniciar_sesion(self.db, id_usuario, id_tarea)
 
     def test_dos_usuarios_inician_su_cronometro_en_la_misma_tarea(self):
         primera = self._iniciar(8)
