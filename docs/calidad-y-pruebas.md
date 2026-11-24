@@ -108,6 +108,12 @@ El workflow se activa en PR dirigidos a `develop` o `main` y define tres trabajo
 
 Que un check exista no prueba que GitHub lo exija para fusionar. Las reglas comprobadas y pendientes están en [CONTRIBUTING](../CONTRIBUTING.md#8-integra-y-comprueba-el-cierre).
 
+### Advertencias externas de CI
+
+- `google-genai 2.29.0` usa `typing._UnionGenericAlias` en Python 3.14. La versión `2.34.0` corrige ese uso. Valida esa actualización por separado con las pruebas de IA. [Seguimiento de Google](https://github.com/googleapis/python-genai/issues/1640).
+- `starlette 1.2.1` advierte cuando `TestClient` usa `httpx`. El candidato `httpx2 2.3.0` se resuelve con las versiones fijadas. `httpx2 2.16.2` requiere `idna>=3.18` y el proyecto fija `idna==3.17`. Valida cualquier cambio de cliente con la suite de API aislada. [Documentación de TestClient](https://starlette.dev/testclient/).
+- Los avisos de pip sobre root o caché corresponden a la instalación en el contenedor. El aviso `trust` de `initdb` corresponde a conexiones locales dentro del contenedor efímero de PostgreSQL. Se conserva la configuración del runner de pruebas.
+
 ## Qué comprobar según el cambio
 
 | Cambio | Comprobaciones |
