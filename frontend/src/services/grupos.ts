@@ -40,3 +40,7 @@ export function expulsarIntegrante(idGrupo: number, idUsuario: number): Promise<
 export function eliminarGrupo(idGrupo: number): Promise<void> {
   return apiFetch<void>(`/grupos/${idGrupo}`, { method: "DELETE" });
 }
+
+export function regenerarCodigoAcceso(idGrupo: number): Promise<Grupo> {
+  return apiFetch<Grupo>(`/grupos/${idGrupo}/regenerar-codigo`, { method: "POST" });
+}

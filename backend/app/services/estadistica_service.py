@@ -52,6 +52,7 @@ def recalcular_estadistica_categoria(
         .filter(
             HistorialTarea.id_usuario == id_usuario,
             Tarea.id_categoria == id_categoria,
+            HistorialTarea.id_grupo.is_(None),
         )
         .first()
     )

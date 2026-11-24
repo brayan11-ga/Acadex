@@ -16,6 +16,7 @@ import {
   analizarDocumentoIA,
   subirArchivoTarea,
   crearTareaGrupal,
+  type ActualizarTareaPayload,
   type TareaBackend,
 } from "../../services/tareas";
 import { SeccionAdjuntosTarea } from "./SeccionAdjuntosTarea";
@@ -37,6 +38,9 @@ const NIVELES_DIFICULTAD = [
   { nivel: 4, icono: caraNivel4, etiqueta: "Difícil" },
   { nivel: 5, icono: caraNivel5, etiqueta: "Muy difícil" },
 ];
+
+// Tope fijo del sistema, igual que MAX_ARCHIVOS_POR_TAREA en el backend.
+const MAX_ARCHIVOS_SISTEMA = 10;
 
 interface FormularioProps {
   onDescartar: () => void;
@@ -71,6 +75,7 @@ function FormularioNuevaTarea({
   const [fecha, setFecha] = useState("");
   const [dificultad, setDificultad] = useState(3);
   const [tiempoEstimado, setTiempoEstimado] = useState("");
+  const [maxArchivos, setMaxArchivos] = useState("3");
   const [descripcion, setDescripcion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,6 +181,7 @@ function FormularioNuevaTarea({
       setFecha(tareaAEditar.fecha_entrega.slice(0, 16));
       setDificultad(tareaAEditar.dificultad_estimada);
       setTiempoEstimado(String(tareaAEditar.tiempo_estimado));
+      setMaxArchivos(String(tareaAEditar.max_archivos));
       setDescripcion(tareaAEditar.descripcion ?? "");
     }
   }, [tareaAEditar]);
@@ -269,7 +275,22 @@ function FormularioNuevaTarea({
       return;
     }
 
-    if (esGrupal) {
+    const maxArchivosNum = Number(maxArchivos);
+    if (
+      esGrupal
+      && tareaAEditar
+      && (!maxArchivos.trim()
+        || !Number.isInteger(maxArchivosNum)
+        || maxArchivosNum < 1
+        || maxArchivosNum > MAX_ARCHIVOS_SISTEMA)
+    ) {
+      setError(
+        `El máximo de archivos debe ser un número entero entre 1 y ${MAX_ARCHIVOS_SISTEMA}`,
+      );
+      return;
+    }
+
+    if (esGrupal && !tareaAEditar) {
       const errorAsignacion = validarAsignados(asignados);
       if (errorAsignacion) {
         setErrorAsignados(errorAsignacion);
@@ -283,7 +304,7 @@ function FormularioNuevaTarea({
 
     marcarEnviando(true);
     try {
-      if (esGrupal && idGrupo != null) {
+      if (esGrupal && idGrupo != null && !tareaAEditar) {
         await crearTareaGrupal(idGrupo, {
           nombre: titulo,
           descripcion,
@@ -295,14 +316,16 @@ function FormularioNuevaTarea({
         });
         onTareaCreada();
       } else if (tareaAEditar) {
-        await actualizarTarea(tareaAEditar.id_tarea, {
+        const datosActualizar: ActualizarTareaPayload = {
           nombre: titulo,
           descripcion,
           fecha_entrega: fecha,
           dificultad_estimada: dificultad,
           tiempo_estimado: tiempoEstimadoNum,
           id_categoria: idCategoria,
-        });
+        };
+        if (esGrupal) datosActualizar.max_archivos = maxArchivosNum;
+        await actualizarTarea(tareaAEditar.id_tarea, datosActualizar);
         onTareaCreada();
       } else {
         const datosTarea = {
@@ -482,6 +505,21 @@ function FormularioNuevaTarea({
         </label>
       </div>
 
+      {esGrupal && tareaAEditar && (
+        <label className="pixel-field">
+          <span className="pixel-field-label">Máximo de archivos</span>
+          <input
+            type="number"
+            min="1"
+            max={MAX_ARCHIVOS_SISTEMA}
+            className="pixel-input"
+            value={maxArchivos}
+            disabled={idTareaCreada !== null}
+            onChange={(e) => setMaxArchivos(e.target.value)}
+          />
+        </label>
+      )}
+
       <label className="pixel-field pixel-field-grow">
         <span className="pixel-field-label">Descripción</span>
         <textarea
@@ -493,7 +531,7 @@ function FormularioNuevaTarea({
         />
       </label>
 
-      {esGrupal && (
+      {esGrupal && !tareaAEditar && (
         <AsignarIntegrantes
           integrantes={integrantes}
           seleccionados={asignados}

@@ -13,6 +13,10 @@ export interface TareaBackend {
   id_categoria: number;
   id_usuario: number | null;
   id_grupo: number | null;
+  max_archivos: number;
+  total_archivos: number;
+  cronometro_activo: boolean;
+  tiempo_acumulado: number;
 }
 
 export interface NuevaTareaPayload {
@@ -32,6 +36,7 @@ export interface ActualizarTareaPayload {
   dificultad_estimada?: number;
   tiempo_estimado?: number;
   id_categoria?: number;
+  max_archivos?: number;
   estado?: string;
 }
 
@@ -77,6 +82,22 @@ export function actualizarTarea(
   return apiFetch<TareaBackend>(`/tareas/${idTarea}`, {
     method: "PUT",
     body: JSON.stringify(datos),
+  });
+}
+
+export function completarParteTarea(
+  idTarea: number,
+  dificultadReal: number
+): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/completar`, {
+    method: "POST",
+    body: JSON.stringify({ dificultad_real: dificultadReal }),
+  });
+}
+
+export function reabrirTarea(idTarea: number): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/reabrir`, {
+    method: "POST",
   });
 }
 
@@ -154,6 +175,7 @@ export interface TareaGrupalCreatePayload {
 export interface IntegranteAsignadoBackend {
   id_usuario: number;
   correo_electronico: string;
+  completado: boolean;
 }
 
 export function listarTareasDeGrupo(idGrupo: number): Promise<TareaBackend[]> {
@@ -172,6 +194,16 @@ export function crearTareaGrupal(
 
 export function listarAsignadosTarea(idTarea: number): Promise<IntegranteAsignadoBackend[]> {
   return apiFetch<IntegranteAsignadoBackend[]>(`/tareas/${idTarea}/asignados`);
+}
+
+export function reasignarAsignadosTarea(
+  idTarea: number,
+  idsUsuarios: number[],
+): Promise<TareaBackend> {
+  return apiFetch<TareaBackend>(`/tareas/${idTarea}/asignados`, {
+    method: "PUT",
+    body: JSON.stringify({ ids_usuarios: idsUsuarios }),
+  });
 }
 
 export function listarTareasAsignadasMias(): Promise<TareaBackend[]> {

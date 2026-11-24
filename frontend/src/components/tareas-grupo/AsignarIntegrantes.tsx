@@ -127,6 +127,11 @@ export default function AsignarIntegrantes({
                           {integrante.nombre || integrante.correo_electronico}
                         </span>
                         {esUsuarioActual && <span className="tareas-grupo-etiqueta-tu">TÚ</span>}
+                        {integrante.completado && (
+                          <span className="detalle-tarea-insignia-estado detalle-tarea-insignia-completo">
+                            Completó
+                          </span>
+                        )}
                       </span>
                       {integrante.nombre && (
                         <span className="tareas-grupo-asignar-secundario tareas-grupo-truncar">

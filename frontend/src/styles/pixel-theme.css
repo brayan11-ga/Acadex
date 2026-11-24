@@ -1,4 +1,4 @@
-/* src/styles/pixel-theme.css */
+/* Ruta: frontend/src/styles/pixel-theme.css */
 
 :root {
   /* =========================
@@ -21,6 +21,7 @@
   --pixel-accent: #7c5cff;
   --pixel-accent-soft: #a68bff;
   --pixel-accent-strong: #5b3df0;
+  --pixel-on-accent: #ffffff;
 
   /* Colores de prioridad */
   --pixel-baja: #45e0a8;
@@ -67,6 +68,7 @@ html.light-mode {
   --pixel-accent: #5b3df0;
   --pixel-accent-soft: #7c5cff;
   --pixel-accent-strong: #7c5cff;
+  --pixel-on-accent: #ffffff;
 
   /* Colores de prioridad (mismos tonos, funcionan en ambos temas) */
   --pixel-baja: #45e0a8;

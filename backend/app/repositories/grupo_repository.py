@@ -1,4 +1,5 @@
 # backend/app/repositories/grupo_repository.py
+from datetime import datetime
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 
@@ -24,23 +25,42 @@ def obtener_grupos_de_usuario(db: Session, id_usuario: int) -> List[Tuple[Grupo,
     )
 
 
+def obtener_todos_los_grupos(db: Session) -> List[Grupo]:
+    return db.query(Grupo).order_by(Grupo.id_grupo).all()
+
+
 def crear_grupo(
     db: Session,
     nombre_grupo: str,
     descripcion: Optional[str],
     codigo_acceso: str,
+    fecha_expiracion_codigo: Optional[datetime] = None,
     commit: bool = True,
 ) -> Grupo:
     grupo = Grupo(
         nombre_grupo=nombre_grupo,
         descripcion=descripcion,
         codigo_acceso=codigo_acceso,
+        fecha_expiracion_codigo=fecha_expiracion_codigo,
     )
     db.add(grupo)
     db.flush()
     if commit:
         db.commit()
         db.refresh(grupo)
+    return grupo
+
+
+def actualizar_codigo_acceso(
+    db: Session,
+    grupo: Grupo,
+    codigo_acceso: str,
+    fecha_expiracion_codigo: Optional[datetime] = None,
+) -> Grupo:
+    grupo.codigo_acceso = codigo_acceso
+    grupo.fecha_expiracion_codigo = fecha_expiracion_codigo
+    db.commit()
+    db.refresh(grupo)
     return grupo
 
 

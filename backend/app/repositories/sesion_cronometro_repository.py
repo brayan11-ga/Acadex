@@ -10,13 +10,6 @@ def get_sesion_by_id(db: Session, id_sesion: int) -> Optional[SesionCronometro]:
 def get_sesiones_by_usuario(db: Session, id_usuario: int) -> list[SesionCronometro]:
     return db.query(SesionCronometro).filter(SesionCronometro.id_usuario == id_usuario).all()
 
-def get_sesion_activa(db: Session, id_tarea: int) -> Optional[SesionCronometro]:
-    return db.query(SesionCronometro).filter(
-        SesionCronometro.id_tarea == id_tarea,
-        SesionCronometro.fecha_fin.is_(None)
-    ).first()
-
-
 def get_sesion_activa_de_usuario(
     db: Session, id_tarea: int, id_usuario: int
 ) -> Optional[SesionCronometro]:
@@ -41,6 +34,40 @@ def sumar_duracion_cerrada(db: Session, id_tarea: int, id_usuario: int) -> float
     )
     return float(total or 0)
 
+
+def obtener_sesiones_de_usuario_en_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> list[SesionCronometro]:
+    """Todas las sesiones del usuario en la tarea, cerradas y abiertas (C4c)."""
+    return (
+        db.query(SesionCronometro)
+        .filter(
+            SesionCronometro.id_tarea == id_tarea,
+            SesionCronometro.id_usuario == id_usuario,
+        )
+        .all()
+    )
+
+
+def eliminar_sesiones_de_usuario_en_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> int:
+    """Borra todas las sesiones del usuario en la tarea (sin commit)."""
+    sesiones = obtener_sesiones_de_usuario_en_tarea(db, id_tarea, id_usuario)
+    for sesion in sesiones:
+        db.delete(sesion)
+    db.flush()
+    return len(sesiones)
+
+
+def reiniciar_sesiones_usuario_tarea(
+    db: Session, id_tarea: int, id_usuario: int
+) -> int:
+    """Borra abiertas y cerradas del usuario en la tarea y confirma (Reiniciar)."""
+    cantidad = eliminar_sesiones_de_usuario_en_tarea(db, id_tarea, id_usuario)
+    db.commit()
+    return cantidad
+
 def create_sesion(db: Session, data: dict) -> SesionCronometro:
     sesion = SesionCronometro(**data)
     db.add(sesion)
@@ -54,3 +81,9 @@ def update_sesion(db: Session, sesion: SesionCronometro, data: dict) -> SesionCr
     db.commit()
     db.refresh(sesion)
     return sesion
+
+
+def delete_sesion(db: Session, sesion: SesionCronometro) -> None:
+    """Elimina una sesión; el service ya validó dueño y que esté abierta."""
+    db.delete(sesion)
+    db.commit()

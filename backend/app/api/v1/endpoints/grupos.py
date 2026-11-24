@@ -2,7 +2,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
-from app.models.grupo import Grupo
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_usuario_actual, requerir_lider_de_grupo, requerir_admin
 from app.models.usuario import Usuario
@@ -24,7 +23,7 @@ def listar_mis_grupos(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_usuario_actual),
 ):
-    return grupo_service.listar_grupos_de_usuario(db, usuario.id_usuario)
+    return grupo_service.listar_grupos_de_usuario(db, usuario.id_usuario, usuario.es_admin)
 
 
 @router.post("/", response_model=GrupoResponse, status_code=status.HTTP_201_CREATED)
@@ -33,7 +32,10 @@ def crear_grupo(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_usuario_actual),
 ):
-    return grupo_service.crear_grupo(db, datos.nombre_grupo, datos.descripcion, usuario.id_usuario)
+    grupo = grupo_service.crear_grupo(
+        db, datos.nombre_grupo, datos.descripcion, usuario.id_usuario
+    )
+    return grupo_service.serializar_grupo(grupo, incluir_codigo=True)
 
 
 @router.post("/unirse", response_model=IntegranteResponse, status_code=status.HTTP_201_CREATED)
@@ -65,7 +67,7 @@ def listar_todos_los_grupos(
     db: Session=Depends(get_db),
     admin:Usuario=Depends(requerir_admin),
 ):
-    return db.query(Grupo).order_by(Grupo.id_grupo).all()
+    return grupo_service.listar_todos_los_grupos(db)
 
 @router.get("/{id_grupo}/integrantes", response_model=List[IntegranteResponse])
 def listar_integrantes(
@@ -102,3 +104,13 @@ def eliminar_grupo(
     usuario: Usuario = Depends(requerir_lider_de_grupo),
 ):
     grupo_service.eliminar_grupo(db, id_grupo)
+
+
+@router.post("/{id_grupo}/regenerar-codigo", response_model=GrupoResponse)
+def regenerar_codigo_acceso(
+    id_grupo: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(requerir_lider_de_grupo),
+):
+    grupo = grupo_service.regenerar_codigo_acceso(db, id_grupo)
+    return grupo_service.serializar_grupo(grupo, incluir_codigo=True)
