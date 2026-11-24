@@ -1,6 +1,6 @@
 # Requisitos no funcionales de Acadex
 
-Total: **32** requisitos no funcionales, organizados por categoría. Cada uno tiene su propio archivo.
+Total: **32** requisitos no funcionales, organizados por categoría. Cada uno tiene su propio archivo. Estos documentos definen objetivos y restricciones; no son por sí mismos evidencia de que un objetivo ya se haya medido o cumplido. Para planificar o validar un cambio, registra la evidencia en su Issue o Pull Request. El mapa de fuentes canónicas está en [docs/README.md](../README.md).
 
 ## Seguridad y privacidad (9)
 

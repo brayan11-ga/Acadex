@@ -1,0 +1,60 @@
+name: Tarea o funcionalidad
+description: Propón una necesidad de producto o una mejora concreta.
+title: "[Tarea]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe el resultado esperado de forma que otra persona pueda entenderlo y verificarlo.
+  - type: textarea
+    id: necesidad
+    attributes:
+      label: Necesidad y resultado esperado
+      description: Qué problema resuelve y qué debe poder hacer la persona usuaria al terminar.
+      placeholder: Como..., necesito... para...
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance y fuera de alcance
+      description: Incluye límites relevantes para evitar interpretaciones distintas.
+    validations:
+      required: true
+  - type: textarea
+    id: requisitos
+    attributes:
+      label: Requisitos relacionados
+      description: Referencia RF o RNF cuando corresponda; indica no aplica si no existe.
+      placeholder: RF-000, RNF-000 o No aplica
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Lista condiciones observables que permitan decidir cuándo está terminada.
+      placeholder: |
+        - Dado ..., cuando ..., entonces ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Áreas posiblemente afectadas
+      options:
+        - label: Frontend
+        - label: Backend o API
+        - label: Base de datos o migraciones
+        - label: Infraestructura o configuración
+        - label: Documentación
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependencias o bloqueos
+      description: Otras Issues, decisiones, accesos o trabajo previo necesario.
+  - type: textarea
+    id: pruebas
+    attributes:
+      label: Pruebas previstas
+      description: Cómo se verificará el resultado y qué casos importan.
+    validations:
+      required: true

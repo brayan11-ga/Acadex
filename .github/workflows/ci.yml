@@ -5,6 +5,9 @@ on:
     branches:
       - develop
       - main
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -136,14 +139,14 @@ jobs:
           mkdir -p /run/secrets
           printf 'ci disposable runner only\n' > /run/secrets/acadex-test-runner
 
-      - name: Aplicar migraciones a la base efímera
-        run: python -m alembic upgrade head
+      - name: Inicializar la base efímera con el comando de Pre-Deploy
+        run: python -m scripts.migrar_bd --allow-empty
 
       - name: Ejecutar pruebas de API con PostgreSQL
         run: python -m pytest test -q
 
-      - name: Verificar migraciones antes de la suite PostgreSQL
-        run: python -m alembic upgrade head
+      - name: Verificar el comando de Pre-Deploy sobre la base migrada
+        run: python -m scripts.migrar_bd
 
       - name: Ejecutar integración PostgreSQL
         run: python -m pytest tests/test_postgres_integration.py -q

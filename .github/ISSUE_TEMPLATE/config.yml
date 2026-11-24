@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Guía de contribución
+    url: https://github.com/brayan11-ga/Acadex/blob/develop/CONTRIBUTING.md
+    about: Consulta el flujo, las pruebas y la actualización de documentación antes de abrir una Issue.
+  - name: Índice de documentación
+    url: https://github.com/brayan11-ga/Acadex/blob/develop/docs/README.md
+    about: Localiza requisitos, arquitectura, pruebas y procedimientos técnicos.

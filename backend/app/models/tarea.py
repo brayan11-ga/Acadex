@@ -18,7 +18,13 @@ class Tarea(Base):
     tiempo_acumulado = Column(REAL, nullable=False, default=0, server_default=text("0"))
     cronometro_activo = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     ultima_pausa = Column(TIMESTAMP, nullable=True)
-    max_archivos = Column(Integer, nullable=False, default=10, server_default=text("10"))
+    max_archivos = Column(
+        Integer,
+        nullable=False,
+        default=10,
+        server_default=text("10"),
+        comment="Máximo de archivos permitidos en la tarea (1..10). Tope fijo del sistema: 10.",
+    )
 
     id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
     id_grupo = Column(Integer, ForeignKey("grupos.id_grupo", ondelete="CASCADE"), nullable=True)

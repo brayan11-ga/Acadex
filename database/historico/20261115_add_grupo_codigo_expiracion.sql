@@ -1,4 +1,4 @@
--- Ruta: database/migrations/20261115_add_grupo_codigo_expiracion.sql
+-- Ruta: database/historico/20261115_add_grupo_codigo_expiracion.sql
 -- Migración manual (Supabase / psql): vencimiento del código de acceso del grupo.
 -- Equivale a la revisión Alembic 20261115_01_grupo_codigo_expiracion.py.
 -- Idempotente: se puede ejecutar más de una vez sin error.

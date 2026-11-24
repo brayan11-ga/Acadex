@@ -1,9 +1,10 @@
 # Requisitos funcionales de Acadex
 
-**Proyecto: Acadex**  
-**Grupo: Baryan Garcia, Samuel Molina, David Urbano, Santiago Patiño**
+**Proyecto: Acadex**
 
 Total: **58** requisitos funcionales. Cada uno tiene su archivo con la descripción, la historia de usuario y los escenarios.
+
+El campo **Tipo de cambio** clasifica la modificación editorial respecto de una versión anterior del requisito. No representa un estado de implementación ni una evidencia de pruebas. Para planificar o validar un cambio, consulta el RF original y registra la evidencia en su Issue o Pull Request. El mapa de fuentes canónicas está en [docs/README.md](../README.md).
 
 | ID | Módulo | Requisito | Tipo de cambio |
 |---|---|---|---|

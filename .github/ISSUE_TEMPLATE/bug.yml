@@ -1,0 +1,50 @@
+name: Reporte de bug
+description: Informa un comportamiento reproducible que difiere de lo esperado.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Descripción del problema
+      description: Explica qué falla y a quién afecta, sin incluir datos personales ni secretos.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduccion
+    attributes:
+      label: Pasos para reproducirlo
+      description: Especifica los pasos mínimos, datos de ejemplo seguros y frecuencia.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Resultado esperado y actual
+      description: Indica claramente la diferencia observada.
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: Entorno y evidencia
+      description: Navegador, sistema, rama, versión o capturas sin información sensible.
+  - type: dropdown
+    id: impacto
+    attributes:
+      label: Impacto estimado
+      options:
+        - Bloquea una tarea esencial
+        - Afecta una función importante con alternativa
+        - Afecta una función no crítica
+        - No estoy seguro
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto adicional
+      description: Relación con requisitos, cambios recientes o posible causa, si se conoce.
