@@ -374,7 +374,12 @@
 
 .tareas-grupo-tarjeta--vencida {
   border-color: color-mix(in srgb, var(--tareas-grupo-error) 55%, transparent);
-  box-shadow: inset 4px 0 0 0 var(--tareas-grupo-error);
+  border-left: 3px solid var(--tareas-grupo-error);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tareas-grupo-error) 8%, transparent),
+    transparent 40%
+  );
 }
 
 .tareas-grupo-tarjeta--vencida:hover {

@@ -97,12 +97,13 @@
   background-color: var(--pixel-panel);
   border: 1px solid var(--pixel-border);
   border-radius: var(--pixel-radius);
-  padding: 1.5rem;
+  padding: 20px 22px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem; /* Espacio mínimo entre texto y botones */
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  align-items: flex-start;
+  gap: 14px 20px;
+  transition: border-color 0.2s ease;
 }
 
 .pixel-tarea-card:hover {
@@ -124,20 +125,18 @@
 
 .pixel-tarea-header-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 8px 10px;
 }
 
 .pixel-tarea-titulo {
   margin: 0;
-  font-size: 1.1rem;
-  font-family: var(--pixel-font-body);
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--pixel-ink);
-  /* Truncamiento para textos muy largos */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 /* Etiquetas de dificultad */
@@ -161,9 +160,29 @@
 .pixel-tarea-detalles {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 6px 20px;
+  margin: 0;
   color: var(--pixel-ink-faint);
-  font-size: 0.85rem;
+  font-size: 13px;
+}
+
+.pixel-tarea-meta {
+  display: flex;
+  gap: 6px;
+}
+
+.pixel-tarea-meta dt::after {
+  content: ':';
+}
+
+.pixel-tarea-meta dd {
+  margin: 0;
+  color: var(--pixel-ink-soft);
+}
+
+.pixel-tarea-meta--vencida dd {
+  color: var(--pixel-vencida);
+  font-weight: 600;
 }
 
 /* Contenedor de botones a la derecha (modo lista) */
@@ -171,18 +190,23 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.8rem;
-  flex-shrink: 0; /* IMPIDE QUE LOS BOTONES SE ESPICHEN */
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .pixel-estado-badge {
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background-color: var(--pixel-panel-alt);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 2px 12px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: 999px;
+  background: transparent;
   color: var(--pixel-ink-soft);
-  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .pixel-estado-badge.completada {
@@ -209,9 +233,13 @@
 
 .pixel-tarea-botones {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--pixel-border);
+  justify-content: flex-start;
 }
 
 .pixel-btn-icono {
@@ -994,4 +1022,37 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+}
+
+.pixel-etiqueta-vencida {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  border: 1px solid var(--pixel-vencida);
+  border-radius: 4px;
+  color: var(--pixel-vencida);
+  font-family: var(--pixel-font-display);
+  font-size: 8px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pixel-prioridad::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.pixel-prioridad--baja { color: var(--pixel-baja); }
+.pixel-prioridad--media { color: var(--pixel-media); }
+.pixel-prioridad--alta { color: var(--pixel-alta); }
+
+.pixel-tarea-botones .tareas-grupo-boton {
+  font-family: var(--pixel-font-body);
+}
+
+.pixel-tarea-botones .pixel-menu-kebab-container {
+  margin-left: auto;
 }

@@ -845,9 +845,11 @@ def crear_tarea_grupal(
     return tarea
 
 def listar_tareas_asignadas(db: Session, id_usuario: int) -> List[Tarea]:
-    return _adjuntar_total_archivos(
-        db, asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
-    )
+    tareas=asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
+    prioridad_service.recalcular_visibles(db, tareas)
+    db.commit()
+    tareas= asignacion_tarea_repository.obtener_tareas_asignadas_a_usuario(db, id_usuario)
+    return _adjuntar_total_archivos(db, tareas)
 
 def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[Tarea]:
     if grupo_repository.obtener_integrante(db, id_usuario, id_grupo) is None:
@@ -855,9 +857,11 @@ def listar_tareas_de_grupo(db: Session, id_grupo: int, id_usuario: int) -> List[
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para consultar las tareas de este grupo.",
         )
-    return _adjuntar_total_archivos(
-        db, tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
-    )
+    tareas= tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
+    prioridad_service.recalcular_visibles(db, tareas)
+    db.commit()
+    tareas=tarea_repository.obtener_tareas_por_grupo(db, id_grupo)
+    return _adjuntar_total_archivos(db, tareas)
 
 def listar_asignados_de_tarea(db: Session, id_tarea: int, id_usuario: int) -> List[dict]:
     # obtener_tarea ya valida el acceso: dueño en las individuales y miembro del grupo

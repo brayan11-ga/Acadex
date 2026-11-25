@@ -14,10 +14,10 @@ import {
 import type { GrupoConRol, Integrante } from "../types/grupo";
 import type { IntegranteAsignable } from "../types/tareaGrupo";
 import { obtenerIdUsuarioActual } from "../utils/jwt";
+import { ETIQUETAS_PRIORIDAD, mapearPrioridad } from "../utils/prioridad";
 import "../styles/tareas-grupo.css";
 
 type EstadoPantalla = "cargando" | "lista" | "vacio" | "error" | "sin-permisos";
-type PrioridadChip = "baja" | "media" | "alta";
 
 const formateadorFecha = new Intl.DateTimeFormat("es-CO", {
   day: "numeric",
@@ -33,12 +33,6 @@ const ETIQUETAS_ESTADO: Record<string, string> = {
   completada: "completada",
 };
 
-const ETIQUETAS_PRIORIDAD: Record<PrioridadChip, string> = {
-  baja: "Prioridad baja",
-  media: "Prioridad media",
-  alta: "Prioridad alta",
-};
-
 function formatearFecha(fechaIso: string): string {
   const fecha = new Date(fechaIso);
   return Number.isNaN(fecha.getTime()) ? "Sin fecha" : formateadorFecha.format(fecha);
@@ -46,13 +40,6 @@ function formatearFecha(fechaIso: string): string {
 
 function normalizarEstado(estado: string): string {
   return estado.trim().toLowerCase().replace(/\s+/g, "-");
-}
-
-function mapearPrioridad(prioridad: number | null): PrioridadChip | null {
-  if (prioridad == null) return null;
-  if (prioridad <= 1) return "alta";
-  if (prioridad === 2) return "media";
-  return "baja";
 }
 
 function estaVencida(tarea: TareaBackend, ahora: Date): boolean {

@@ -1,10 +1,11 @@
 # Ruta: backend/tests/test_api_autorizacion.py
 import sys
 import unittest
+from unittest.mock import MagicMock, patch
 from datetime import date, datetime, timedelta
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, patch
-
+from unittest.mock import patch
 from fastapi import HTTPException
 from fastapi.dependencies import utils as fastapi_dependency_utils
 from fastapi.security import HTTPAuthorizationCredentials
@@ -218,16 +219,20 @@ class AutorizacionServiciosTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, 403)
 
     def test_listado_de_grupo_exige_pertenencia(self):
+        db=MagicMock()
         tarea = SimpleNamespace(id_tarea=4, id_grupo=7)
         with (
             patch.object(tarea_service.grupo_repository, "obtener_integrante", side_effect=[SimpleNamespace(rol="miembro"), None]),
             patch.object(tarea_service.tarea_repository, "obtener_tareas_por_grupo", return_value=[tarea]) as listar,
+            patch.object(tarea_service.prioridad_service, "recalcular_visibles"),
+            patch.object(tarea_service, "_adjuntar_total_archivos", side_effect=lambda _db, tareas: tareas),
         ):
-            self.assertEqual(tarea_service.listar_tareas_de_grupo(None, 7, 12), [tarea])
+            self.assertEqual(tarea_service.listar_tareas_de_grupo(db, 7, 12), [tarea])
             with self.assertRaises(HTTPException) as error:
-                tarea_service.listar_tareas_de_grupo(None, 7, 13)
+                tarea_service.listar_tareas_de_grupo(db, 7, 13)
         self.assertEqual(error.exception.status_code, 403)
-        listar.assert_called_once_with(None, 7)
+        self.assertEqual(listar.call_count, 2)
+        listar.assert_called_with(db, 7)
 
     def test_calendario_no_acepta_id_de_otro_usuario(self):
         with patch.object(tarea_service.tarea_repository, "obtener_tareas_por_rango") as consultar:
