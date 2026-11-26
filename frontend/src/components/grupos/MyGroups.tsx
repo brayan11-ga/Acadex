@@ -1,6 +1,9 @@
 // frontend/src/components/grupos/MyGroups.tsx
 import type { GrupoConRol } from "../../types/grupo";
+import "../styles/tarjetas.css";
 import "../../styles/my-groups.css";
+import "../../styles/my-groups.css";
+import "../../styles/difuminado.css";
 import { EmptyState } from "../ui/EmptyState";
 
 interface MyGroupsProps {
@@ -43,17 +46,17 @@ export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: My
             <li key={grupo.id_grupo}>
               <button
                 type="button"
-                className="group-card"
+                className={`group-card group-card--${grupo.rol === "lider" ? "leader" : "member"}`}
                 onClick={() => onOpenGroup(grupo.id_grupo)}
                 aria-label={`Abrir grupo ${grupo.nombre_grupo}`}
               >
                 <div className="group-card-top">
-                  <h2 className="group-card-name">{grupo.nombre_grupo}</h2>
+                  <h2 className="group-card-name texto-difuminado">{grupo.nombre_grupo}</h2>
                   <span className={`role-badge role-badge--${grupo.rol === "lider" ? "leader" : "member"}`}>
                     {grupo.rol === "lider" ? "Líder" : "Miembro"}
                   </span>
                 </div>
-                <p className="group-card-desc">{grupo.descripcion?.trim() || "Sin descripción."}</p>
+                <p className="group-card-desc texto-difuminado">{grupo.descripcion?.trim() || "Sin descripción."}</p>
                 <div className="group-card-footer">
                   <span className="group-card-cta">Ver grupo →</span>
                 </div>

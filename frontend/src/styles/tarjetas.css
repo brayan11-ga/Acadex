@@ -1,0 +1,33 @@
+/* Base común: tareas, tareas de grupo, categorías y Mis grupos */
+:root :is(.pixel-tarea-card, .tareas-grupo-tarjeta, .groups-grid .group-card) {
+  border: 1px solid var(--pixel-border);
+  border-left: 3px solid var(--tono, var(--pixel-border-strong));
+  border-radius: var(--pixel-radius);
+  background-color: var(--pixel-panel);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tono, transparent) 9%, transparent),
+    transparent 40%
+  );
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:root :is(.pixel-tarea-card, .tareas-grupo-tarjeta, .groups-grid .group-card):hover {
+  border-color: var(--pixel-border-strong);
+  border-left-color: var(--tono, var(--pixel-border-strong));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--tono, var(--pixel-accent)) 28%, transparent);
+}
+
+/* Tonos */
+.pixel-tarea-card--baja, .tareas-grupo-tarjeta--baja { --tono: var(--pixel-baja); }
+.pixel-tarea-card--media, .tareas-grupo-tarjeta--media { --tono: var(--pixel-media); }
+.pixel-tarea-card--alta, .tareas-grupo-tarjeta--alta { --tono: var(--pixel-alta); }
+.pixel-tarea-card.vencida, .tareas-grupo-tarjeta--vencida { --tono: var(--pixel-vencida, #ef4444); }
+
+.pixel-categoria-card--nivel-1 { --tono: var(--pixel-nivel-1); }
+.pixel-categoria-card--nivel-2 { --tono: var(--pixel-nivel-2); }
+.pixel-categoria-card--nivel-3 { --tono: var(--pixel-nivel-3); }
+.pixel-categoria-card--nivel-4 { --tono: var(--pixel-nivel-4); }
+.pixel-categoria-card--nivel-5 { --tono: var(--pixel-nivel-5); }
+
+.groups-grid .group-card--leader { --tono: var(--pixel-accent); }

@@ -16,6 +16,7 @@ import type { IntegranteAsignable } from "../types/tareaGrupo";
 import { obtenerIdUsuarioActual } from "../utils/jwt";
 import { ETIQUETAS_PRIORIDAD, mapearPrioridad } from "../utils/prioridad";
 import "../styles/tareas-grupo.css";
+import "../styles/difuminado.css";
 
 type EstadoPantalla = "cargando" | "lista" | "vacio" | "error" | "sin-permisos";
 
@@ -319,6 +320,7 @@ function TareasGrupoPage() {
               const idPanel = `tareas-grupo-asignados-${tarea.id_tarea}`;
               const clases = [
                 "tareas-grupo-tarjeta",
+                prioridad && `tareas-grupo-tarjeta--${prioridad}`,
                 vencida && "tareas-grupo-tarjeta--vencida",
                 estadoNorm === "completada" && "tareas-grupo-tarjeta--completada",
               ]
@@ -329,7 +331,10 @@ function TareasGrupoPage() {
                 <li key={tarea.id_tarea} className={clases}>
                   <div className="tareas-grupo-tarjeta-principal">
                     <div className="tareas-grupo-tarjeta-titulo-fila">
-                      <h3 className="tareas-grupo-tarjeta-titulo">{tarea.nombre}</h3>
+                      <h3 className="tareas-grupo-tarjeta-titulo texto-difuminado" title={tarea.nombre}>{tarea.nombre}</h3>
+                      {tarea.descripcion?.trim() && (
+                        <p className="tareas-grupo-desc texto-difuminado" title={tarea.descripcion}>{tarea.descripcion}</p>
+                      )}
                       <span className={`tareas-grupo-nivel tareas-grupo-nivel--${tarea.dificultad_estimada}`}>
                         Nivel {tarea.dificultad_estimada}
                       </span>

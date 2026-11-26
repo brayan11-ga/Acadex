@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import type { TareaBackend } from "../../services/tareas";
 import { Check, Undo2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { ETIQUETAS_PRIORIDAD, mapearPrioridad } from "../../utils/prioridad";
+import "../../styles/tarjetas.css";
+import "../../styles/difuminado.css";
 import "../../styles/tareas-grupo.css";
 
 interface TarjetaTareaProps {
@@ -47,13 +49,14 @@ export const TarjetaTarea = ({
   };
 
   return (
-    <article className={`pixel-tarea-card ${esCompletada ? "completada" : ""} ${esVencida ? "vencida" : ""}`}>
+    <article className={`pixel-tarea-card ${prioridad ? `pixel-tarea-card--${prioridad}` : ""} ${esCompletada ? "completada" : ""} ${esVencida ? "vencida" : ""}`}>
       <div className="pixel-tarea-info">
         <div className="pixel-tarea-header-card">
-          <h3 className={`pixel-tarea-titulo ${esCompletada ? "tachado" : ""}`}>{tarea.nombre}</h3>
-          <span className={`pixel-badge-dificultad nivel-${tarea.dificultad_estimada}`}>
-            Nivel {tarea.dificultad_estimada}
-          </span>
+        <h3 className={`pixel-tarea-titulo texto-difuminado ${esCompletada ? "tachado" : ""}`} title={tarea.nombre}>{tarea.nombre}</h3>
+          {tarea.descripcion?.trim() && (
+            <p className="pixel-tarea-desc texto-difuminado" title={tarea.descripcion}>{tarea.descripcion}</p>
+          )}
+          <span className={`pixel-badge-dificultad nivel-${tarea.dificultad_estimada}`}></span>
           {esVencida && <span className="pixel-etiqueta-vencida">Vencida</span>}
         </div>
         <dl className="pixel-tarea-detalles">

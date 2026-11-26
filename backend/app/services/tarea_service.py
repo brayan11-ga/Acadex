@@ -308,28 +308,9 @@ def actualizar_tarea(db: Session, id_tarea: int, datos: TareaUpdate, id_usuario:
             and estado_nuevo.lower() == "completada"
             and estado_anterior.lower() != "completada"
         ):
-            db.add(
-                HistorialTarea(
-                    id_tarea=tarea_actualizada.id_tarea,
-                    id_usuario=id_usuario_historial,
-                    id_grupo=tarea_actualizada.id_grupo,
-                    fechahora_fin=datetime.now(),
-                    tiempo_real=tarea_actualizada.tiempo_acumulado,
-                    dificultad_real=prioridad_service.calcular_dificultad_real(tarea_actualizada.dificultad_estimada,tarea_actualizada.tiempo_estimado,tarea_actualizada.tiempo_acumulado,),
-                )
+            _registrar_finalizacion_individual(
+                db, tarea_actualizada, id_usuario_historial
             )
-            if db is not None:
-                db.flush()
-
-            from app.services import estadistica_service
-
-            estadistica_service.recalcular_estadistica_categoria(
-                db,
-                id_usuario_historial,
-                tarea_actualizada.id_categoria,
-                commit=False,
-            )
-
         # C9: si la fecha de entrega cambió de verdad, avisa a los asignados
         # (menos al líder) en la misma transacción del PUT. Solo grupales.
         if _cambio_fecha_entrega(tarea_actualizada, cambios, fecha_anterior):

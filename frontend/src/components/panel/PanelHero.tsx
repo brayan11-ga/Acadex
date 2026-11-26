@@ -1,16 +1,15 @@
-import type { TareaPanel, ProgresoDiario } from '../../types/panel';
-import { Cronometro } from '../Cronometro/Cronometro';
-import { TasksCompletedChart } from '../estadisticas/TasksCompletedChart';
-
-import '../../styles/estadisticas.css';
+// PanelHero
+import type { TareaPanel } from '../../types/panel';
+import { Cronometro } from '../../components/cronometro/Cronometro';
+import { PanelResumen, type ResumenTareas } from './PanelResumen';
 
 interface PanelHeroProps {
   tareaPrioritaria?: TareaPanel | null;
-  progreso?: ProgresoDiario | null;
+  resumen:ResumenTareas;
   onCompletarTarea?: (idTarea: number) => void;
 }
 
-export const PanelHero = ({ tareaPrioritaria, progreso, onCompletarTarea }: PanelHeroProps) => {
+export const PanelHero = ({ tareaPrioritaria, resumen, onCompletarTarea }: PanelHeroProps) => {
   return (
     <section className="panel-grid-top">
       {tareaPrioritaria && (
@@ -39,11 +38,7 @@ export const PanelHero = ({ tareaPrioritaria, progreso, onCompletarTarea }: Pane
         </div>
       )}
 
-      {progreso && (
-        <TasksCompletedChart
-          dias={progreso.dias.map((dia) => ({ ...dia, actual: dia.actual ?? false }))}
-        />
-      )}
+      <PanelResumen{...resumen}/>
     </section>
   );
 };

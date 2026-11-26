@@ -1056,3 +1056,29 @@
 .pixel-tarea-botones .pixel-menu-kebab-container {
   margin-left: auto;
 }
+
+.pixel-tarea-header-card .pixel-tarea-titulo {
+  flex: 1 1 100%; /* el título ocupa su fila y las etiquetas bajan debajo */
+}
+
+.pixel-tarea-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pixel-ink-faint);
+}
+
+.pixel-tarea-card {
+  border-left: 3px solid var(--pixel-border-strong);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pixel-tarea-card--baja { border-left-color: var(--pixel-baja); }
+.pixel-tarea-card--media { border-left-color: var(--pixel-media); }
+.pixel-tarea-card--alta { border-left-color: var(--pixel-alta); }
+
+.pixel-tarea-card:hover {
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--pixel-accent) 25%, transparent);
+}
+
+.pixel-categoria-card .pixel-tarea-header-card .pixel-tarea-titulo {
+  flex: 0 1 auto;
+}

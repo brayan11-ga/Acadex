@@ -1,3 +1,4 @@
+# estadistica_service.py
 from sqlalchemy.orm import Session
 from app.models.perfil import Perfil
 from app.models.estadistica_categoria import EstadisticaCategoria

@@ -1,10 +1,11 @@
 // src/pages/Panel.tsx
 import { useEffect, useState } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/hooks';
 import { fetchPanelData } from '../store/panelSlice';
+import { ModalDetalleTarea } from '../components/tareas/ModalDetalleTarea';
 import type { AppLayoutContext } from '../types/AppLayoutContext';
-import { listarTareas, actualizarTarea, type TareaBackend } from '../services/tareas';
+import { listarTareas, actualizarTarea, obtenerTarea, type TareaBackend } from '../services/tareas';
 import { listarCategorias, type Categoria } from '../services/categorias';
 import { ModalConfirmacion } from '../components/layout/ModalConfirmacion';
 import { PanelTareasVencidas } from '../components/panel/PanelTareasVencidas';
@@ -19,17 +20,17 @@ const formatearFecha=(iso:string)=>
     day:'numeric',
     month:'short',
     hour:'numeric',
-    minute:'02-digit',
+    minute:'2-digit',
   });
 
 export const Panel = () => {
   const dispatch = useAppDispatch();
   const { data: datos, error } = useAppSelector((state) => state.panel);
-  const { nombreUsuario, abrirModalGlobal } = useOutletContext<AppLayoutContext>();
+  const { nombreUsuario, abrirModalGlobal, refreshKey } = useOutletContext<AppLayoutContext>();
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
-  const navigate=useNavigate();
   const [tareas, setTareas]= useState<TareaBackend[]>([]);
-  const [categoria, setCategorias]= useState<Categoria[]>([]);
+  const [categorias, setCategorias]= useState<Categoria[]>([]);
+  const [tareaDetalle, setTareaDetalle]= useState<TareaBackend | null>(null);
   const [tareaVencida, setTareaVencida]= useState<TareaBackend | null>(null);
 
   const cargarTareas =()=>
@@ -43,7 +44,7 @@ export const Panel = () => {
   useEffect(() => {
     dispatch(fetchPanelData());
     void cargarTareas();
-  }, [dispatch]);
+  }, [dispatch, refreshKey]);
 
   const manejarCompletarTarea = async (idTarea: number) => {
     try {
@@ -90,14 +91,28 @@ export const Panel = () => {
   }
 
   const tareaPrioritaria = datos?.tareaPrioritaria;
-  const progreso = datos?.progreso;
-  const proximasTareas = datos?.proximasTareas;
-
   const vencidas = tareas.filter((t)=>t.vencida);
   const proximas=tareas
     .filter((t)=>!t.vencida && t.id_tarea !== tareaPrioritaria?.id)
-    .sort((a,b)=>new Date(a.fecha_entrega).getTime()-new Date(b.fecha_entrega).getTime())
+    .sort((a,b)=>(b.prioridad ?? 0)-(a.prioridad ?? 0) || new Date(a.fecha_entrega).getTime()-new Date(b.fecha_entrega).getTime(),
+  )
     .slice(0, 5)
+
+  const resume=(()=>{
+    const finHoy =new Date();
+    finHoy.setHours(23, 59, 999);
+    const fin7 = new Date(finHoy);
+    fin7.setDate(fin7.getDate()+7);
+    let hoy =0;
+    let semana =0;
+    for (const t of tareas){
+      if (t.vencida) continue;
+      const entrega = new Date(t.fecha_entrega);
+      if(entrega <= finHoy)hoy++;
+      else if (entrega <= fin7) semana++;
+    }
+    return {vencidas:vencidas.length, hoy, semana, pendientes:tareas.length};
+  })();
 
   const saludo = nombreUsuario
     ? '¡Te damos la bienvenida a Acadex, ' + nombreUsuario + '!'
@@ -114,7 +129,7 @@ export const Panel = () => {
 
       <PanelHero 
         tareaPrioritaria={tareaPrioritaria} 
-        progreso={progreso} 
+        resumen={resume} 
         onCompletarTarea={manejarCompletarTarea} 
       />
 
@@ -122,7 +137,11 @@ export const Panel = () => {
       tareas={proximas}
       nombreCategoria={nombreCategoria}
       formatearFecha={formatearFecha}
-      onVerDetalles={()=>navigate('/tareas')}
+      onVerDetalles={(id) =>
+        void obtenerTarea(id)
+          .then(setTareaDetalle)
+          .catch(() => setErrorAccion('No se pudieron cargar los detalles.'))
+      }
       onCompletar={(t)=>void manejarCompletarTarea(t.id_tarea)}
       onCrearTarea={abrirModalGlobal} 
       />
@@ -130,9 +149,14 @@ export const Panel = () => {
       tareas={vencidas}
       nombreCategoria={nombreCategoria}
       formatearFecha={formatearFecha}
-      onVerDetalles={()=>navigate('/tareas')}
+      onVerDetalles={(id) =>
+        void obtenerTarea(id)
+          .then(setTareaDetalle)
+          .catch(() => setErrorAccion('No se pudieron cargar los detalles.'))
+      }
       onSeleccionar={setTareaVencida}
       />
+      {tareaDetalle && (
       <ModalConfirmacion
       isOpen={tareaVencida !==null}
       title="Esta tarea vencio"
@@ -140,6 +164,7 @@ export const Panel = () => {
       onConfirm={confirmarCompletarVencida}
       onCancel={()=> setTareaVencida(null)}
       />
+    )}
     </div>
   );
 };

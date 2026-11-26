@@ -1,6 +1,8 @@
 import { Folder, ChevronRight } from "lucide-react";
 import type { RendimientoCategoria } from "../../types/estadisticas";
 
+const MIN_TAREAS_CATEGORIA = 3;
+
 interface TarjetaCategoriaProps {
   nombre: string;
   totalTareas: number;
@@ -18,9 +20,14 @@ export const TarjetaCategoria = ({
   const nivel = clasificada
     ? Math.min(5, Math.max(1, Math.round(rendimiento.dificultad_estimada_prom)))
     : null;
+    const faltan= clasificada
+    ? 0 : Math.max(0, MIN_TAREAS_CATEGORIA - (rendimiento?.total_tareas ?? 0));
 
   return (
-    <article className="pixel-tarea-card pixel-categoria-card" onClick={onAbrir}>
+        <article
+      className={`pixel-tarea-card pixel-categoria-card${nivel !== null ? ` pixel-categoria-card--nivel-${nivel}` : ""}`}
+      onClick={onAbrir}
+    >
       <div className="pixel-tarea-info">
         <div className="pixel-tarea-header-card">
           <h3 className="pixel-tarea-titulo">{nombre}</h3>
@@ -36,6 +43,11 @@ export const TarjetaCategoria = ({
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Folder size={14} /> {totalTareas} {totalTareas === 1 ? "tarea" : "tareas"}
           </span>
+          {!clasificada && faltan > 0 && (
+            <span>
+              Completa {faltan} {faltan === 1 ? "tarea más" : "tareas más"} para clasificarla
+            </span>
+          )}
         </div>
       </div>
 
