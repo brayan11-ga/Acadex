@@ -29,7 +29,7 @@ export function CreateGroupModal({ isOpen, onClose, onCreate }: CreateGroupModal
     try {
       const grupo = await onCreate({ nombre_grupo: trimmed, descripcion: descripcion.trim() });
       setCreatedCode(grupo.codigo_acceso);
-    } catch (err) {
+    } catch {
       setError("No se pudo crear el grupo. Intenta de nuevo.");
     } finally {
       setEnviando(false);

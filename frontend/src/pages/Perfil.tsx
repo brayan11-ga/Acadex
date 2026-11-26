@@ -23,7 +23,6 @@ function Perfil() {
   const [limiteCronometro, setLimiteCronometro] = useState<number | "">("");
 
   useEffect(() => {
-    setCargando(true);
     obtenerMiPerfil()
       .then((datos) => {
         setPerfil(datos);

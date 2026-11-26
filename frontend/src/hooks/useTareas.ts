@@ -12,7 +12,8 @@ import { listarCategorias, type Categoria } from "../services/categorias";
 export const useTareas = (refreshKey: number) => {
   const [tareas, setTareas] = useState<TareaBackend[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const [carga, setCarga] = useState({ clave: refreshKey, pendiente: true });
+  const cargando = carga.pendiente;
   const [error, setError] = useState<string | null>(null);
   const [tareaDetalle, setTareaDetalle] = useState<TareaBackend | null>(null);
   const [tareaAEliminar, setTareaAEliminar] = useState<number | null>(null);
@@ -21,25 +22,43 @@ export const useTareas = (refreshKey: number) => {
   const [filtroActivo, setFiltroActivo] = useState<string>("todas");
   const [modoVista, setModoVista] = useState<"lista" | "cuadricula">("lista");
   const [paginaActual, setPaginaActual] = useState<number>(1);
+  const [paginacionAnterior, setPaginacionAnterior] = useState({
+    filtro: filtroActivo,
+    cantidad: tareas.length,
+  });
   const tareasPorPagina = 6;
+
+  if (!Object.is(carga.clave, refreshKey)) {
+    setCarga({ clave: refreshKey, pendiente: true });
+  }
 
   // Carga inicial de datos
   useEffect(() => {
-    setCargando(true);
+    let activo = true;
     Promise.all([listarTareas(), listarCategorias()])
       .then(([datosTareas, datosCategorias]) => {
+        if (!activo) return;
         setTareas(datosTareas);
         setCategorias(datosCategorias);
         setError(null);
       })
-      .catch(() => setError("No se pudieron cargar las tareas"))
-      .finally(() => setCargando(false));
+      .catch(() => {
+        if (activo) setError("No se pudieron cargar las tareas");
+      })
+      .finally(() => {
+        if (activo) setCarga({ clave: refreshKey, pendiente: false });
+      });
+
+    return () => {
+      activo = false;
+    };
   }, [refreshKey]);
 
   // Reiniciar paginación al cambiar filtros
-  useEffect(() => {
+  if (paginacionAnterior.filtro !== filtroActivo || paginacionAnterior.cantidad !== tareas.length) {
+    setPaginacionAnterior({ filtro: filtroActivo, cantidad: tareas.length });
     setPaginaActual(1);
-  }, [filtroActivo, tareas.length]);
+  }
 
   // Utilidades y cálculos
   const nombreCategoria = (id: number) =>

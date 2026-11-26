@@ -19,12 +19,6 @@ const ETIQUETAS_ROL: Record<RolIntegrante, string> = {
   miembro: "Miembro",
 };
 
-export const MENSAJE_SIN_ASIGNADOS = "Elige al menos un integrante";
-
-export function validarAsignados(idsSeleccionados: number[]): string | undefined {
-  return idsSeleccionados.length === 0 ? MENSAJE_SIN_ASIGNADOS : undefined;
-}
-
 function obtenerInicial(integrante: IntegranteAsignable): string {
   const base = integrante.nombre?.trim() || integrante.correo_electronico.trim();
   return base.charAt(0).toUpperCase() || "?";

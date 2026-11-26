@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface EstadoPersistido {
   segundosAcumulados: number;
@@ -15,86 +15,81 @@ const persistirEstado = (idTarea: number, estado: EstadoPersistido) => {
   }
 };
 
-export function useCronometro(idTarea: number, limiteSegundos = 25 * 60) {
-  const [segundos, setSegundos] = useState(0);
-  const [corriendo, setCorriendo] = useState(false);
-  const [pausadoPorLimite, setPausadoPorLimite] = useState(false);
-  const intervaloRef = useRef<number | null>(null);
+// Al montar o cambiar de tarea: recuperar estado guardado y
+// sumar el tiempo que pasó mientras la app estuvo cerrada (si estaba corriendo)
+function recuperarEstado(idTarea: number, limiteSegundos: number) {
+  let segundos = 0;
+  let corriendo = false;
 
-  // Al montar o cambiar de tarea: recuperar estado guardado y
-  // sumar el tiempo que pasó mientras la app estuvo cerrada (si estaba corriendo)
-  useEffect(() => {
-    let segundosBase = 0;
-    let corriendoBase = false;
-
-    try {
-      const guardado = localStorage.getItem(construirClave(idTarea));
-      if (guardado) {
-        const estado: EstadoPersistido = JSON.parse(guardado);
-        segundosBase = estado.segundosAcumulados;
-        corriendoBase = estado.corriendo;
-        if (estado.corriendo && estado.ultimaMarcaTiempo) {
-          const transcurridoMientrasCerrado = Math.floor(
-            (Date.now() - estado.ultimaMarcaTiempo) / 1000
-          );
-          segundosBase += Math.max(0, transcurridoMientrasCerrado);
-        }
+  try {
+    const guardado = localStorage.getItem(construirClave(idTarea));
+    if (guardado) {
+      const estado: EstadoPersistido = JSON.parse(guardado);
+      segundos = estado.segundosAcumulados;
+      corriendo = estado.corriendo;
+      if (corriendo && estado.ultimaMarcaTiempo) {
+        const transcurrido = Math.floor((Date.now() - estado.ultimaMarcaTiempo) / 1000);
+        segundos += Math.max(0, transcurrido);
       }
-    } catch {
     }
+  } catch {
+  }
 
-    if (segundosBase >= limiteSegundos) {
-      segundosBase = limiteSegundos;
-      corriendoBase = false;
-      setPausadoPorLimite(true);
-    } else {
-      setPausadoPorLimite(false);
-    }
+  const pausadoPorLimite = segundos >= limiteSegundos;
+  return {
+    idTarea,
+    limiteSegundos,
+    segundos: pausadoPorLimite ? limiteSegundos : segundos,
+    corriendo: corriendo && !pausadoPorLimite,
+    pausadoPorLimite,
+    tickPendiente: null as EstadoPersistido | null,
+  };
+}
 
-    setSegundos(segundosBase);
-    setCorriendo(corriendoBase);
-  }, [idTarea, limiteSegundos]);
+export function useCronometro(idTarea: number, limiteSegundos = 25 * 60) {
+  const [estado, setEstado] = useState(() => recuperarEstado(idTarea, limiteSegundos));
+  const { segundos, corriendo, pausadoPorLimite, tickPendiente } = estado;
+
+  if (!Object.is(estado.idTarea, idTarea) || !Object.is(estado.limiteSegundos, limiteSegundos)) {
+    setEstado(recuperarEstado(idTarea, limiteSegundos));
+  }
+
+  useEffect(() => {
+    if (tickPendiente) persistirEstado(idTarea, tickPendiente);
+  }, [idTarea, tickPendiente]);
 
   // Tick del cronómetro mientras está corriendo
   useEffect(() => {
     if (!corriendo) return;
 
-    intervaloRef.current = window.setInterval(() => {
-      setSegundos((previo) => {
-        const siguiente = previo + 1;
-
-        if (siguiente >= limiteSegundos) {
-          setCorriendo(false);
-          setPausadoPorLimite(true);
-          persistirEstado(idTarea, {
-            segundosAcumulados: siguiente,
-            corriendo: false,
-            ultimaMarcaTiempo: null,
-          });
-          return siguiente;
+    const intervalo = window.setInterval(() => {
+      const marca = Date.now();
+      setEstado((previo) => {
+        if (!previo.corriendo || !Object.is(previo.idTarea, idTarea) || !Object.is(previo.limiteSegundos, limiteSegundos)) {
+          return previo;
         }
-
-        persistirEstado(idTarea, {
-          segundosAcumulados: siguiente,
-          corriendo: true,
-          ultimaMarcaTiempo: Date.now(),
-        });
-        return siguiente;
+        const siguiente = previo.segundos + 1;
+        const alcanzoLimite = siguiente >= limiteSegundos;
+        return {
+          ...previo,
+          segundos: siguiente,
+          corriendo: !alcanzoLimite,
+          pausadoPorLimite: alcanzoLimite,
+          tickPendiente: {
+            segundosAcumulados: siguiente,
+            corriendo: !alcanzoLimite,
+            ultimaMarcaTiempo: alcanzoLimite ? null : marca,
+          },
+        };
       });
     }, 1000);
 
-    return () => {
-      if (intervaloRef.current) {
-        clearInterval(intervaloRef.current);
-        intervaloRef.current = null;
-      }
-    };
+    return () => window.clearInterval(intervalo);
   }, [corriendo, idTarea, limiteSegundos]);
 
   const iniciar = () => {
     if (segundos >= limiteSegundos) return;
-    setPausadoPorLimite(false);
-    setCorriendo(true);
+    setEstado((previo) => ({ ...previo, pausadoPorLimite: false, corriendo: true, tickPendiente: null }));
     persistirEstado(idTarea, {
       segundosAcumulados: segundos,
       corriendo: true,
@@ -103,7 +98,7 @@ export function useCronometro(idTarea: number, limiteSegundos = 25 * 60) {
   };
 
   const pausar = () => {
-    setCorriendo(false);
+    setEstado((previo) => ({ ...previo, corriendo: false, tickPendiente: null }));
     persistirEstado(idTarea, {
       segundosAcumulados: segundos,
       corriendo: false,
@@ -114,9 +109,13 @@ export function useCronometro(idTarea: number, limiteSegundos = 25 * 60) {
   const alternar = () => (corriendo ? pausar() : iniciar());
 
   const reiniciar = () => {
-    setSegundos(0);
-    setCorriendo(false);
-    setPausadoPorLimite(false);
+    setEstado((previo) => ({
+      ...previo,
+      segundos: 0,
+      corriendo: false,
+      pausadoPorLimite: false,
+      tickPendiente: null,
+    }));
     persistirEstado(idTarea, {
       segundosAcumulados: 0,
       corriendo: false,

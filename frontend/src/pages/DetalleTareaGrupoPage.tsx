@@ -9,9 +9,7 @@ import {
 } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import FormularioNuevaTarea from "../components/tareas/FormularioNuevaTarea";
-import AsignarIntegrantes, {
-  type IntegranteAsignable,
-} from "../components/tareas-grupo/AsignarIntegrantes";
+import AsignarIntegrantes from "../components/tareas-grupo/AsignarIntegrantes";
 import { listarCategorias, type Categoria } from "../services/categorias";
 import { listarMisGrupos, obtenerIntegrantes } from "../services/grupos";
 import {
@@ -37,6 +35,7 @@ import {
   type SesionCronometroBackend,
 } from "../services/sesionesCronometro";
 import type { GrupoConRol } from "../types/grupo";
+import type { IntegranteAsignable } from "../types/tareaGrupo";
 import { obtenerIdUsuarioActual } from "../utils/jwt";
 import "../styles/detalle-tarea-grupo.css";
 
@@ -1114,7 +1113,6 @@ function ModalEditarTarea({
 }
 
 function ModalReasignar({
-  abierto,
   idGrupo,
   idTarea,
   asignados,
@@ -1122,7 +1120,6 @@ function ModalReasignar({
   onCerrar,
   onGuardada,
 }: {
-  abierto: boolean;
   idGrupo: number;
   idTarea: number;
   asignados: IntegranteAsignadoBackend[];
@@ -1131,44 +1128,43 @@ function ModalReasignar({
   onGuardada: () => void;
 }) {
   const [integrantes, setIntegrantes] = useState<IntegranteAsignable[]>([]);
-  const [seleccionados, setSeleccionados] = useState<number[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const idsActuales = useMemo(
+    () => asignados.map((asignado) => asignado.id_usuario),
+    [asignados],
+  );
+  const [asignadosAnteriores, setAsignadosAnteriores] = useState(asignados);
+  const [seleccionados, setSeleccionados] = useState(idsActuales);
+  const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [confirmarQuitar, setConfirmarQuitar] = useState(false);
 
-  const idsActuales = useMemo(
-    () => asignados.map((asignado) => asignado.id_usuario),
-    [asignados],
-  );
-
-  // Al abrir, carga los integrantes del grupo y deja marcados los asignados actuales.
-  useEffect(() => {
-    if (!abierto) return;
-    let activo = true;
+  if (asignadosAnteriores !== asignados) {
+    setAsignadosAnteriores(asignados);
+    setSeleccionados(idsActuales);
     setCargando(true);
     setErrorCarga(null);
     setErrorAccion(null);
     setConfirmarQuitar(false);
-    setSeleccionados(idsActuales);
+  }
+
+  // Al abrir, carga los integrantes del grupo y deja marcados los asignados actuales.
+  useEffect(() => {
+    let activo = true;
 
     obtenerIntegrantes(idGrupo)
       .then((datos) => {
         if (!activo) return;
         const completados = new Set(
-          asignados
-            .filter((asignado) => asignado.completado)
-            .map((asignado) => asignado.id_usuario),
+          asignados.filter((asignado) => asignado.completado).map((asignado) => asignado.id_usuario),
         );
-        setIntegrantes(
-          datos.map((integrante) => ({
-            id_usuario: integrante.id_usuario,
-            correo_electronico: integrante.correo_electronico,
-            rol: integrante.rol,
-            completado: completados.has(integrante.id_usuario),
-          })),
-        );
+        setIntegrantes(datos.map((integrante) => ({
+          id_usuario: integrante.id_usuario,
+          correo_electronico: integrante.correo_electronico,
+          rol: integrante.rol,
+          completado: completados.has(integrante.id_usuario),
+        })));
       })
       .catch((err) => {
         if (!activo) return;
@@ -1188,7 +1184,7 @@ function ModalReasignar({
     return () => {
       activo = false;
     };
-  }, [abierto, idGrupo, idsActuales, asignados]);
+  }, [idGrupo, asignados]);
 
   const quitados = idsActuales.filter((id) => !seleccionados.includes(id));
   const agregados = seleccionados.filter((id) => !idsActuales.includes(id));
@@ -1258,7 +1254,7 @@ function ModalReasignar({
 
   return (
     <>
-      <Modal abierto={abierto} onCerrar={cerrar} titulo="Reasignar integrantes">
+      <Modal abierto onCerrar={cerrar} titulo="Reasignar integrantes">
         <fieldset className="detalle-tarea-fieldset" disabled={enviando}>
           {cargando ? (
             <p className="detalle-tarea-nota">Cargando integrantes…</p>
@@ -1402,10 +1398,26 @@ function MensajeCentral({
 
 function DetalleTareaGrupoPage() {
   const { idGrupo, idTarea } = useParams();
-  const navigate = useNavigate();
   const idG = Number(idGrupo);
   const idT = Number(idTarea);
+  if (Number.isNaN(idG) || Number.isNaN(idT)) return <Navigate to="/grupos" replace />;
   const idUsuarioActual = obtenerIdUsuarioActual();
+  return (
+    <DetalleTareaGrupo
+      key={`${idG}:${idT}:${idUsuarioActual}`}
+      idG={idG}
+      idT={idT}
+      idUsuarioActual={idUsuarioActual}
+    />
+  );
+}
+
+function DetalleTareaGrupo({ idG, idT, idUsuarioActual }: {
+  idG: number;
+  idT: number;
+  idUsuarioActual: number | null;
+}) {
+  const navigate = useNavigate();
 
   const [grupo, setGrupo] = useState<GrupoConRol | null>(null);
   const [tarea, setTarea] = useState<TareaBackend | null>(null);
@@ -1457,10 +1469,8 @@ function DetalleTareaGrupoPage() {
     );
   }, [categorias, tarea]);
 
-  const cargar = useCallback(async (opciones?: { silencioso?: boolean }) => {
-    if (!opciones?.silencioso) setEstado("cargando");
-    try {
-      const misGrupos = await listarMisGrupos();
+  const cargar = useCallback(() => listarMisGrupos()
+    .then(async (misGrupos) => {
       const grupoEncontrado =
         misGrupos.find((grupoActual) => grupoActual.id_grupo === idG) ?? null;
       if (!grupoEncontrado) {
@@ -1513,7 +1523,8 @@ function DetalleTareaGrupoPage() {
           : null,
       );
       setEstado("lista");
-    } catch (err) {
+    })
+    .catch((err: unknown) => {
       if (esErrorDePermiso(err)) {
         setEstado("sin-permisos");
       } else {
@@ -1527,12 +1538,11 @@ function DetalleTareaGrupoPage() {
           setEstado("error");
         }
       }
-    }
-  }, [idG, idT, idUsuarioActual]);
+    }), [idG, idT, idUsuarioActual]);
 
   useEffect(() => {
-    if (!Number.isNaN(idG) && !Number.isNaN(idT)) void cargar();
-  }, [cargar, idG, idT]);
+    void cargar();
+  }, [cargar]);
 
   async function descargar(archivo: ArchivoTarea) {
     setErrorArchivos(null);
@@ -1563,7 +1573,7 @@ function DetalleTareaGrupoPage() {
     setSubiendoArchivo(true);
     try {
       await subirArchivoTarea(idT, archivo);
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setEstado("sin-permisos");
@@ -1581,7 +1591,7 @@ function DetalleTareaGrupoPage() {
     setEliminandoId(archivo.id_archivo);
     try {
       await eliminarArchivoTarea(idT, archivo.id_archivo);
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setEstado("sin-permisos");
@@ -1601,7 +1611,7 @@ function DetalleTareaGrupoPage() {
     try {
       await completarParteTarea(idT, dificultad);
       setModalCompletar(false);
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setModalCompletar(false);
@@ -1648,7 +1658,7 @@ function DetalleTareaGrupoPage() {
       setTiempoPropioSegundos(
         (total) => (total ?? 0) + (finalizada.duracion ?? 0),
       );
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setEstado("sin-permisos");
@@ -1670,7 +1680,7 @@ function DetalleTareaGrupoPage() {
       setSesionActiva(null);
       setTiempoPropioSegundos(0);
       setConfirmarReiniciarCrono(false);
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setConfirmarReiniciarCrono(false);
@@ -1691,7 +1701,7 @@ function DetalleTareaGrupoPage() {
     try {
       await reabrirTarea(idT);
       setConfirmarReabrir(false);
-      await cargar({ silencioso: true });
+      await cargar();
     } catch (err) {
       if (esErrorDePermiso(err)) {
         setConfirmarReabrir(false);
@@ -1731,10 +1741,6 @@ function DetalleTareaGrupoPage() {
     } finally {
       setEliminandoTarea(false);
     }
-  }
-
-  if (Number.isNaN(idG) || Number.isNaN(idT)) {
-    return <Navigate to="/grupos" replace />;
   }
 
   if (estado === "cargando") {
@@ -1797,7 +1803,10 @@ function DetalleTareaGrupoPage() {
               <button
                 type="button"
                 className="detalle-tarea-boton detalle-tarea-boton-primario"
-                onClick={() => void cargar()}
+                onClick={() => {
+                  setEstado("cargando");
+                  void cargar();
+                }}
               >
                 Reintentar
               </button>
@@ -1966,22 +1975,23 @@ function DetalleTareaGrupoPage() {
           onCerrar={() => setModalEditar(false)}
           onGuardada={() => {
             setModalEditar(false);
-            void cargar({ silencioso: true });
+            void cargar();
           }}
         />
 
-        <ModalReasignar
-          abierto={modalReasignar}
-          idGrupo={idG}
-          idTarea={idT}
-          asignados={asignados}
-          usuarioActualId={idUsuarioActual}
-          onCerrar={() => setModalReasignar(false)}
-          onGuardada={() => {
-            setModalReasignar(false);
-            void cargar({ silencioso: true });
-          }}
-        />
+        {modalReasignar && (
+          <ModalReasignar
+            idGrupo={idG}
+            idTarea={idT}
+            asignados={asignados}
+            usuarioActualId={idUsuarioActual}
+            onCerrar={() => setModalReasignar(false)}
+            onGuardada={() => {
+              setModalReasignar(false);
+              void cargar();
+            }}
+          />
+        )}
 
         <DialogoConfirmacion
           abierto={confirmarEliminarTarea}

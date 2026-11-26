@@ -3,25 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { obtenerMiPerfil, type PerfilBackend } from "../services/perfil";
 
 export function usePerfilActual() {
-  const [perfil, setPerfil] = useState<PerfilBackend | null>(null);
-  const [errorServidorCaido, setErrorServidorCaido] = useState(false);
+  const [resultado, setResultado] = useState<{
+    token: string;
+    perfil: PerfilBackend | null;
+    errorServidorCaido: boolean;
+  } | null>(null);
   const token = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
+  if (resultado && resultado.token !== token) setResultado(null);
+
   useEffect(() => {
-    if (!token) {
-      setPerfil(null);
-      setErrorServidorCaido(false);
-      return;
-    }
+    if (!token) return;
 
     let cancelado = false;
 
     obtenerMiPerfil()
       .then((datos) => {
         if (cancelado) return;
-        setPerfil(datos);
-        setErrorServidorCaido(false);
+        setResultado({ token, perfil: datos, errorServidorCaido: false });
       })
       .catch((error: unknown) => {
         if (cancelado) return;
@@ -32,10 +32,12 @@ export function usePerfilActual() {
         if (mensaje.includes("401")) {
           localStorage.removeItem("access_token");
           navigate("/iniciarSesion");
-        } else if (mensaje.includes("Failed to fetch")) {
-          setErrorServidorCaido(true);
         } else {
-          setErrorServidorCaido(false);
+          setResultado((anterior) => ({
+            token,
+            perfil: anterior?.token === token ? anterior.perfil : null,
+            errorServidorCaido: mensaje.includes("Failed to fetch"),
+          }));
         }
       });
 
@@ -44,5 +46,9 @@ export function usePerfilActual() {
     };
   }, [token, navigate]);
 
-  return { perfil, errorServidorCaido };
+  const resultadoActual = resultado?.token === token ? resultado : null;
+  return {
+    perfil: resultadoActual?.perfil ?? null,
+    errorServidorCaido: resultadoActual?.errorServidorCaido ?? false,
+  };
 }

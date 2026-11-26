@@ -45,7 +45,7 @@ def crear_tarea_con_pdf(
         datos_tarea = TareaCreate.model_validate_json(datos)
     except ValueError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Los datos de la tarea no son válidos.",
         ) from error
 

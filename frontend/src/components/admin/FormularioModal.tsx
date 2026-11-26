@@ -23,11 +23,13 @@ export const FormularioModal = ({
     onGuardar,
 }: FormularioModalProps) => {
     const [valores, setValores] = useState<Record<string, unknown>>(valoresIniciales);
+    const [inicioAnterior, setInicioAnterior] = useState({ valoresIniciales, abierto });
     const [opcionesDinamicas, setOpcionesDinamicas] = useState<Record<string, any[]>>({});
 
-    useEffect(() => {
-    setValores(valoresIniciales);
-    }, [valoresIniciales, abierto]);
+    if (inicioAnterior.valoresIniciales !== valoresIniciales || inicioAnterior.abierto !== abierto) {
+        setInicioAnterior({ valoresIniciales, abierto });
+        setValores(valoresIniciales);
+    }
 
     useEffect(() => {
     if (!abierto) return;

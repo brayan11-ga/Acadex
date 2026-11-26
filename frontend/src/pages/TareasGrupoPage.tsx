@@ -79,6 +79,11 @@ function obtenerInicial(correo: string): string {
 function TareasGrupoPage() {
   const { idGrupo } = useParams();
   const id = Number(idGrupo);
+  if (Number.isNaN(id)) return <Navigate to="/grupos" replace />;
+  return <TareasDelGrupo key={id} id={id} />;
+}
+
+function TareasDelGrupo({ id }: { id: number }) {
   const navigate = useNavigate();
   const idUsuarioActual = obtenerIdUsuarioActual();
   const [ahora] = useState(() => new Date());
@@ -104,10 +109,8 @@ function TareasGrupoPage() {
     [categorias],
   );
 
-  const cargar = useCallback(async () => {
-    setEstado("cargando");
-    try {
-      const misGrupos = await listarMisGrupos();
+  const cargar = useCallback(() => listarMisGrupos()
+    .then(async (misGrupos) => {
       const encontrado = misGrupos.find((g) => g.id_grupo === id) ?? null;
       if (!encontrado) {
         setGrupo(null);
@@ -128,19 +131,24 @@ function TareasGrupoPage() {
       setCategorias(categoriasDatos);
       setIdsTareasMias(new Set(asignadasMias.map((t) => t.id_tarea)));
       setEstado(listaTareas.length === 0 ? "vacio" : "lista");
-    } catch (err) {
+    })
+    .catch((err: unknown) => {
       const mensaje = (err instanceof Error ? err.message : "").toLowerCase();
       if (mensaje.includes("permiso") || mensaje.includes("403") || mensaje.includes("forbidden")) {
         setEstado("sin-permisos");
       } else {
         setEstado("error");
       }
-    }
-  }, [id]);
+    }), [id]);
 
   useEffect(() => {
-    if (!Number.isNaN(id)) cargar();
-  }, [cargar, id]);
+    void cargar();
+  }, [cargar]);
+
+  function recargar() {
+    setEstado("cargando");
+    void cargar();
+  }
 
   async function alternarAsignados(idTarea: number) {
     const yaAbierto = asignadosAbiertos.includes(idTarea);
@@ -179,10 +187,8 @@ function TareasGrupoPage() {
   function manejarTareaCreada() {
     setModalAbierto(false);
     setAvisoVisible(true);
-    void cargar();
+    recargar();
   }
-
-  if (Number.isNaN(id)) return <Navigate to="/grupos" replace />;
 
   if (estado === "sin-permisos") {
     return (
@@ -299,7 +305,7 @@ function TareasGrupoPage() {
             <button
               type="button"
               className="tareas-grupo-boton tareas-grupo-boton--primario"
-              onClick={() => void cargar()}
+              onClick={recargar}
             >
               Reintentar
             </button>

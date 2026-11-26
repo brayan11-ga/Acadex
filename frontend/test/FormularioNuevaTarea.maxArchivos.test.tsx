@@ -95,6 +95,22 @@ describe("max_archivos en la edición de tarea grupal", () => {
     expect(campo).toHaveAttribute("max", "10");
   });
 
+  it("reinicia los campos de edición al recibir otra tarea", async () => {
+    const callbacks = { onDescartar: vi.fn(), onTareaCreada: vi.fn() };
+    const { rerender } = render(
+      <FormularioNuevaTarea {...callbacks} modo="grupal" idGrupo={7} tareaAEditar={tareaGrupal} />,
+    );
+    fireEvent.change(await screen.findByDisplayValue(tareaGrupal.nombre), {
+      target: { value: "Borrador" },
+    });
+
+    const otra = { ...tareaGrupal, id_tarea: 50, nombre: "Otra tarea", max_archivos: 2 };
+    rerender(<FormularioNuevaTarea {...callbacks} modo="grupal" idGrupo={7} tareaAEditar={otra} />);
+    expect(screen.getByDisplayValue(otra.nombre)).toBeInTheDocument();
+    expect(screen.getByLabelText("Máximo de archivos")).toHaveValue(2);
+    await waitFor(() => expect(servicios.listarCategorias).toHaveBeenCalledTimes(2));
+  });
+
   it("envía el nuevo max_archivos al guardar la edición grupal", async () => {
     const onTareaCreada = renderEdicion(tareaGrupal);
     fireEvent.change(await screen.findByLabelText("Máximo de archivos"), {

@@ -13,18 +13,19 @@ export const FormularioLogin = () => {
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   const estadoNavegacion = location.state as { mensajeExito?: unknown } | null;
+  const mensajeDeNavegacion = estadoNavegacion?.mensajeExito;
   const [mensajeExito] = useState<string | null>(() =>
-    typeof estadoNavegacion?.mensajeExito === 'string' ? estadoNavegacion.mensajeExito : null,
+    typeof mensajeDeNavegacion === 'string' ? mensajeDeNavegacion : null,
   );
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (typeof estadoNavegacion?.mensajeExito === 'string') {
+    if (typeof mensajeDeNavegacion === 'string') {
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.pathname, location.state, navigate]);
+  }, [location.pathname, mensajeDeNavegacion, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

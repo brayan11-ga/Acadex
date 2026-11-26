@@ -82,13 +82,8 @@ export function SeccionAdjuntosTarea({ idTarea, modo }: SeccionAdjuntosTareaProp
   }, [idTarea]);
 
   useEffect(() => {
+    if (!adjuntosHabilitados()) return;
     let activo = true;
-    if (!adjuntosHabilitados()) {
-      setCargandoAdjuntos(false);
-      return () => {
-        activo = false;
-      };
-    }
     void listarArchivosTarea(idTarea)
       .then((resultado) => {
         if (activo) setAdjuntos(resultado);

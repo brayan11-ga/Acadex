@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -78,6 +78,23 @@ describe('acciones del panel administrativo', () => {
     expect(screen.queryByRole('button', { name: '+ Nuevo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument();
+  });
+
+  test('mantiene las categorías si una carga anterior de usuarios falla más tarde', async () => {
+    let resolverUsuarios!: (datos: null) => void;
+    const usuarios = new Promise<null>((resolver) => { resolverUsuarios = resolver; });
+    listarMock
+      .mockReturnValueOnce(usuarios)
+      .mockResolvedValueOnce([{ id_categoria: 3, nombre_categoria: 'Lectura' }]);
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Usuarios' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Categorías' }));
+    expect(await screen.findByText('Lectura')).toBeInTheDocument();
+
+    await act(async () => resolverUsuarios(null));
+    expect(screen.getByText('Lectura')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   test('muestra solo el token temporal y su vencimiento al restablecer contraseña', async () => {

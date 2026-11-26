@@ -15,6 +15,11 @@ function formatearTiempoRestante(segundos: number): string {
 function Lider(){
     const {idGrupo}=useParams();
     const id=Number(idGrupo);
+    if (Number.isNaN(id)) return <Navigate to="/grupos" replace />;
+    return <PanelLider key={id} id={id} />;
+}
+
+function PanelLider({ id }: { id: number }) {
     const navigate=useNavigate();
     const idUsuarioActual=obtenerIdUsuarioActual();
 
@@ -25,36 +30,38 @@ function Lider(){
     const [copiado, setCopiado]=useState(false);
     const [regenerando, setRegenerando]=useState(false);
     const [errorRegenerar, setErrorRegenerar]=useState<string | null>(null);
-    const [segundosRestantes, setSegundosRestantes]=useState<number | null>(null);
+    const [contador, setContador] = useState<{ inicial: number; restante: number } | null>(null);
+    const segundosRestantes = contador?.restante ?? null;
 
-    const cargar = useCallback(async()=>{
-        try{
-            const [grupo, miembros]= await Promise.all([
-                listarMisGrupos(),
-                obtenerIntegrantes(id),
-            ]);
-            setGrupo(grupo.find((g)=> g.id_grupo===id)?? null);
+    const cargar = useCallback(() => Promise.all([listarMisGrupos(), obtenerIntegrantes(id)])
+        .then(([grupos, miembros]) => {
+            const encontrado = grupos.find((g) => g.id_grupo === id) ?? null;
+            const inicial = encontrado?.segundos_restantes_codigo ?? null;
+            setGrupo(encontrado);
             setIntegrantes(miembros);
             setError(null);
-        } catch{
+            setContador((previo) => {
+                if (inicial === null) return null;
+                return previo?.inicial === inicial ? previo : { inicial, restante: inicial };
+            });
+        })
+        .catch(() => {
             setError("No se encontro el panel");
-        } finally{
+        })
+        .finally(() => {
             setCargando(false);
-        }
-    },[id]);
+        }), [id]);
     useEffect(()=>{
-        cargar();
+        void cargar();
     },[cargar]);
-
-    useEffect(()=>{
-        setSegundosRestantes(grupo?.segundos_restantes_codigo ?? null);
-    }, [grupo?.segundos_restantes_codigo]);
 
     const contadorActivo = segundosRestantes !== null && segundosRestantes > 0;
     useEffect(()=>{
         if (!contadorActivo) return;
         const intervalo = setInterval(()=>{
-            setSegundosRestantes((prev)=> (prev !== null && prev > 0 ? prev - 1 : 0));
+            setContador((previo) =>
+                previo && { ...previo, restante: Math.max(0, previo.restante - 1) },
+            );
         }, 1000);
         return ()=> clearInterval(intervalo);
     }, [contadorActivo]);
@@ -101,7 +108,8 @@ function Lider(){
                 fecha_expiracion_codigo: actualizado.fecha_expiracion_codigo,
                 segundos_restantes_codigo: actualizado.segundos_restantes_codigo,
             } : prev);
-            setSegundosRestantes(actualizado.segundos_restantes_codigo ?? null);
+            const inicial = actualizado.segundos_restantes_codigo ?? null;
+            setContador(inicial === null ? null : { inicial, restante: inicial });
             setCopiado(false);
         }catch(error){
             setErrorRegenerar(
@@ -114,8 +122,6 @@ function Lider(){
         }
     };
     
-    console.log({ idGrupo, id, cargando, error, grupo });
-    if (Number.isNaN(id)) return<Navigate to="/grupos" replace/>;
     if (cargando) return <GroupMembersLoadingSkeleton label="Cargando el panel de líder" />;
     if (error) return <p>{error}</p>;
     if (!grupo || grupo.rol !=="lider") return <Navigate to="/grupos" replace/>;

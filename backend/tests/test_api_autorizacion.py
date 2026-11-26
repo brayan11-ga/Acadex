@@ -1,7 +1,7 @@
 # Ruta: backend/tests/test_api_autorizacion.py
 import sys
 import unittest
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -47,6 +47,7 @@ from app.models.grupo import Grupo
 from app.models.integrante import Integrante
 from app.models.tarea import Tarea
 from app.api.v1.endpoints.sesiones_cronometro import iniciar_sesion as iniciar_sesion_endpoint
+from app.api.v1.endpoints.tareas import crear_tarea_con_pdf
 from app.models.usuario import Usuario
 from app.repositories import tarea_repository
 from app.services import perfil_service, sesion_cronometro_service, tarea_service
@@ -77,6 +78,13 @@ class SesionFalsa:
 
 
 class AutenticacionRutasTests(unittest.TestCase):
+    def test_crear_tarea_con_pdf_rechaza_datos_invalidos_con_422(self):
+        with self.assertRaises(HTTPException) as error:
+            crear_tarea_con_pdf(datos="{", archivo=Mock(), db=Mock(), usuario_actual=Mock())
+
+        self.assertEqual(error.exception.status_code, 422)
+        self.assertEqual(error.exception.detail, "Los datos de la tarea no son válidos.")
+
     def test_health_live_no_depende_de_postgresql(self):
         self.assertEqual(health_live(), {"status": "ok"})
 
@@ -455,9 +463,10 @@ class AutorizacionPerfilYSesionTests(unittest.TestCase):
         listar.assert_not_called()
 
     def test_propietario_puede_finalizar_y_listar_sus_sesiones(self):
-        inicio = datetime.utcnow() - timedelta(minutes=5)
+        ahora = datetime.now(UTC).replace(tzinfo=None)
+        inicio = ahora - timedelta(minutes=5)
         sesion = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=None)
-        finalizada = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=datetime.utcnow())
+        finalizada = SimpleNamespace(id_usuario=12, fecha_inicio=inicio, fecha_fin=ahora)
         with (
             patch.object(sesion_cronometro_service.repo, "get_sesion_by_id", return_value=sesion),
             patch.object(sesion_cronometro_service.repo, "update_sesion", return_value=finalizada) as actualizar,

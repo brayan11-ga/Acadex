@@ -224,6 +224,22 @@ describe("Reasignar integrantes de una tarea grupal", () => {
     expect(servicios.reasignar).not.toHaveBeenCalled();
   });
 
+  it("restaura la selección guardada al cancelar y volver a abrir", async () => {
+    await abrirModal();
+    fireEvent.click(casilla("carlos@correo.com"));
+    expect(casilla("carlos@correo.com")).toBeChecked();
+
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Reasignar integrantes" }))
+      .getByRole("button", { name: "Cancelar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reasignar integrantes" }));
+    await screen.findByText("Integrantes del grupo");
+
+    expect(casilla("lider@correo.com")).toBeChecked();
+    expect(casilla("ana@correo.com")).toBeChecked();
+    expect(casilla("carlos@correo.com")).not.toBeChecked();
+    expect(servicios.reasignar).not.toHaveBeenCalled();
+  });
+
   it("pide confirmación al quitar a alguien y envía solo los que quedan", async () => {
     await abrirModal();
 
