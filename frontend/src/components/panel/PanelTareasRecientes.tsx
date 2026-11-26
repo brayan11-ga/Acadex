@@ -1,58 +1,51 @@
+import {Link} from 'react-router-dom';
+import type { TareaBackend } from '../../services/tareas';
+import { TarjetaTarea } from '../tareas/TarjetaTarea';
 import { EmptyState } from "../ui/EmptyState";
 
-interface TareaMini {
-  id: number | string;
-  fechaVencimiento: string;
-  titulo: string;
-  descripcion: string;
-  etiqueta?: string;
+interface PanelTareasRecientesProps{
+  tareas: TareaBackend[];
+  nombreCategoria: (id:number)=>string;
+  formatearFecha: (iso:string)=>string;
+  onVerDetalles: (id:number)=>void;
+  onCompletar: (tarea:TareaBackend)=>void;
+  onCrearTarea?: ()=>void;
 }
 
-interface PanelTareasRecientesProps {
-  proximasTareas?: TareaMini[];
-  onCrearTarea?: () => void;
-}
-
-export const PanelTareasRecientes = ({ proximasTareas, onCrearTarea }: PanelTareasRecientesProps) => {
+export const PanelTareasRecientes = ({ tareas, nombreCategoria, formatearFecha, onVerDetalles, onCompletar, onCrearTarea }:
+  PanelTareasRecientesProps) => {
   return (
-    <section className="panel-grid-bottom">
-      <div className="bottom-header">
-        <h3 className="pixel-subtitle-bold">Próximas Tareas</h3>
-        <a href="/tareas" className="link-ver-todas">Ver todas las tareas</a>
-      </div>
-      
-      <div className="proximas-tareas-grid">
-        {proximasTareas && proximasTareas.length > 0 ? proximasTareas.map((tarea) => (
-          <div key={tarea.id} className="tarjeta-mini pixel-panel">
-            <div className="tarjeta-mini-top">
-              <span className="tarjeta-icono">📄</span>
-              <span className="tarjeta-hora">{tarea.fechaVencimiento}</span>
-            </div>
-            <h4 className="tarjeta-mini-titulo">{tarea.titulo}</h4>
-            <p className="tarjeta-mini-desc">{tarea.descripcion}</p>
-            
-            <div className="tarjeta-mini-footer">
-              {tarea.etiqueta ? (
-                <span className="pixel-chip-tech">{tarea.etiqueta}</span>
-              ) : (
-                <div className="tarjeta-equipo">
-                  <div className="avatar-micro avatar-1"></div>
-                  <div className="avatar-micro avatar-2"></div>
-                  <span className="equipo-texto">+2 otros</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )) : (
-          <EmptyState
-            className="empty-state--panel"
-            headingLevel={4}
-            title="No tienes tareas próximas"
-            description="Crea una tarea para empezar a organizar tus actividades."
-            action={onCrearTarea ? { label: "Crear tarea", onClick: onCrearTarea } : undefined}
+  <section className="panel-grid-bottom">
+    <div className="bottom-header">
+      <h3 className="pixel-subtitle-bold">
+        Próximas tareas
+        {tareas.length > 0 && <span className="panel-contador">{tareas.length}</span>}
+      </h3>
+      <Link to="/tareas" className="link-ver-todas">Ver todas las tareas</Link>
+    </div>
+
+    <div className="panel-lista-tareas">
+      {tareas.length > 0 ? (
+        tareas.map((tarea) => (
+          <TarjetaTarea
+            key={tarea.id_tarea}
+            tarea={tarea}
+            nombreCategoria={nombreCategoria}
+            formatearFecha={formatearFecha}
+            onVerDetalles={onVerDetalles}
+            onCambiarEstado={onCompletar}
           />
-        )}
-      </div>
-    </section>
-  );
-};
+        ))
+      ) : (
+        <EmptyState
+          className="empty-state--panel"
+          headingLevel={4}
+          title="No tienes tareas próximas"
+          description="Crea una tarea para empezar a organizar tus actividades."
+          action={onCrearTarea ? { label: 'Crear tarea', onClick: onCrearTarea } : undefined}
+        />
+      )}
+    </div>
+  </section>
+);
+}

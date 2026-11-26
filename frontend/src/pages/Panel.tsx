@@ -1,6 +1,6 @@
 // src/pages/Panel.tsx
 import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/hooks';
 import { fetchPanelData } from '../store/panelSlice';
 import type { AppLayoutContext } from '../types/AppLayoutContext';
@@ -11,31 +11,38 @@ import { PanelTareasVencidas } from '../components/panel/PanelTareasVencidas';
 import { PanelHero } from '../components/panel/PanelHero';
 import { PanelTareasRecientes } from '../components/panel/PanelTareasRecientes';
 import { PanelLoadingSkeleton } from '../components/skeletons/LoadingSkeletons';
-
+import '../styles/contenido-tareas.css';
 import '../styles/Panel.css';
+
+const formatearFecha=(iso:string)=>
+  new Date(iso).toLocaleString('es-CO',{
+    day:'numeric',
+    month:'short',
+    hour:'numeric',
+    minute:'02-digit',
+  });
 
 export const Panel = () => {
   const dispatch = useAppDispatch();
   const { data: datos, error } = useAppSelector((state) => state.panel);
   const { nombreUsuario, abrirModalGlobal } = useOutletContext<AppLayoutContext>();
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
-  const [vencidas, setVencidas] = useState<TareaBackend[]>([]);
+  const navigate=useNavigate();
+  const [tareas, setTareas]= useState<TareaBackend[]>([]);
   const [categoria, setCategorias]= useState<Categoria[]>([]);
   const [tareaVencida, setTareaVencida]= useState<TareaBackend | null>(null);
 
-  const cargarVencidas =()=>
+  const cargarTareas =()=>
     Promise.all([listarTareas(), listarCategorias()])
-      .then(([tareas, cats])=>{
+      .then(([lista, cats])=>{
         setCategorias(cats);
-        setVencidas(
-          tareas.filter((t)=>t.id_usuario !== null && t.estado !== 'Completada' && t.vencida)
-        );
+        setTareas(lista.filter((t)=>t.id_usuario !== null && t.estado !== 'Completada'));
       })
-      .catch(()=> setVencidas([]));
+      .catch(()=> setTareas([]));
 
   useEffect(() => {
     dispatch(fetchPanelData());
-    void cargarVencidas();
+    void cargarTareas();
   }, [dispatch]);
 
   const manejarCompletarTarea = async (idTarea: number) => {
@@ -44,7 +51,7 @@ export const Panel = () => {
       // Actualizamos el estado en el backend a "Completada"
       await actualizarTarea(idTarea, { estado: "Completada" });
       dispatch(fetchPanelData());
-      void cargarVencidas();
+      void cargarTareas();
     } catch {
       setErrorAccion("No se pudo completar la tarea desde el panel.");
     }
@@ -58,7 +65,7 @@ export const Panel = () => {
   };
 
   const nombreCategoria =(id:number)=>
-    categoria.find((e)=> e.id_categoria === id)?.nombre_categoria ?? 'Sin categoria';
+    categorias.find((e)=> e.id_categoria === id)?.nombre_categoria ?? 'Sin categoria';
 
   if (!datos && !error) {
     return <PanelLoadingSkeleton />;
@@ -86,6 +93,12 @@ export const Panel = () => {
   const progreso = datos?.progreso;
   const proximasTareas = datos?.proximasTareas;
 
+  const vencidas = tareas.filter((t)=>t.vencida);
+  const proximas=tareas
+    .filter((t)=>!t.vencida && t.id_tarea !== tareaPrioritaria?.id)
+    .sort((a,b)=>new Date(a.fecha_entrega).getTime()-new Date(b.fecha_entrega).getTime())
+    .slice(0, 5)
+
   const saludo = nombreUsuario
     ? '¡Te damos la bienvenida a Acadex, ' + nombreUsuario + '!'
     : '¡Te damos la bienvenida a Acadex!';
@@ -106,12 +119,18 @@ export const Panel = () => {
       />
 
       <PanelTareasRecientes
-      proximasTareas={proximasTareas} 
+      tareas={proximas}
+      nombreCategoria={nombreCategoria}
+      formatearFecha={formatearFecha}
+      onVerDetalles={()=>navigate('/tareas')}
+      onCompletar={(t)=>void manejarCompletarTarea(t.id_tarea)}
       onCrearTarea={abrirModalGlobal} 
       />
       <PanelTareasVencidas
       tareas={vencidas}
       nombreCategoria={nombreCategoria}
+      formatearFecha={formatearFecha}
+      onVerDetalles={()=>navigate('/tareas')}
       onSeleccionar={setTareaVencida}
       />
       <ModalConfirmacion

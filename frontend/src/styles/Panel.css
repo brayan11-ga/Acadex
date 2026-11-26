@@ -371,3 +371,101 @@
   outline: 2px solid #ef4444;
   outline-offset: 2px;
 }
+
+/* --- Superficies del panel: mismo lenguaje que las tarjetas de /tareas --- */
+.panel-contenedor .pixel-panel {
+  background-color: var(--pixel-panel);
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
+  box-shadow: none;
+}
+
+/* Franja de acento = prioritaria (la franja roja ya significa vencida) */
+.panel-contenedor .tarjeta-prioridad {
+  border-left: 3px solid var(--pixel-accent);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--pixel-accent) 10%, transparent),
+    transparent 45%
+  );
+}
+
+.panel-contenedor .pixel-chip-priority {
+  background: color-mix(in srgb, var(--pixel-accent) 15%, transparent);
+  border-color: var(--pixel-accent);
+  color: var(--pixel-accent-soft);
+  border-radius: 999px;
+}
+
+.panel-contenedor .pixel-btn-outline-success {
+  border-color: var(--pixel-baja);
+  color: var(--pixel-baja);
+  border-radius: var(--pixel-radius-sm);
+}
+
+/* --- Secciones de tareas --- */
+.panel-grid-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bottom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pixel-border);
+}
+
+.bottom-header .pixel-subtitle-bold {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-contador {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--pixel-border-strong);
+  border-radius: 999px;
+  color: var(--pixel-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.panel-vencidas .panel-contador {
+  border-color: var(--pixel-vencida);
+  color: var(--pixel-vencida);
+}
+
+.link-ver-todas {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pixel-accent-soft);
+  text-decoration: none;
+}
+
+.link-ver-todas:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.panel-lista-tareas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+  gap: 14px;
+}
+
+.panel-lista-tareas > .empty-state {
+  grid-column: 1 / -1;
+}
+
+/* Que los botones queden alineados abajo aunque los títulos tengan distinta altura */
+.panel-lista-tareas .pixel-tarea-card {
+  align-content: space-between;
+}

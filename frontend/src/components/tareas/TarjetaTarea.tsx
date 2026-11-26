@@ -10,9 +10,9 @@ interface TarjetaTareaProps {
   nombreCategoria: (id: number) => string;
   formatearFecha: (iso: string) => string;
   onVerDetalles: (id: number) => void;
-  onEditar: (tarea: TareaBackend) => void;
-  onEliminar: (id: number) => void;
-  onCambiarEstado: (tarea: TareaBackend) => void;
+  onEditar?: (tarea: TareaBackend) => void;
+  onEliminar?: (id: number) => void;
+  onCambiarEstado?: (tarea: TareaBackend) => void;
 }
 
 export const TarjetaTarea = ({
@@ -79,7 +79,7 @@ export const TarjetaTarea = ({
         )}
       </div>
 
-      <div className="pixel-tarea-botones" ref={menuRef}>
+            <div className="pixel-tarea-botones" ref={menuRef}>
         <button
           type="button"
           className="tareas-grupo-boton tareas-grupo-boton--primario tareas-grupo-boton--pequeno"
@@ -87,45 +87,49 @@ export const TarjetaTarea = ({
         >
           Ver
         </button>
-        <button
-          type="button"
-          className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
-          onClick={() => onCambiarEstado(tarea)}
-          title={esCompletada ? "Marcar como pendiente" : "Marcar como completada"}
-        >
-          {esCompletada ? (
-            <><Undo2 size={14} /> Reabrir</>
-          ) : (
-            <><Check size={14} /> Completar</>
-          )}
-        </button>
-
-        <div className="pixel-menu-kebab-container">
+        {onCambiarEstado && (
           <button
             type="button"
-            className="pixel-btn-kebab"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            title="Más opciones"
+            className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
+            onClick={() => onCambiarEstado(tarea)}
+            title={esCompletada ? "Marcar como pendiente" : "Marcar como completada"}
           >
-            <MoreVertical size={18} />
+            {esCompletada ? (
+              <><Undo2 size={14} /> Reabrir</>
+            ) : (
+              <><Check size={14} /> Completar</>
+            )}
           </button>
+        )}
 
-          {menuAbierto && (
-            <div className="pixel-dropdown-menu">
-              <button type="button" onClick={() => ejecutarAccion(() => onEditar(tarea))}>
-                <Pencil size={16} /> Editar Tarea
-              </button>
-              <div className="pixel-dropdown-divisor"></div>
-              <button
-                type="button"
-                className="pixel-btn-peligro-texto"
-                onClick={() => ejecutarAccion(() => onEliminar(tarea.id_tarea))}
-              >
-                <Trash2 size={16} /> Eliminar
-              </button>
-            </div>
-          )}
-        </div>
+        {onEditar && onEliminar && (
+          <div className="pixel-menu-kebab-container">
+            <button
+              type="button"
+              className="pixel-btn-kebab"
+              onClick={() => setMenuAbierto(!menuAbierto)}
+              title="Más opciones"
+            >
+              <MoreVertical size={18} />
+            </button>
+
+            {menuAbierto && (
+              <div className="pixel-dropdown-menu">
+                <button type="button" onClick={() => ejecutarAccion(() => onEditar?.(tarea))}>
+                  <Pencil size={16} /> Editar Tarea
+                </button>
+                <div className="pixel-dropdown-divisor"></div>
+                <button
+                  type="button"
+                  className="pixel-btn-peligro-texto"
+                  onClick={() => ejecutarAccion(() => onEliminar?.(tarea.id_tarea))}
+                >
+                  <Trash2 size={16} /> Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );
