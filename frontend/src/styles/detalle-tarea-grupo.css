@@ -156,9 +156,9 @@
 }
 
 .detalle-tarea-pildora-completada {
-  color: var(--pixel-baja);
-  border-color: color-mix(in srgb, var(--pixel-baja) 60%, transparent);
-  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+  color: var(--pixel-completado);
+  border-color: color-mix(in srgb, var(--pixel-completado) 60%, transparent);
+  background: color-mix(in srgb, var(--pixel-completado) 12%, transparent);
 }
 
 .detalle-tarea-banner {

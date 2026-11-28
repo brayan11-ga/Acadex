@@ -3,6 +3,9 @@
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent);
+}
+
+.texto-difuminado--desborda {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(90% - 3rem), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(85% - 3rem), transparent);
 }

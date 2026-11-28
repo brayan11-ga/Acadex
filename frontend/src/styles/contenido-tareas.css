@@ -84,7 +84,7 @@
 }
 
 /* =========================================
-   TARJETAS DE TAREAS - ESTRUCTURA BASE
+   LISTA DE TAREAS (lista y cuadrícula)
    ========================================= */
 
 .pixel-tareas-lista {
@@ -93,155 +93,13 @@
   gap: 1rem;
 }
 
-.pixel-tarea-card {
-  background-color: var(--pixel-panel);
-  border: 1px solid var(--pixel-border);
-  border-radius: var(--pixel-radius);
-  padding: 20px 22px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 14px 20px;
-  transition: border-color 0.2s ease;
+.pixel-tareas-lista.vista-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
-.pixel-tarea-card:hover {
-  border-color: var(--pixel-border-strong);
-}
-
-.pixel-tarea-card.completada {
-  opacity: 0.5;
-}
-
-/* Corrección de Flexbox: Evitar espichamiento */
-.pixel-tarea-info {
-  flex: 1; /* Ocupa todo el espacio disponible */
-  min-width: 0; /* Permite que el texto largo se trunque en lugar de empujar el layout */
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pixel-tarea-header-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 10px;
-}
-
-.pixel-tarea-titulo {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--pixel-ink);
-  overflow-wrap: anywhere;
-}
-
-/* Etiquetas de dificultad */
-.pixel-badge-dificultad {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.7rem;
-  border-radius: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  background-color: transparent;
-  border: 1px solid currentColor;
-  flex-shrink: 0; /* Evita que el badge se encoja */
-}
-
-.pixel-badge-dificultad.nivel-1 { color: var(--pixel-nivel-1); }
-.pixel-badge-dificultad.nivel-2 { color: var(--pixel-nivel-2); }
-.pixel-badge-dificultad.nivel-3 { color: var(--pixel-nivel-3); }
-.pixel-badge-dificultad.nivel-4 { color: var(--pixel-nivel-4); }
-.pixel-badge-dificultad.nivel-5 { color: var(--pixel-nivel-5); }
-
-.pixel-tarea-detalles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 20px;
-  margin: 0;
-  color: var(--pixel-ink-faint);
-  font-size: 13px;
-}
-
-.pixel-tarea-meta {
-  display: flex;
-  gap: 6px;
-}
-
-.pixel-tarea-meta dt::after {
-  content: ':';
-}
-
-.pixel-tarea-meta dd {
-  margin: 0;
-  color: var(--pixel-ink-soft);
-}
-
-.pixel-tarea-meta--vencida dd {
-  color: var(--pixel-vencida);
-  font-weight: 600;
-}
-
-/* Contenedor de botones a la derecha (modo lista) */
-.pixel-tarea-acciones {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.pixel-estado-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 26px;
-  padding: 2px 12px;
-  border: 1px solid var(--pixel-border-strong);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--pixel-ink-soft);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.pixel-estado-badge.completada {
-  background-color: transparent;
-  color: var(--pixel-baja);
-  border: 1px solid var(--pixel-baja);
-}
-
-.pixel-tarea-card.vencida {
-  border-left: 3px solid var(--pixel-vencida);
-  background-image: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--pixel-vencida) 8%, transparent),
-    transparent 40%
-  );
-  opacity: 0.85;
-}
-
-.pixel-tarea-card.vencida .pixel-estado-badge {
-  background-color: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid #ef4444;
-}
-
-.pixel-tarea-botones {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding-top: 14px;
-  border-top: 1px solid var(--pixel-border);
-  justify-content: flex-start;
-}
-
+/* Botón genérico (adjuntos y otros) */
 .pixel-btn-icono {
   font-family: var(--pixel-font-body);
   font-size: 0.75rem;
@@ -270,43 +128,6 @@
   background-color: rgba(255, 77, 109, 0.12);
   border-color: #ff4d6d;
   color: #ff4d6d;
-}
-
-/* =========================================
-   MODO CUADRÍCULA (GRID VIEW)
-   ========================================= */
-
-.pixel-tareas-lista.vista-cuadricula {
-  display: grid;
-  /* Crea columnas responsivas: mínimo 320px de ancho cada una */
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.pixel-tareas-lista.vista-cuadricula .pixel-tarea-card {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.pixel-tareas-lista.vista-cuadricula .pixel-tarea-info {
-  width: 100%;
-}
-
-.pixel-tareas-lista.vista-cuadricula .pixel-tarea-titulo {
-  /* En cuadrícula, podemos dejar que el texto baje de línea si lo prefieres, 
-     o mantenerlo en una línea. Lo mantendremos en una línea para consistencia */
-  white-space: nowrap;
-}
-
-.pixel-tareas-lista.vista-cuadricula .pixel-tarea-acciones {
-  width: 100%;
-  align-items: flex-start; /* Alinea los botones a la izquierda en cuadrícula */
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.pixel-tareas-lista.vista-cuadricula .pixel-tarea-botones {
-  justify-content: flex-start;
 }
 
 /* =========================================
@@ -375,7 +196,7 @@
   border-radius: var(--pixel-radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   min-width: 150px;
-  z-index: 100; /* Asegura que flote sobre otras tarjetas */
+  z-index: 100;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1022,61 +843,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
-}
-
-.pixel-etiqueta-vencida {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 7px;
-  border: 1px solid var(--pixel-vencida);
-  border-radius: 4px;
-  color: var(--pixel-vencida);
-  font-family: var(--pixel-font-display);
-  font-size: 8px;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.pixel-prioridad::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: currentColor;
-}
-
-.pixel-prioridad--baja { color: var(--pixel-baja); }
-.pixel-prioridad--media { color: var(--pixel-media); }
-.pixel-prioridad--alta { color: var(--pixel-alta); }
-
-.pixel-tarea-botones .tareas-grupo-boton {
-  font-family: var(--pixel-font-body);
-}
-
-.pixel-tarea-botones .pixel-menu-kebab-container {
-  margin-left: auto;
-}
-
-.pixel-tarea-header-card .pixel-tarea-titulo {
-  flex: 1 1 100%; /* el título ocupa su fila y las etiquetas bajan debajo */
-}
-
-.pixel-tarea-desc {
-  margin: 0;
-  font-size: 13px;
-  color: var(--pixel-ink-faint);
-}
-
-.pixel-tarea-card {
-  border-left: 3px solid var(--pixel-border-strong);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.pixel-tarea-card--baja { border-left-color: var(--pixel-baja); }
-.pixel-tarea-card--media { border-left-color: var(--pixel-media); }
-.pixel-tarea-card--alta { border-left-color: var(--pixel-alta); }
-
-.pixel-tarea-card:hover {
-  box-shadow: 3px 3px 0 color-mix(in srgb, var(--pixel-accent) 25%, transparent);
 }
 
 .pixel-categoria-card .pixel-tarea-header-card .pixel-tarea-titulo {

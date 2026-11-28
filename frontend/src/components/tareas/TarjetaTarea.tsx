@@ -1,13 +1,19 @@
 // src/components/tareas/TarjetaTarea.tsx
+import type { ReactNode } from "react";
 import { useState, useRef, useEffect } from "react";
 import type { TareaBackend } from "../../services/tareas";
 import { Check, Undo2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { ETIQUETAS_PRIORIDAD, mapearPrioridad } from "../../utils/prioridad";
+import { useDesbordado } from "../../hooks/useDesbordado";
 import "../../styles/tarjetas.css";
 import "../../styles/difuminado.css";
 import "../../styles/tareas-grupo.css";
 
 interface TarjetaTareaProps {
+  esTuya?: boolean;
+  vencida?: boolean;
+  accionesExtra?: ReactNode;
+  children?: ReactNode;
   tarea: TareaBackend;
   nombreCategoria: (id: number) => string;
   formatearFecha: (iso: string) => string;
@@ -25,13 +31,23 @@ export const TarjetaTarea = ({
   onEditar,
   onEliminar,
   onCambiarEstado,
+  esTuya,
+  vencida,
+  accionesExtra,
+  children,
 }: TarjetaTareaProps) => {
   const esCompletada = tarea.estado === "Completada";
-  const esVencida = !esCompletada && tarea.vencida === true;
+  const esVencida = !esCompletada && (vencida ?? tarea.vencida === true);
   const prioridad = mapearPrioridad(tarea.prioridad);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [tituloRef, tituloDesborda] = useDesbordado<HTMLHeadingElement>(
+    tarea.nombre,
+  );
+  const [descRef, descDesborda] = useDesbordado<HTMLParagraphElement>(
+    tarea.descripcion,
+  );
 
   useEffect(() => {
     const manejarClicFuera = (event: MouseEvent) => {
@@ -48,41 +64,76 @@ export const TarjetaTarea = ({
     accion();
   };
 
+  const clases = [
+    "tareas-grupo-tarjeta",
+    prioridad && `tareas-grupo-tarjeta--${prioridad}`,
+    esVencida && "tareas-grupo-tarjeta--vencida",
+    esCompletada && "tareas-grupo-tarjeta--completada",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <article className={`pixel-tarea-card ${prioridad ? `pixel-tarea-card--${prioridad}` : ""} ${esCompletada ? "completada" : ""} ${esVencida ? "vencida" : ""}`}>
-      <div className="pixel-tarea-info">
-        <div className="pixel-tarea-header-card">
-        <h3 className={`pixel-tarea-titulo texto-difuminado ${esCompletada ? "tachado" : ""}`} title={tarea.nombre}>{tarea.nombre}</h3>
-          {tarea.descripcion?.trim() && (
-            <p className="pixel-tarea-desc texto-difuminado" title={tarea.descripcion}>{tarea.descripcion}</p>
+    <article className={clases}>
+      <div className="tareas-grupo-tarjeta-principal">
+        <div className="tareas-grupo-tarjeta-titulo-fila">
+          <h3
+            ref={tituloRef}
+            className={`tareas-grupo-tarjeta-titulo texto-difuminado ${tituloDesborda ? "texto-difuminado--desborda" : ""} ${esCompletada ? "tachado" : ""}`}
+            title={tarea.nombre}
+          >
+            {tarea.nombre}
+          </h3>
+          <span
+            className={`tareas-grupo-nivel tareas-grupo-nivel--${tarea.dificultad_estimada}`}
+          >
+            Nivel {tarea.dificultad_estimada}
+          </span>
+          {esTuya && <span className="tareas-grupo-etiqueta-tuya">Tuya</span>}
+          {esVencida && (
+            <span className="tareas-grupo-etiqueta-vencida">Vencida</span>
           )}
-          <span className={`pixel-badge-dificultad nivel-${tarea.dificultad_estimada}`}></span>
-          {esVencida && <span className="pixel-etiqueta-vencida">Vencida</span>}
         </div>
-        <dl className="pixel-tarea-detalles">
-          <div className={`pixel-tarea-meta ${esVencida ? "pixel-tarea-meta--vencida" : ""}`}>
+        {tarea.descripcion?.trim() && (
+          <p
+            ref={descRef}
+            className={`tareas-grupo-desc texto-difuminado ${descDesborda ? "texto-difuminado--desborda" : ""}`}
+            title={tarea.descripcion}
+          >
+            {tarea.descripcion}
+          </p>
+        )}
+
+        <dl className="tareas-grupo-meta">
+          <div
+            className={`tareas-grupo-meta-item ${esVencida ? "tareas-grupo-meta-item--vencida" : ""}`}
+          >
             <dt>Entrega</dt>
             <dd>{formatearFecha(tarea.fecha_entrega)}</dd>
           </div>
-          <div className="pixel-tarea-meta">
+          <div className="tareas-grupo-meta-item">
             <dt>Categoría</dt>
             <dd>{nombreCategoria(tarea.id_categoria)}</dd>
           </div>
         </dl>
       </div>
 
-      <div className="pixel-tarea-acciones">
-        <span className={`pixel-estado-badge ${tarea.estado.replace(" ", "-").toLowerCase()}`}>
+      <div className="tareas-grupo-tarjeta-lado">
+        <span
+          className={`tareas-grupo-chip tareas-grupo-estado--${tarea.estado.trim().toLowerCase().replace(/\s+/g, "-")}`}
+        >
+          <span className="tareas-grupo-sr-only">Estado: </span>
           {tarea.estado.toLowerCase()}
         </span>
         {prioridad && (
-          <span className={`pixel-estado-badge pixel-prioridad pixel-prioridad--${prioridad}`}>
+          <span
+            className={`tareas-grupo-chip tareas-grupo-prioridad tareas-grupo-prioridad--${prioridad}`}
+          >
             {ETIQUETAS_PRIORIDAD[prioridad]}
           </span>
         )}
       </div>
-
-            <div className="pixel-tarea-botones" ref={menuRef}>
+      <div className="tareas-grupo-tarjeta-pie" ref={menuRef}>
         <button
           type="button"
           className="tareas-grupo-boton tareas-grupo-boton--primario tareas-grupo-boton--pequeno"
@@ -90,17 +141,24 @@ export const TarjetaTarea = ({
         >
           Ver
         </button>
+        {accionesExtra}
         {onCambiarEstado && (
           <button
             type="button"
             className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
             onClick={() => onCambiarEstado(tarea)}
-            title={esCompletada ? "Marcar como pendiente" : "Marcar como completada"}
+            title={
+              esCompletada ? "Marcar como pendiente" : "Marcar como completada"
+            }
           >
             {esCompletada ? (
-              <><Undo2 size={14} /> Reabrir</>
+              <>
+                <Undo2 size={14} /> Reabrir
+              </>
             ) : (
-              <><Check size={14} /> Completar</>
+              <>
+                <Check size={14} /> Completar
+              </>
             )}
           </button>
         )}
@@ -118,14 +176,19 @@ export const TarjetaTarea = ({
 
             {menuAbierto && (
               <div className="pixel-dropdown-menu">
-                <button type="button" onClick={() => ejecutarAccion(() => onEditar?.(tarea))}>
+                <button
+                  type="button"
+                  onClick={() => ejecutarAccion(() => onEditar?.(tarea))}
+                >
                   <Pencil size={16} /> Editar Tarea
                 </button>
                 <div className="pixel-dropdown-divisor"></div>
                 <button
                   type="button"
                   className="pixel-btn-peligro-texto"
-                  onClick={() => ejecutarAccion(() => onEliminar?.(tarea.id_tarea))}
+                  onClick={() =>
+                    ejecutarAccion(() => onEliminar?.(tarea.id_tarea))
+                  }
                 >
                   <Trash2 size={16} /> Eliminar
                 </button>
@@ -134,6 +197,7 @@ export const TarjetaTarea = ({
           </div>
         )}
       </div>
+      {children}
     </article>
   );
 };

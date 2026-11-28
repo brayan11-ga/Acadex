@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 24px;
   box-sizing: border-box;
-  color: #ffffff;
+  color: var(--pixel-ink);
   font-family: inherit;
 }
 
@@ -15,10 +15,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pixel-panel);
   padding: 16px 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--pixel-radius);
+  border: 1px solid var(--pixel-border);
 }
 
 .calendario-header h2 {
@@ -35,17 +35,17 @@
 
 .calendario-controles button {
   padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: #6366f1;
-  color: #ffffff;
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius-sm);
+  background: var(--pixel-accent);
+  color: var(--pixel-on-accent);
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
 }
 
 .calendario-controles button:hover {
-  background: #4f46e5;
+  background: var(--pixel-accent-strong);
   transform: translateY(-1px);
 }
 
@@ -62,29 +62,29 @@
   text-align: center;
   font-weight: 700;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: var(--pixel-panel-alt);
+  border-radius: var(--pixel-radius-sm);
   text-transform: uppercase;
   font-size: 0.85rem;
   letter-spacing: 1px;
-  color: #a5b4fc;
+  color: var(--pixel-accent-soft);
 }
 
 /* Celdas de días */
 .dia-celda {
   min-width: 0;
   min-height: 110px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  border: 1px solid var(--pixel-border);
+  border-radius: var(--pixel-radius);
   padding: 8px;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--pixel-panel);
   display: flex;
   flex-direction: column;
   transition: border-color 0.2s ease;
 }
 
 .dia-celda:hover {
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: var(--pixel-border-strong);
 }
 
 .dia-celda.vacia {
@@ -93,15 +93,15 @@
 }
 
 .dia-celda.hoy {
-  border: 2px solid #818cf8;
-  background: rgba(99, 102, 241, 0.15);
+  border: 2px solid var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 15%, var(--pixel-panel));
 }
 
 .numero-dia {
   font-size: 0.9rem;
   font-weight: 700;
   margin-bottom: 6px;
-  color: #cbd5e1;
+  color: var(--pixel-ink-soft);
 }
 
 /* Badges de eventos y tareas */
@@ -121,7 +121,7 @@
   box-sizing: border-box;
   font-size: 0.75rem;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--pixel-radius-sm);
   border: 0;
   font-family: inherit;
   text-align: left;
@@ -134,7 +134,7 @@
 }
 
 .evento-badge:focus-visible {
-  outline: 2px solid #c7d2fe;
+  outline: 2px solid var(--pixel-accent-soft);
   outline-offset: 2px;
 }
 
@@ -142,33 +142,29 @@
   filter: brightness(1.08);
 }
 
-/* Colores según el estado de la tarea (Pendiente, En Proceso, Completada, Cancelada) */
+/* Colores según el estado de la tarea */
 .estado-pendiente {
-  background-color: #f59e0b; /* Naranja / Ámbar */
-  color: #ffffff;
+  background-color: var(--resumen-pendientes);
+  color: var(--pixel-on-accent);
 }
 
-.estado-en_proceso {
-  background-color: #3b82f6; /* Azul */
-  color: #ffffff;
+.estado-en_proceso,
+.estado-en-progreso {
+  background-color: var(--pixel-baja);
+  color: var(--pixel-on-accent);
 }
 
 .estado-completada {
-  background-color: #10b981; /* Verde */
-  color: #ffffff;
+  background-color: var(--pixel-completado);
+  color: var(--pixel-on-accent);
 }
 
 .estado-cancelada {
-  background-color: #6b7280; /* Gris */
-  color: #ffffff;
-}
-
-.estado-en-progreso {
-  background-color: #3b82f6;
-  color: #ffffff;
+  background-color: var(--pixel-ink-faint);
+  color: var(--pixel-on-accent);
 }
 
 .evento-badge.estado-vencida {
-  background-color: #ef4444;
-  color: #fff;
+  background-color: var(--resumen-vencidas);
+  color: var(--pixel-on-accent);
 }

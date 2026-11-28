@@ -231,8 +231,8 @@
 }
 
 .panel-contenedor .pixel-btn-outline-success {
-  border-color: var(--pixel-baja);
-  color: var(--pixel-baja);
+  border-color: var(--pixel-completado);
+  color: var(--pixel-completado);
   border-radius: var(--pixel-radius-sm);
 }
 
@@ -299,7 +299,7 @@
 }
 
 /* Que los botones queden alineados abajo aunque los títulos tengan distinta altura */
-.panel-lista-tareas .pixel-tarea-card {
+.panel-lista-tareas .tareas-grupo-tarjeta {
   align-content: space-between;
 }
 
@@ -376,3 +376,35 @@
 .panel-resumen-item--hoy:not(.vacio) dd {
   color: var(--pixel-accent-soft);
 }
+
+.prioridad-titulo {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(90deg, #000 80%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 80%, transparent 100%);
+}
+
+.panel-contenedor .panel-resumen {
+  border-left: 3px solid var(--pixel-border-strong);
+}
+
+.panel-resumen-item--vencidas:not(.vacio),
+.panel-resumen-item--hoy:not(.vacio),
+.panel-resumen-item--semana:not(.vacio),
+.panel-resumen-item--pendientes:not(.vacio) {
+  border-left: 3px solid var(--c);
+  background: color-mix(in srgb, var(--c) 8%, var(--pixel-panel));
+}
+
+.panel-resumen-item--vencidas:not(.vacio) dd,
+.panel-resumen-item--hoy:not(.vacio) dd,
+.panel-resumen-item--semana:not(.vacio) dd,
+.panel-resumen-item--pendientes:not(.vacio) dd {
+  color: var(--c);
+}
+
+.panel-resumen-item--vencidas   { --c: var(--resumen-vencidas); }
+.panel-resumen-item--hoy        { --c: var(--resumen-hoy); }
+.panel-resumen-item--semana     { --c: var(--resumen-semana); }
+.panel-resumen-item--pendientes { --c: var(--resumen-pendientes); }

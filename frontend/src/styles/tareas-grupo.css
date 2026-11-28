@@ -372,6 +372,28 @@
   border-color: var(--pixel-border-strong);
 }
 
+/* Que la tarjeta se vea igual dentro y fuera de .tareas-grupo-pagina */
+.tareas-grupo-tarjeta {
+  --tareas-grupo-error: var(--pixel-nivel-5);
+  box-sizing: border-box;
+  font-family: var(--pixel-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--pixel-ink);
+}
+
+.tareas-grupo-tarjeta :is(h3, p, dl, dd) {
+  margin: 0;
+}
+
+.tareas-grupo-tarjeta .tareas-grupo-boton {
+  font: inherit;
+}
+
+.tareas-grupo-tarjeta-pie .pixel-menu-kebab-container {
+  margin-left: auto;
+}
+
 .tareas-grupo-tarjeta--vencida {
   border-color: color-mix(in srgb, var(--tareas-grupo-error) 55%, transparent);
   border-left: 3px solid var(--tareas-grupo-error);
@@ -402,6 +424,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
+}
+
+.tareas-grupo-tarjeta-titulo-fila .tareas-grupo-desc {
+  order: 1;
+  flex: 0 0 100%;
+  min-width: 0;
 }
 
 .tareas-grupo-tarjeta-titulo {
@@ -501,10 +529,11 @@
   color: var(--pixel-accent-soft);
 }
 
+/* tareas-grupo.css */
 .tareas-grupo-estado--completada {
-  border-color: var(--pixel-baja);
-  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
-  color: var(--pixel-baja);
+  border-color: var(--pixel-completado);
+  background: color-mix(in srgb, var(--pixel-completado) 12%, transparent);
+  color: var(--pixel-completado);
 }
 
 .tareas-grupo-prioridad::before {

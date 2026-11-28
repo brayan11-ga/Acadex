@@ -14,7 +14,9 @@ import {
 import type { GrupoConRol, Integrante } from "../types/grupo";
 import type { IntegranteAsignable } from "../types/tareaGrupo";
 import { obtenerIdUsuarioActual } from "../utils/jwt";
-import { ETIQUETAS_PRIORIDAD, mapearPrioridad } from "../utils/prioridad";
+import { TarjetaTarea } from "../components/tareas/TarjetaTarea";
+import { ToggleVista } from "../components/ui/ToggleVista";
+import { useModoVista } from "../hooks/useModoVista";
 import "../styles/tareas-grupo.css";
 import "../styles/difuminado.css";
 
@@ -26,13 +28,6 @@ const formateadorFecha = new Intl.DateTimeFormat("es-CO", {
   hour: "numeric",
   minute: "2-digit",
 });
-
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  pendiente: "pendiente",
-  "en-progreso": "en progreso",
-  "en progreso": "en progreso",
-  completada: "completada",
-};
 
 function formatearFecha(fechaIso: string): string {
   const fecha = new Date(fechaIso);
@@ -70,7 +65,7 @@ function TareasGrupoPage() {
   const navigate = useNavigate();
   const idUsuarioActual = obtenerIdUsuarioActual();
   const [ahora] = useState(() => new Date());
-
+  const [modoVista, setModoVista] = useModoVista("acadex:vista-tareas-grupo", "lista");
   const [grupo, setGrupo] = useState<GrupoConRol | null>(null);
   const [tareas, setTareas] = useState<TareaBackend[]>([]);
   const [integrantes, setIntegrantes] = useState<IntegranteAsignable[]>([]);
@@ -309,128 +304,81 @@ function TareasGrupoPage() {
         )}
 
         {estado === "lista" && grupo && (
-          <ul className="tareas-grupo-lista" aria-label={`Tareas de ${grupo.nombre_grupo}`}>
+          <>
+          <div className="tarjetas-toolbar">
+            <ToggleVista valor={modoVista} onCambiar={setModoVista}/>
+          </div>
+          <ul className={`tareas-lista ${modoVista==="cuadricula"? "vista-cuadricula":""}`}
+          aria-label={`Tareas de ${grupo.nombre_grupo}`}
+          >
             {tareas.map((tarea) => {
-              const estadoNorm = normalizarEstado(tarea.estado);
-              const prioridad = mapearPrioridad(tarea.prioridad);
-              const vencida = estaVencida(tarea, ahora);
-              const esTuya = idsTareasMias.has(tarea.id_tarea);
               const abierto = asignadosAbiertos.includes(tarea.id_tarea);
               const asignados = cacheAsignados[tarea.id_tarea] ?? [];
               const idPanel = `tareas-grupo-asignados-${tarea.id_tarea}`;
-              const clases = [
-                "tareas-grupo-tarjeta",
-                prioridad && `tareas-grupo-tarjeta--${prioridad}`,
-                vencida && "tareas-grupo-tarjeta--vencida",
-                estadoNorm === "completada" && "tareas-grupo-tarjeta--completada",
-              ]
-                .filter(Boolean)
-                .join(" ");
 
               return (
-                <li key={tarea.id_tarea} className={clases}>
-                  <div className="tareas-grupo-tarjeta-principal">
-                    <div className="tareas-grupo-tarjeta-titulo-fila">
-                      <h3 className="tareas-grupo-tarjeta-titulo texto-difuminado" title={tarea.nombre}>{tarea.nombre}</h3>
-                      {tarea.descripcion?.trim() && (
-                        <p className="tareas-grupo-desc texto-difuminado" title={tarea.descripcion}>{tarea.descripcion}</p>
-                      )}
-                      <span className={`tareas-grupo-nivel tareas-grupo-nivel--${tarea.dificultad_estimada}`}>
-                        Nivel {tarea.dificultad_estimada}
-                      </span>
-                      {esTuya && <span className="tareas-grupo-etiqueta-tuya">Tuya</span>}
-                      {vencida && <span className="tareas-grupo-etiqueta-vencida">Vencida</span>}
-                    </div>
-                    <dl className="tareas-grupo-meta">
-                      <div className={vencida ? "tareas-grupo-meta-item tareas-grupo-meta-item--vencida" : "tareas-grupo-meta-item"}>
-                        <dt>Entrega</dt>
-                        <dd>
-                          <time dateTime={tarea.fecha_entrega}>{formatearFecha(tarea.fecha_entrega)}</time>
-                        </dd>
+                <li key={tarea.id_tarea}>
+                  <TarjetaTarea
+                    tarea={tarea}
+                    nombreCategoria={nombreCategoria}
+                    formatearFecha={formatearFecha}
+                    onVerDetalles={(idTarea) => navigate(`/grupos/${id}/tareas/${idTarea}`)}
+                    esTuya={idsTareasMias.has(tarea.id_tarea)}
+                    vencida={estaVencida(tarea, ahora)}
+                    accionesExtra={
+                      <button
+                        type="button"
+                        className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
+                        aria-expanded={abierto}
+                        aria-controls={idPanel}
+                        onClick={() => void alternarAsignados(tarea.id_tarea)}
+                      >
+                        {abierto ? "Ocultar asignados" : "Ver asignados"}
+                        {cacheAsignados[tarea.id_tarea] && (
+                          <span className="tareas-grupo-boton-contador" aria-label={`${asignados.length} asignados`}>
+                            {asignados.length}
+                          </span>
+                        )}
+                      </button>
+                    }
+                  >
+                    {abierto && (
+                      <div id={idPanel} className="tareas-grupo-asignados">
+                        {cargandoAsignados[tarea.id_tarea] && (
+                          <p className="tareas-grupo-asignados-vacio" role="status">Cargando asignados…</p>
+                        )}
+                        {errorAsignados[tarea.id_tarea] && (
+                          <p className="tareas-grupo-error-campo" role="alert">
+                            <span aria-hidden="true">✕</span> {errorAsignados[tarea.id_tarea]}
+                          </p>
+                        )}
+                        {!cargandoAsignados[tarea.id_tarea] && !errorAsignados[tarea.id_tarea] && (
+                          asignados.length === 0 ? (
+                            <p className="tareas-grupo-asignados-vacio">Sin asignados</p>
+                          ) : (
+                            <ul className="tareas-grupo-asignados-lista">
+                              {asignados.map((persona) => (
+                                <li key={persona.id_usuario} className="tareas-grupo-asignado">
+                                  <span className="tareas-grupo-avatar" aria-hidden="true">
+                                    {obtenerInicial(persona.correo_electronico)}
+                                  </span>
+                                  <span className="tareas-grupo-truncar">{persona.correo_electronico}</span>
+                                  {persona.id_usuario === idUsuarioActual && (
+                                    <span className="tareas-grupo-etiqueta-tu">TÚ</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )
+                        )}
                       </div>
-                      <div className="tareas-grupo-meta-item">
-                        <dt>Categoría</dt>
-                        <dd>{nombreCategoria(tarea.id_categoria)}</dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <div className="tareas-grupo-tarjeta-lado">
-                    <span className={`tareas-grupo-chip tareas-grupo-estado--${estadoNorm}`}>
-                      <span className="tareas-grupo-sr-only">Estado: </span>
-                      {ETIQUETAS_ESTADO[estadoNorm] ?? estadoNorm}
-                    </span>
-                    {prioridad && (
-                      <span className={`tareas-grupo-chip tareas-grupo-prioridad tareas-grupo-prioridad--${prioridad}`}>
-                        {ETIQUETAS_PRIORIDAD[prioridad]}
-                      </span>
                     )}
-                  </div>
-
-                  <div className="tareas-grupo-tarjeta-pie">
-                    <button
-                      type="button"
-                      className="tareas-grupo-boton tareas-grupo-boton--primario tareas-grupo-boton--pequeno"
-                      onClick={() =>
-                        navigate(`/grupos/${id}/tareas/${tarea.id_tarea}`)
-                      }
-                    >
-                      Ver
-                    </button>
-                    <button
-                      type="button"
-                      className="tareas-grupo-boton tareas-grupo-boton--secundario tareas-grupo-boton--pequeno"
-                      aria-expanded={abierto}
-                      aria-controls={idPanel}
-                      onClick={() => void alternarAsignados(tarea.id_tarea)}
-                    >
-                      {abierto ? "Ocultar asignados" : "Ver asignados"}
-                      {cacheAsignados[tarea.id_tarea] && (
-                        <span
-                          className="tareas-grupo-boton-contador"
-                          aria-label={`${asignados.length} asignados`}
-                        >
-                          {asignados.length}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-
-                  {abierto && (
-                    <div id={idPanel} className="tareas-grupo-asignados">
-                      {cargandoAsignados[tarea.id_tarea] && (
-                        <p className="tareas-grupo-asignados-vacio" role="status">Cargando asignados…</p>
-                      )}
-                      {errorAsignados[tarea.id_tarea] && (
-                        <p className="tareas-grupo-error-campo" role="alert">
-                          <span aria-hidden="true">✕</span> {errorAsignados[tarea.id_tarea]}
-                        </p>
-                      )}
-                      {!cargandoAsignados[tarea.id_tarea] && !errorAsignados[tarea.id_tarea] && (
-                        asignados.length === 0 ? (
-                          <p className="tareas-grupo-asignados-vacio">Sin asignados</p>
-                        ) : (
-                          <ul className="tareas-grupo-asignados-lista">
-                            {asignados.map((persona) => (
-                              <li key={persona.id_usuario} className="tareas-grupo-asignado">
-                                <span className="tareas-grupo-avatar" aria-hidden="true">
-                                  {obtenerInicial(persona.correo_electronico)}
-                                </span>
-                                <span className="tareas-grupo-truncar">{persona.correo_electronico}</span>
-                                {persona.id_usuario === idUsuarioActual && (
-                                  <span className="tareas-grupo-etiqueta-tu">TÚ</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )
-                      )}
-                    </div>
-                  )}
+                  </TarjetaTarea>
                 </li>
               );
             })}
           </ul>
+          </>
         )}
       </div>
 

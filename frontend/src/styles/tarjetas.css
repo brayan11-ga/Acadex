@@ -1,5 +1,5 @@
 /* Base común: tareas, tareas de grupo, categorías y Mis grupos */
-:root :is(.pixel-tarea-card, .tareas-grupo-tarjeta, .groups-grid .group-card) {
+:root .tareas-grupo-tarjeta {
   border: 1px solid var(--pixel-border);
   border-left: 3px solid var(--tono, var(--pixel-border-strong));
   border-radius: var(--pixel-radius);
@@ -12,17 +12,17 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-:root :is(.pixel-tarea-card, .tareas-grupo-tarjeta, .groups-grid .group-card):hover {
+:root .tareas-grupo-tarjeta:hover {
   border-color: var(--pixel-border-strong);
   border-left-color: var(--tono, var(--pixel-border-strong));
   box-shadow: 3px 3px 0 color-mix(in srgb, var(--tono, var(--pixel-accent)) 28%, transparent);
 }
 
 /* Tonos */
-.pixel-tarea-card--baja, .tareas-grupo-tarjeta--baja { --tono: var(--pixel-baja); }
-.pixel-tarea-card--media, .tareas-grupo-tarjeta--media { --tono: var(--pixel-media); }
-.pixel-tarea-card--alta, .tareas-grupo-tarjeta--alta { --tono: var(--pixel-alta); }
-.pixel-tarea-card.vencida, .tareas-grupo-tarjeta--vencida { --tono: var(--pixel-vencida, #ef4444); }
+.tareas-grupo-tarjeta--baja { --tono: var(--pixel-baja); }
+.tareas-grupo-tarjeta--media { --tono: var(--pixel-media); }
+.tareas-grupo-tarjeta--alta { --tono: var(--pixel-alta); }
+.tareas-grupo-tarjeta--vencida { --tono: var(--pixel-vencida, #ef4444); }
 
 .pixel-categoria-card--nivel-1 { --tono: var(--pixel-nivel-1); }
 .pixel-categoria-card--nivel-2 { --tono: var(--pixel-nivel-2); }
@@ -30,4 +30,95 @@
 .pixel-categoria-card--nivel-4 { --tono: var(--pixel-nivel-4); }
 .pixel-categoria-card--nivel-5 { --tono: var(--pixel-nivel-5); }
 
-.groups-grid .group-card--leader { --tono: var(--pixel-accent); }
+.tareas-grupo-tarjeta--completada { --tono: var(--pixel-completado); }
+/* ---------- Tarjetas de grupo (Mis grupos) ---------- */
+
+.role-badge--leader {
+  color: var(--pixel-accent-soft);
+  background: color-mix(in srgb, var(--pixel-accent) 16%, transparent);
+}
+
+.role-badge--member {
+  color: var(--pixel-baja);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+}
+
+.group-card-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--pixel-ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.group-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--pixel-border);
+  font-size: 0.82rem;
+}
+
+.group-card-cta {
+  color: var(--pixel-accent-soft);
+  font-weight: 600;
+}
+
+.tareas-grupo-tarjeta--lider { --tono: var(--pixel-accent); }
+.tarjeta-clicable { cursor: pointer; }
+
+.tareas-grupo-chip--lider {
+  border-color: var(--pixel-accent);
+  background: color-mix(in srgb, var(--pixel-accent) 14%, transparent);
+  color: var(--pixel-accent-soft);
+}
+
+.tareas-grupo-chip--miembro {
+  border-color: var(--pixel-baja);
+  background: color-mix(in srgb, var(--pixel-baja) 12%, transparent);
+  color: var(--pixel-baja);
+}
+
+/* Lista y cuadrícula compartidas */
+.tarjetas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjetas-lista.vista-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.tarjetas-lista > li {
+  display: flex;
+}
+
+.tarjetas-lista > li > .tareas-grupo-tarjeta {
+  flex: 1;
+  align-content: start;
+}
+
+.vista-cuadricula .tareas-grupo-tarjeta {
+  grid-template-columns: 1fr;
+}
+
+.vista-cuadricula .tareas-grupo-tarjeta-lado {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.tarjetas-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}

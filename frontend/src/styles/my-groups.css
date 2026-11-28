@@ -1,8 +1,11 @@
 /* frontend/src/styles/my-groups.css */
 .groups-view {
   width: 100%;
+  padding: 2rem 3rem;
+  box-sizing: border-box;
   color: #e5e7eb;
 }
+
 .groups-header {
   display: flex;
   align-items: flex-start;
@@ -29,6 +32,7 @@
   gap: 0.7rem;
   flex-shrink: 0;
 }
+
 .groups-btn {
   padding: 0.7rem 1.2rem;
   border-radius: 10px;
@@ -39,6 +43,7 @@
   border: 1px solid transparent;
   transition: transform 0.1s ease, background 0.15s ease;
 }
+
 .groups-btn:active {
   transform: translateY(1px);
 }
@@ -58,90 +63,7 @@
 .groups-btn-ghost:hover {
   background: rgba(139, 92, 246, 0.12);
 }
-.groups-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.1rem;
-}
-.group-card {
-  width: 100%;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.3rem;
-  border: 1px solid rgba(139, 92, 246, 0.18);
-  border-radius: 14px;
-  background: #14121f;
-  color: inherit;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-.group-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(139, 92, 246, 0.55);
-  background: #171528;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-}
-.group-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-.group-card-name {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f5f3ff;
-}
-.role-badge {
-  flex-shrink: 0;
-  padding: 0.22rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-}
-.role-badge--leader {
-  color: #c4b5fd;
-  background: rgba(139, 92, 246, 0.16);
-  border-color: rgba(139, 92, 246, 0.5);
-}
-.role-badge--member {
-  color: #7ee0bd;
-  background: rgba(52, 211, 153, 0.12);
-  border-color: rgba(52, 211, 153, 0.45);
-}
-.group-card-desc {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: #9b9bb3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.group-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
-  font-size: 0.82rem;
-}
-.group-card-cta {
-  color: #a78bfa;
-  font-weight: 600;
-}
+
 @media (max-width: 640px) {
   .groups-title {
     font-size: 1.4rem;
@@ -153,9 +75,9 @@
     flex: 1;
   }
 }
-.groups-view {
-  width: 100%;
-  padding: 2rem 3rem;
-  box-sizing: border-box;
-  color: #e5e7eb;
+
+.groups-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }

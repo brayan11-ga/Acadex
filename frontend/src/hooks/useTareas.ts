@@ -10,6 +10,8 @@ import {
   type TareaBackend,
 } from "../services/tareas";
 import { listarCategorias, type Categoria } from "../services/categorias";
+import { useModoVista } from "./useModoVista";
+
 
 export const useTareas = (refreshKey: number) => {
   const [tareas, setTareas] = useState<TareaBackend[]>([]);
@@ -20,13 +22,14 @@ export const useTareas = (refreshKey: number) => {
   const [tareaAEliminar, setTareaAEliminar] = useState<number | null>(null);
   
   // Estados de vista y filtros
+  // Estados de vista y filtros
   const [rendimiento, setRendimiento] = useState<RendimientoCategoria[]>([]);
   const [filtroActivo, setFiltroActivo] = useState<string>("todas");
-  const [modoVista, setModoVista] = useState<"lista" | "cuadricula">("lista");
+  const [modoVista, setModoVista] = useModoVista("acadex:vista-tareas");
   const [paginaActual, setPaginaActual] = useState<number>(1);
-  const categoriasPorPagina =modoVista==="cuadricula"?6:3;
+  const categoriasPorPagina = modoVista === "cuadricula" ? 6 : 3;
 
-  useEffect(()=>{
+  useEffect(() => {
     setPaginaActual(1);
   }, [filtroActivo, tareas.length, modoVista]);
 

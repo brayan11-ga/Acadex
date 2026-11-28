@@ -23,11 +23,21 @@
   --pixel-accent-strong: #5b3df0;
   --pixel-on-accent: #ffffff;
 
-  /* Colores de prioridad */
-  --pixel-baja: #45e0a8;
-  --pixel-media: #7c5cff;
+  /* Prioridad */
+  --pixel-baja: #38bdf8;
+  --pixel-media: #5b3df0;
   --pixel-alta: #ff6fa5;
 
+  /* Estado */
+  --pixel-completado: #45e0a8;
+  --pixel-vencida: #ef4444;
+
+  /* Resumen del panel (una por casilla) */
+  --resumen-vencidas: var(--pixel-vencida);
+  --resumen-hoy: #2452fb;
+  --resumen-semana: #a78bfa;
+  --resumen-pendientes: #fbbf24;
+  
   /* Colores por nivel de dificultad */
   --pixel-nivel-1: #3ecbf0;
   --pixel-nivel-2: #57d68d;
@@ -71,7 +81,8 @@ html.light-mode {
   --pixel-on-accent: #ffffff;
 
   /* Colores de prioridad (mismos tonos, funcionan en ambos temas) */
-  --pixel-baja: #45e0a8;
+  --pixel-baja: #38bdf8;
+  --pixel-completado: #45e0a8;
   --pixel-media: #5b3df0;
   --pixel-alta: #ff6fa5;
 

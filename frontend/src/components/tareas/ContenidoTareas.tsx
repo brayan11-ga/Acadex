@@ -8,6 +8,7 @@ import { Paginacion } from "./Paginacion";
 import { TarjetaCategoria } from "./TarjetaCategoria";
 import { TaskListLoadingSkeleton } from "../skeletons/LoadingSkeletons";
 import { EmptyState } from "../ui/EmptyState";
+import { ToggleVista } from "../ui/ToggleVista";
 import { ModalConfirmacion } from "../layout/ModalConfirmacion";
 import { useTareas } from "../../hooks/useTareas"; // Importamos nuestro nuevo cerebro
 import { ModalDetalleTarea } from "./ModalDetalleTarea";
@@ -75,29 +76,15 @@ function ContenidoTareas({ onNuevaTarea, onEditarTarea, refreshKey }: ContenidoT
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <FiltrosTareas filtroActivo={filtroActivo} onCambiarFiltro={setFiltroActivo} />
 
-        <div className="pixel-tareas-filtros" style={{ marginBottom: "2rem" }}>
-          <span className="pixel-filtro-label">Vista:</span>
-          <button
-            className={`pixel-filtro-btn ${modoVista === "lista" ? "activo" : ""}`}
-            onClick={() => setModoVista("lista")}
-          >
-            ☰ Lista
-          </button>
-          <button
-            className={`pixel-filtro-btn ${modoVista === "cuadricula" ? "activo" : ""}`}
-            onClick={() => setModoVista("cuadricula")}
-          >
-            ⊞ Cuadrícula
-          </button>
+        <div style={{ marginBottom: "2rem" }}>
+          <ToggleVista valor={modoVista} onCambiar={setModoVista} />
         </div>
       </div>
-
       {cargando && <TaskListLoadingSkeleton />}
       {error && <p className="pixel-error">{error}</p>}
-
       {!cargando && !error && (
-  categoriaAbierta !== null ? (
-    <>
+        categoriaAbierta !== null ? (
+      <>
       <button
         type="button"
         className="pixel-filtro-btn"

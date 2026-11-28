@@ -539,46 +539,6 @@
   font-family: var(--pixel-font-body);
 }
 
-/* ===== PRIORIDAD ===== */
-
-.pixel-prioridad-group {
-  display: flex;
-  gap: 12px;
-}
-
-.pixel-prioridad-btn {
-  flex: 1;
-  background: var(--pixel-panel-alt);
-  border: 2px solid var(--pixel-border-strong);
-  border-radius: 0;
-  padding: 14px 10px;
-  color: var(--pixel-ink-soft);
-  font-family: var(--pixel-font-display);
-  font-size: 0.62rem;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.pixel-prioridad-btn:hover {
-  color: var(--pixel-ink);
-}
-
-.pixel-prioridad-btn.prioridad-baja.active {
-  border-color: var(--pixel-baja);
-  color: var(--pixel-baja);
-}
-
-.pixel-prioridad-btn.prioridad-media.active {
-  border-color: var(--pixel-media);
-  color: var(--pixel-media);
-}
-
-.pixel-prioridad-btn.prioridad-alta.active {
-  border-color: var(--pixel-alta);
-  color: var(--pixel-alta);
-}
-
 /* ===== DIFICULTAD ===== */
 .pixel-dificultad-group {
   display: flex;

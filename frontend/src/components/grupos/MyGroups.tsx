@@ -1,10 +1,11 @@
 // frontend/src/components/grupos/MyGroups.tsx
 import type { GrupoConRol } from "../../types/grupo";
-import "../styles/tarjetas.css";
+import "../../styles/tarjetas.css";
 import "../../styles/my-groups.css";
-import "../../styles/my-groups.css";
-import "../../styles/difuminado.css";
 import { EmptyState } from "../ui/EmptyState";
+import { ToggleVista } from "../ui/ToggleVista";
+import { useModoVista } from "../../hooks/useModoVista";
+import { TarjetaGrupo } from "./TarjetaGrupo";
 
 interface MyGroupsProps {
   groups: GrupoConRol[];
@@ -14,6 +15,8 @@ interface MyGroupsProps {
 }
 
 export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: MyGroupsProps) {
+  const [modoVista, setModoVista] = useModoVista("acadex:vista-grupos", "cuadricula");
+
   return (
     <section className="groups-view">
       <header className="groups-header">
@@ -29,7 +32,10 @@ export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: My
           <button className="groups-btn groups-btn-ghost" onClick={onJoinClick}>
             Unirse con código
           </button>
-          <button className="groups-btn groups-btn-primary" onClick={onCreateClick}>
+          <button
+            className="groups-btn groups-btn-primary"
+            onClick={onCreateClick}
+          >
             + Crear grupo
           </button>
         </div>
@@ -41,29 +47,20 @@ export function MyGroups({ groups, onOpenGroup, onCreateClick, onJoinClick }: My
           description="Crea un grupo o únete con un código para empezar a colaborar."
         />
       ) : (
-        <ul className="groups-grid">
-          {groups.map((grupo) => (
-            <li key={grupo.id_grupo}>
-              <button
-                type="button"
-                className={`group-card group-card--${grupo.rol === "lider" ? "leader" : "member"}`}
-                onClick={() => onOpenGroup(grupo.id_grupo)}
-                aria-label={`Abrir grupo ${grupo.nombre_grupo}`}
-              >
-                <div className="group-card-top">
-                  <h2 className="group-card-name texto-difuminado">{grupo.nombre_grupo}</h2>
-                  <span className={`role-badge role-badge--${grupo.rol === "lider" ? "leader" : "member"}`}>
-                    {grupo.rol === "lider" ? "Líder" : "Miembro"}
-                  </span>
-                </div>
-                <p className="group-card-desc texto-difuminado">{grupo.descripcion?.trim() || "Sin descripción."}</p>
-                <div className="group-card-footer">
-                  <span className="group-card-cta">Ver grupo →</span>
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="groups-toolbar">
+            <ToggleVista valor={modoVista} onCambiar={setModoVista} />
+          </div>
+          <ul
+            className={`tarjetas-lista ${modoVista === "cuadricula" ? "vista-cuadricula" : ""}`}
+          >
+            {groups.map((grupo) => (
+              <li key={grupo.id_grupo}>
+                <TarjetaGrupo grupo={grupo} onAbrir={onOpenGroup} />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );

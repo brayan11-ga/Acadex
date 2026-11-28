@@ -161,8 +161,8 @@ export function TaskListLoadingSkeleton() {
     <SkeletonStatus label="Cargando las tareas" className="loading-task-list">
       <section className="pixel-tareas-lista">
         {cuatroElementos.map((item) => (
-          <article className="pixel-tarea-card loading-task-card" key={item}>
-            <div className="pixel-tarea-info">
+          <article className="tareas-grupo-tarjeta loading-task-card" key={item}>
+            <div className="tareas-grupo-tarjeta-principal">
               <div className="loading-task-card__heading">
                 <Skeleton width="min(16rem, 50vw)" height="1rem" />
                 <Skeleton width="5rem" height="1.4rem" variant="pill" />
